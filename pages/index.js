@@ -60,15 +60,21 @@ export default function Home() {
   function handleNoteClose() { load(); setOpenNote(null) }
   function handleNoteDelete(noteId) { setGeneralNotes(prev => prev.filter(n => n.id !== noteId)); setOpenNote(null) }
 
+  function stripHtml(html) {
+    if (!html) return ''
+    return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim()
+  }
   function noteTitle(body) {
     if (!body) return 'New Note'
-    const lines = body.split('\n').filter(l => l.trim())
-    return lines[0] || 'New Note'
+    const text = stripHtml(body)
+    const lines = text.split('\n').filter(l => l.trim())
+    return lines[0]?.slice(0, 50) || text.slice(0, 50) || 'New Note'
   }
   function notePreview(body) {
     if (!body) return 'No additional text'
-    const lines = body.split('\n').filter(l => l.trim())
-    return lines[1] || 'No additional text'
+    const text = stripHtml(body)
+    const lines = text.split('\n').filter(l => l.trim())
+    return lines[1]?.slice(0, 60) || 'No additional text'
   }
 
   if (openNote) {
@@ -83,7 +89,7 @@ export default function Home() {
           <div className={styles.headerRight}>
             <span className={styles.villageCount}>{totalVillages} villages</span>
             {tab === 'Qanungos' && <button className={styles.addBtn} onClick={() => setShowAddQ(true)}>+ Qanungo</button>}
-            <a className={styles.mapBtn} href="https://zietsuiuzkfjjgbdybdd.supabase.co/storage/v1/object/public/maps/DISTRICT%20MAP%2021-09%20-2023%2005.pdf" target="_blank" rel="noreferrer" title="District Map">🗺</a>
+            <a className={styles.mapBtn} href="/DISTRICT%20MAP%2021-09%20-2023%2005.pdf" target="_blank" rel="noreferrer" title="District Map">🗺</a>
           </div>
         </div>
       </header>

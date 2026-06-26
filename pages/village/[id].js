@@ -217,7 +217,13 @@ export default function VillagePage() {
                 ))}
               </ul>
             )}
-            <button className={styles.fab} onClick={openAddContact}>＋</button>
+            <div className={styles.fabGroup}>
+              <button className={styles.fabSecondary} onClick={importFromContacts} title="Import from Contacts">📥</button>
+              <button className={styles.fab} onClick={openAddContact}>＋</button>
+            </div>
+            <button className={styles.importBtn} onClick={importFromContacts} disabled={savingContact}>
+              {savingContact ? '⏳' : '📋 Import'}
+            </button>
           </>
         )}
 

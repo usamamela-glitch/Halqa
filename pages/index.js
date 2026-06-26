@@ -3,47 +3,84 @@ import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabase'
 import styles from '../styles/Home.module.css'
 
+const TABS = ['Qanungos', 'General']
+
 export default function Home() {
   const router = useRouter()
-  const [villages, setVillages] = useState([])
-  const [search, setSearch] = useState('')
+  const [tab, setTab] = useState('Qanungos')
+  const [qanungos, setQanungos] = useState([])
+  const [villageCounts, setVillageCounts] = useState({})
+  const [totalVillages, setTotalVillages] = useState(0)
+  const [generalNotes, setGeneralNotes] = useState([])
   const [loading, setLoading] = useState(true)
-  const [showAdd, setShowAdd] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState(null)
+
+  // Qanungo modals
+  const [showAddQ, setShowAddQ] = useState(false)
+  const [newQName, setNewQName] = useState('')
+  const [savingQ, setSavingQ] = useState(false)
+  const [deleteQ, setDeleteQ] = useState(null)
+
+  // General notes
+  const [newNote, setNewNote] = useState('')
+  const [savingNote, setSavingNote] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
-    const { data } = await supabase
-      .from('villages')
-      .select('*')
-      .order('name')
-    setVillages(data || [])
+    const [{ data: qs }, { data: vs }, { data: ns }] = await Promise.all([
+      supabase.from('qanungos').select('*').order('name'),
+      supabase.from('villages').select('id, qanungo_id'),
+      supabase.from('general_notes').select('*').order('created_at', { ascending: false }),
+    ])
+
+    setQanungos(qs || [])
+    setGeneralNotes(ns || [])
+
+    // Count villages per qanungo
+    const counts = {}
+    let total = 0
+    ;(vs || []).forEach(v => {
+      total++
+      if (v.qanungo_id) {
+        counts[v.qanungo_id] = (counts[v.qanungo_id] || 0) + 1
+      }
+    })
+    setVillageCounts(counts)
+    setTotalVillages(total)
     setLoading(false)
   }, [])
 
   useEffect(() => { load() }, [load])
 
-  const filtered = villages.filter(v =>
-    v.name.toLowerCase().includes(search.toLowerCase())
-  )
-
-  async function addVillage() {
-    const name = newName.trim()
+  async function addQanungo() {
+    const name = newQName.trim()
     if (!name) return
-    setSaving(true)
-    await supabase.from('villages').insert({ name })
-    setNewName('')
-    setShowAdd(false)
-    setSaving(false)
+    setSavingQ(true)
+    await supabase.from('qanungos').insert({ name })
+    setNewQName('')
+    setShowAddQ(false)
+    setSavingQ(false)
     load()
   }
 
-  async function deleteVillage(v) {
-    await supabase.from('contacts').delete().eq('village_id', v.id)
-    await supabase.from('villages').delete().eq('id', v.id)
-    setDeleteTarget(null)
+  async function deleteQanungo(q) {
+    // Unassign villages from this qanungo
+    await supabase.from('villages').update({ qanungo_id: null }).eq('qanungo_id', q.id)
+    await supabase.from('qanungos').delete().eq('id', q.id)
+    setDeleteQ(null)
+    load()
+  }
+
+  async function addNote() {
+    if (!newNote.trim()) return
+    setSavingNote(true)
+    await supabase.from('general_notes').insert({ body: newNote.trim() })
+    setNewNote('')
+    setSavingNote(false)
+    load()
+  }
+
+  async function deleteNote(id) {
+    await supabase.from('general_notes').delete().eq('id', id)
     load()
   }
 
@@ -53,97 +90,139 @@ export default function Home() {
       <header className={styles.header}>
         <div className={styles.headerTop}>
           <h1 className={styles.logo}>Halqa</h1>
-          <button className={styles.addBtn} onClick={() => setShowAdd(true)}>+ Village</button>
-        </div>
-        <div className={styles.searchWrap}>
-          <span className={styles.searchIcon}>⌕</span>
-          <input
-            className={styles.searchInput}
-            type="text"
-            placeholder="Search villages…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
-          {search && <button className={styles.clearSearch} onClick={() => setSearch('')}>×</button>}
+          <div className={styles.headerRight}>
+            <span className={styles.villageCount}>{totalVillages} villages</span>
+            {tab === 'Qanungos' && (
+              <button className={styles.addBtn} onClick={() => setShowAddQ(true)}>+ Qanungo</button>
+            )}
+          </div>
         </div>
       </header>
 
-      {/* LIST */}
+      {/* TABS */}
+      <div className={styles.tabBar}>
+        {TABS.map(t => (
+          <button
+            key={t}
+            className={`${styles.tabBtn} ${tab === t ? styles.tabActive : ''}`}
+            onClick={() => setTab(t)}
+          >{t}</button>
+        ))}
+      </div>
+
+      {/* CONTENT */}
       <main className={styles.main}>
         {loading ? (
-          <div className={styles.loading}>
-            <div className={styles.spinner} />
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className={styles.empty}>
-            <div className={styles.emptyIcon}>🏘</div>
-            <h3>{villages.length ? 'No villages match your search' : 'No villages yet'}</h3>
-            <p>{villages.length ? 'Try a different name.' : 'Tap "+ Village" to get started.'}</p>
-          </div>
+          <div className={styles.loading}><div className={styles.spinner} /></div>
+        ) : tab === 'Qanungos' ? (
+          <>
+            {qanungos.length === 0 ? (
+              <div className={styles.empty}>
+                <div className={styles.emptyIcon}>🏛</div>
+                <h3>No Qanungos yet</h3>
+                <p>Tap "+ Qanungo" to add your first one.</p>
+              </div>
+            ) : (
+              <ul className={styles.qanungoList}>
+                {qanungos.map(q => (
+                  <li key={q.id} className={styles.qanungoItem}>
+                    <button
+                      className={styles.qanungoCard}
+                      onClick={() => router.push(`/qanungo/${q.id}`)}
+                    >
+                      <div className={styles.qanungoCardLeft}>
+                        <span className={styles.qanungoName}>{q.name}</span>
+                        <span className={styles.qanungoCount}>
+                          {villageCounts[q.id] || 0} village{(villageCounts[q.id] || 0) !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                      <span className={styles.arrow}>›</span>
+                    </button>
+                    <button className={styles.deleteBtn} onClick={() => setDeleteQ(q)}>🗑</button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
         ) : (
-          <ul className={styles.villageList}>
-            {filtered.map(v => (
-              <li key={v.id} className={styles.villageItem}>
-                <button
-                  className={styles.villageCard}
-                  onClick={() => router.push(`/village/${v.id}`)}
-                >
-                  <div className={styles.villageCardLeft}>
-                    <span className={styles.villageName}>{v.name}</span>
-                    {v.registered_voters && (
-                      <span className={styles.villageVoters}>{Number(v.registered_voters).toLocaleString()} voters</span>
-                    )}
-                  </div>
-                  <span className={styles.villageArrow}>›</span>
-                </button>
-                <button
-                  className={styles.deleteVillageBtn}
-                  onClick={() => setDeleteTarget(v)}
-                  title="Remove village"
-                >🗑</button>
-              </li>
-            ))}
-          </ul>
+          /* GENERAL NOTES */
+          <div className={styles.notesPage}>
+            <div className={styles.noteInputWrap}>
+              <textarea
+                className={styles.noteInput}
+                placeholder="Add a general note…"
+                value={newNote}
+                onChange={e => setNewNote(e.target.value)}
+                rows={3}
+              />
+              <button
+                className={styles.noteAddBtn}
+                onClick={addNote}
+                disabled={savingNote || !newNote.trim()}
+              >{savingNote ? '…' : 'Add'}</button>
+            </div>
+            {generalNotes.length === 0 ? (
+              <div className={styles.empty} style={{ paddingTop: 40 }}>
+                <div className={styles.emptyIcon}>📝</div>
+                <h3>No notes yet</h3>
+                <p>Type above and tap Add.</p>
+              </div>
+            ) : (
+              <ul className={styles.notesList}>
+                {generalNotes.map(n => (
+                  <li key={n.id} className={styles.noteCard}>
+                    <p className={styles.noteBody}>{n.body}</p>
+                    <div className={styles.noteMeta}>
+                      <span className={styles.noteDate}>
+                        {new Date(n.created_at).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </span>
+                      <button className={styles.noteDelete} onClick={() => deleteNote(n.id)}>Delete</button>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
         )}
       </main>
 
-      {/* ADD VILLAGE MODAL */}
-      {showAdd && (
-        <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAdd(false) }}>
+      {/* ADD QANUNGO MODAL */}
+      {showAddQ && (
+        <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) setShowAddQ(false) }}>
           <div className={styles.modal}>
             <div className={styles.modalHandle} />
-            <h2 className={styles.modalTitle}>Add Village</h2>
+            <h2 className={styles.modalTitle}>Add Qanungo</h2>
             <input
               className={styles.modalInput}
               type="text"
-              placeholder="Village name"
-              value={newName}
-              onChange={e => setNewName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addVillage()}
+              placeholder="Qanungo name"
+              value={newQName}
+              onChange={e => setNewQName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addQanungo()}
               autoFocus
             />
             <div className={styles.modalActions}>
-              <button className={styles.btnCancel} onClick={() => { setShowAdd(false); setNewName('') }}>Cancel</button>
-              <button className={styles.btnSave} onClick={addVillage} disabled={saving}>
-                {saving ? 'Saving…' : 'Add'}
+              <button className={styles.btnCancel} onClick={() => { setShowAddQ(false); setNewQName('') }}>Cancel</button>
+              <button className={styles.btnSave} onClick={addQanungo} disabled={savingQ}>
+                {savingQ ? 'Saving…' : 'Add'}
               </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* DELETE CONFIRM MODAL */}
-      {deleteTarget && (
-        <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) setDeleteTarget(null) }}>
+      {/* DELETE QANUNGO CONFIRM */}
+      {deleteQ && (
+        <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) setDeleteQ(null) }}>
           <div className={styles.modal}>
             <div className={styles.modalHandle} />
-            <h2 className={styles.modalTitle}>Remove Village?</h2>
+            <h2 className={styles.modalTitle}>Remove Qanungo?</h2>
             <p className={styles.modalBody}>
-              This will permanently delete <strong>{deleteTarget.name}</strong> and all its contacts, notes, and data. This cannot be undone.
+              This removes <strong>{deleteQ.name}</strong>. Its villages will become unassigned but won't be deleted.
             </p>
             <div className={styles.modalActions}>
-              <button className={styles.btnCancel} onClick={() => setDeleteTarget(null)}>Cancel</button>
-              <button className={styles.btnDelete} onClick={() => deleteVillage(deleteTarget)}>Delete</button>
+              <button className={styles.btnCancel} onClick={() => setDeleteQ(null)}>Cancel</button>
+              <button className={styles.btnDelete} onClick={() => deleteQanungo(deleteQ)}>Remove</button>
             </div>
           </div>
         </div>

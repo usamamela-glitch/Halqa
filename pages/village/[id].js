@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../../lib/supabase'
 import styles from '../../styles/Village.module.css'
@@ -29,18 +29,19 @@ export default function VillagePage() {
   const [tab, setTab] = useState('Contacts')
   const [loading, setLoading] = useState(true)
 
+  // Note editing
+  const [openNote, setOpenNote] = useState(null) // null | note object
+  const [noteText, setNoteText] = useState('')
+  const saveTimer = useRef(null)
+
   // Edit village info
   const [editInfo, setEditInfo] = useState(false)
   const [infoForm, setInfoForm] = useState({})
 
   // Contact modal
-  const [contactModal, setContactModal] = useState(null) // null | 'add' | contact-obj
+  const [contactModal, setContactModal] = useState(null)
   const [contactForm, setContactForm] = useState({ name: '', phone: '', description: '' })
   const [savingContact, setSavingContact] = useState(false)
-
-  // Note input
-  const [newNote, setNewNote] = useState('')
-  const [savingNote, setSavingNote] = useState(false)
 
   // Dynamics / Development
   const [dynForm, setDynForm] = useState({ our_group: '', anti_group: '' })
@@ -50,8 +51,9 @@ export default function VillagePage() {
   const [dynSaved, setDynSaved] = useState(false)
   const [devSaved, setDevSaved] = useState(false)
 
-  // Delete contact confirm
+  // Delete
   const [deleteContact, setDeleteContact] = useState(null)
+  const [deleteNoteTarget, setDeleteNoteTarget] = useState(null)
 
   const load = useCallback(async () => {
     if (!id) return
@@ -121,17 +123,54 @@ export default function VillagePage() {
   }
 
   // ── NOTES ───────────────────────────────────────────────────────────────────
-  async function addNote() {
-    if (!newNote.trim()) return
-    setSavingNote(true)
-    await supabase.from('notes').insert({ village_id: id, body: newNote.trim() })
-    setNewNote('')
-    setSavingNote(false)
-    load()
+  async function createNote() {
+    const { data } = await supabase.from('notes').insert({ village_id: id, body: '' }).select().single()
+    if (data) {
+      setNotes(prev => [data, ...prev])
+      setOpenNote(data)
+      setNoteText('')
+    }
   }
-  async function deleteNote(noteId) {
-    await supabase.from('notes').delete().eq('id', noteId)
-    load()
+
+  function handleNoteChange(text) {
+    setNoteText(text)
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    saveTimer.current = setTimeout(async () => {
+      await supabase.from('notes').update({ body: text }).eq('id', openNote.id)
+      setNotes(prev => prev.map(n => n.id === openNote.id ? { ...n, body: text } : n))
+    }, 800)
+  }
+
+  function closeNote() {
+    if (saveTimer.current) clearTimeout(saveTimer.current)
+    if (openNote) {
+      supabase.from('notes').update({ body: noteText }).eq('id', openNote.id)
+      setNotes(prev => prev.map(n => n.id === openNote.id ? { ...n, body: noteText } : n))
+    }
+    setOpenNote(null)
+    setNoteText('')
+  }
+
+  async function confirmDeleteNote() {
+    await supabase.from('notes').delete().eq('id', deleteNoteTarget.id)
+    setNotes(prev => prev.filter(n => n.id !== deleteNoteTarget.id))
+    setDeleteNoteTarget(null)
+    if (openNote?.id === deleteNoteTarget.id) {
+      setOpenNote(null)
+      setNoteText('')
+    }
+  }
+
+  function notePreview(body) {
+    if (!body) return 'No additional text'
+    const lines = body.split('\n').filter(l => l.trim())
+    return lines[0] || 'No additional text'
+  }
+
+  function noteTitle(body) {
+    if (!body) return 'New Note'
+    const lines = body.split('\n').filter(l => l.trim())
+    return lines[0] || 'New Note'
   }
 
   // ── DYNAMICS ────────────────────────────────────────────────────────────────
@@ -143,7 +182,6 @@ export default function VillagePage() {
     setTimeout(() => setDynSaved(false), 2000)
   }
 
-  // ── DEVELOPMENT ─────────────────────────────────────────────────────────────
   async function saveDevelopment() {
     setSavingDev(true)
     await supabase.from('villages').update({ development: devForm.development }).eq('id', id)
@@ -152,24 +190,47 @@ export default function VillagePage() {
     setTimeout(() => setDevSaved(false), 2000)
   }
 
-  if (loading) return (
-    <div className={styles.loadingPage}>
-      <div className={styles.spinner} />
-    </div>
-  )
+  if (loading) return <div className={styles.loadingPage}><div className={styles.spinner} /></div>
+  if (!village) return <div className={styles.loadingPage}><p>Village not found.</p></div>
 
-  if (!village) return (
-    <div className={styles.loadingPage}>
-      <p>Village not found.</p>
-      <button onClick={() => router.push('/')}>← Go back</button>
-    </div>
-  )
+  // ── NOTE EDITOR (full screen) ──────────────────────────────────────────────
+  if (openNote) {
+    return (
+      <div className={styles.noteEditorPage}>
+        <div className={styles.noteEditorHeader}>
+          <button className={styles.noteEditorBack} onClick={closeNote}>‹ Notes</button>
+          <span className={styles.noteEditorSaving}>Auto-saving</span>
+          <button className={styles.noteEditorDelete} onClick={() => setDeleteNoteTarget(openNote)}>Delete</button>
+        </div>
+        <textarea
+          className={styles.noteEditorArea}
+          value={noteText}
+          onChange={e => handleNoteChange(e.target.value)}
+          placeholder="Start typing…"
+          autoFocus
+        />
+        {deleteNoteTarget && (
+          <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) setDeleteNoteTarget(null) }}>
+            <div className={styles.modal}>
+              <div className={styles.modalHandle} />
+              <h2 className={styles.modalTitle}>Delete Note?</h2>
+              <p className={styles.modalBody}>This note will be permanently deleted.</p>
+              <div className={styles.modalActions}>
+                <button className={styles.btnCancel} onClick={() => setDeleteNoteTarget(null)}>Cancel</button>
+                <button className={styles.btnDelete} onClick={confirmDeleteNote}>Delete</button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    )
+  }
 
   return (
     <div className={styles.page}>
       {/* TOP BAR */}
       <header className={styles.topBar}>
-        <button className={styles.backBtn} onClick={() => router.push('/')}>‹</button>
+        <button className={styles.backBtn} onClick={() => router.back()}>‹</button>
         <h1 className={styles.villageName}>{village.name}</h1>
         <button className={styles.editInfoBtn} onClick={() => setEditInfo(true)}>Edit</button>
       </header>
@@ -200,15 +261,10 @@ export default function VillagePage() {
       {/* TABS */}
       <div className={styles.tabBar}>
         {TABS.map(t => (
-          <button
-            key={t}
-            className={`${styles.tabBtn} ${tab === t ? styles.tabActive : ''}`}
-            onClick={() => setTab(t)}
-          >{t}</button>
+          <button key={t} className={`${styles.tabBtn} ${tab === t ? styles.tabActive : ''}`} onClick={() => setTab(t)}>{t}</button>
         ))}
       </div>
 
-      {/* TAB CONTENT */}
       <main className={styles.main}>
 
         {/* ── CONTACTS ── */}
@@ -218,7 +274,7 @@ export default function VillagePage() {
               <div className={styles.empty}>
                 <div className={styles.emptyIcon}>👤</div>
                 <h3>No contacts yet</h3>
-                <p>Tap + to add your first contact in {village.name}.</p>
+                <p>Tap + to add your first contact.</p>
               </div>
             ) : (
               <ul className={styles.contactList}>
@@ -258,29 +314,13 @@ export default function VillagePage() {
           <div className={styles.formPage}>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>Our Group</label>
-              <textarea
-                className={styles.textarea}
-                placeholder="Describe the allied group, key figures, influence…"
-                value={dynForm.our_group}
-                onChange={e => setDynForm(f => ({ ...f, our_group: e.target.value }))}
-                rows={6}
-              />
+              <textarea className={styles.textarea} placeholder="Describe the allied group…" value={dynForm.our_group} onChange={e => setDynForm(f => ({ ...f, our_group: e.target.value }))} rows={6} />
             </div>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>Opposition Group</label>
-              <textarea
-                className={styles.textarea}
-                placeholder="Describe the opposing group, their base, concerns…"
-                value={dynForm.anti_group}
-                onChange={e => setDynForm(f => ({ ...f, anti_group: e.target.value }))}
-                rows={6}
-              />
+              <textarea className={styles.textarea} placeholder="Describe the opposing group…" value={dynForm.anti_group} onChange={e => setDynForm(f => ({ ...f, anti_group: e.target.value }))} rows={6} />
             </div>
-            <button
-              className={`${styles.saveTabBtn} ${dynSaved ? styles.savedBtn : ''}`}
-              onClick={saveDynamics}
-              disabled={savingDyn}
-            >
+            <button className={`${styles.saveTabBtn} ${dynSaved ? styles.savedBtn : ''}`} onClick={saveDynamics} disabled={savingDyn}>
               {dynSaved ? '✓ Saved' : savingDyn ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -291,19 +331,9 @@ export default function VillagePage() {
           <div className={styles.formPage}>
             <div className={styles.fieldGroup}>
               <label className={styles.fieldLabel}>Development Notes</label>
-              <textarea
-                className={styles.textarea}
-                placeholder="Ongoing schemes, demands, infrastructure issues, status updates…"
-                value={devForm.development}
-                onChange={e => setDevForm({ development: e.target.value })}
-                rows={14}
-              />
+              <textarea className={styles.textarea} placeholder="Ongoing schemes, demands, infrastructure…" value={devForm.development} onChange={e => setDevForm({ development: e.target.value })} rows={14} />
             </div>
-            <button
-              className={`${styles.saveTabBtn} ${devSaved ? styles.savedBtn : ''}`}
-              onClick={saveDevelopment}
-              disabled={savingDev}
-            >
+            <button className={`${styles.saveTabBtn} ${devSaved ? styles.savedBtn : ''}`} onClick={saveDevelopment} disabled={savingDev}>
               {devSaved ? '✓ Saved' : savingDev ? 'Saving…' : 'Save'}
             </button>
           </div>
@@ -311,44 +341,27 @@ export default function VillagePage() {
 
         {/* ── NOTES ── */}
         {tab === 'Notes' && (
-          <div className={styles.notesPage}>
-            <div className={styles.noteInputWrap}>
-              <textarea
-                className={styles.noteInput}
-                placeholder="Add a note…"
-                value={newNote}
-                onChange={e => setNewNote(e.target.value)}
-                rows={3}
-              />
-              <button
-                className={styles.noteAddBtn}
-                onClick={addNote}
-                disabled={savingNote || !newNote.trim()}
-              >
-                {savingNote ? '…' : 'Add'}
-              </button>
-            </div>
+          <div className={styles.notesListPage}>
             {notes.length === 0 ? (
-              <div className={styles.empty} style={{ paddingTop: 40 }}>
+              <div className={styles.empty}>
                 <div className={styles.emptyIcon}>📝</div>
                 <h3>No notes yet</h3>
-                <p>Type above and tap Add.</p>
+                <p>Tap the pencil to create your first note.</p>
               </div>
             ) : (
-              <ul className={styles.notesList}>
+              <ul className={styles.iosNotesList}>
                 {notes.map(n => (
-                  <li key={n.id} className={styles.noteCard}>
-                    <p className={styles.noteBody}>{n.body}</p>
-                    <div className={styles.noteMeta}>
-                      <span className={styles.noteDate}>
-                        {new Date(n.created_at).toLocaleDateString('en-PK', { day: 'numeric', month: 'short', year: 'numeric' })}
-                      </span>
-                      <button className={styles.noteDelete} onClick={() => deleteNote(n.id)}>Delete</button>
+                  <li key={n.id} className={styles.iosNoteItem} onClick={() => { setOpenNote(n); setNoteText(n.body || '') }}>
+                    <div className={styles.iosNoteTitle}>{noteTitle(n.body)}</div>
+                    <div className={styles.iosNoteMeta}>
+                      <span className={styles.iosNoteDate}>{new Date(n.created_at).toLocaleDateString('en-PK', { day: 'numeric', month: 'short' })}</span>
+                      <span className={styles.iosNotePreview}>{notePreview(n.body)}</span>
                     </div>
                   </li>
                 ))}
               </ul>
             )}
+            <button className={styles.fab} onClick={createNote}>✏️</button>
           </div>
         )}
       </main>
@@ -367,13 +380,7 @@ export default function VillagePage() {
             ].map(f => (
               <div key={f.key} className={styles.fieldGroup}>
                 <label className={styles.fieldLabel}>{f.label}</label>
-                <input
-                  className={styles.modalInput}
-                  type={f.type || 'text'}
-                  placeholder={f.placeholder}
-                  value={infoForm[f.key]}
-                  onChange={e => setInfoForm(x => ({ ...x, [f.key]: e.target.value }))}
-                />
+                <input className={styles.modalInput} type={f.type || 'text'} placeholder={f.placeholder} value={infoForm[f.key]} onChange={e => setInfoForm(x => ({ ...x, [f.key]: e.target.value }))} />
               </div>
             ))}
             <div className={styles.modalActions}>
@@ -393,33 +400,23 @@ export default function VillagePage() {
             {[
               { key: 'name', label: 'Full Name', placeholder: 'e.g. Muhammad Akram', type: 'text' },
               { key: 'phone', label: 'Phone Number', placeholder: 'e.g. 0300-1234567', type: 'tel' },
-              { key: 'description', label: 'Description (optional)', placeholder: 'e.g. Village elder, PTI supporter', type: 'text' },
+              { key: 'description', label: 'Description (optional)', placeholder: 'e.g. Village elder', type: 'text' },
             ].map(f => (
               <div key={f.key} className={styles.fieldGroup}>
                 <label className={styles.fieldLabel}>{f.label}</label>
-                <input
-                  className={styles.modalInput}
-                  type={f.type}
-                  placeholder={f.placeholder}
-                  value={contactForm[f.key]}
-                  onChange={e => setContactForm(x => ({ ...x, [f.key]: e.target.value }))}
-                />
+                <input className={styles.modalInput} type={f.type} placeholder={f.placeholder} value={contactForm[f.key]} onChange={e => setContactForm(x => ({ ...x, [f.key]: e.target.value }))} />
               </div>
             ))}
             <div className={styles.modalActions}>
-              {contactModal !== 'add' && (
-                <button className={styles.btnDeleteSmall} onClick={() => setDeleteContact(contactModal)}>Delete</button>
-              )}
+              {contactModal !== 'add' && <button className={styles.btnDeleteSmall} onClick={() => setDeleteContact(contactModal)}>Delete</button>}
               <button className={styles.btnCancel} onClick={() => setContactModal(null)}>Cancel</button>
-              <button className={styles.btnSave} onClick={saveContact} disabled={savingContact}>
-                {savingContact ? 'Saving…' : 'Save'}
-              </button>
+              <button className={styles.btnSave} onClick={saveContact} disabled={savingContact}>{savingContact ? 'Saving…' : 'Save'}</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* DELETE CONTACT CONFIRM */}
+      {/* DELETE CONTACT */}
       {deleteContact && (
         <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) setDeleteContact(null) }}>
           <div className={styles.modal}>

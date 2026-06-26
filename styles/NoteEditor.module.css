@@ -71,3 +71,4 @@
 .modalActions { display: flex; gap: 10px; margin-top: 16px; }
 .btnCancel { flex: 1; padding: 13px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; font-size: 15px; color: var(--muted); }
 .btnDelete { flex: 2; padding: 13px; background: var(--red); border: none; border-radius: 10px; font-size: 15px; font-weight: 600; color: white; }
+.unsaved { color: var(--amber) !important; } 

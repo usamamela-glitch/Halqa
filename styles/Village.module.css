@@ -316,3 +316,12 @@
   font-family: 'Inter', sans-serif;
   min-height: calc(100vh - 80px);
 }
+
+.actionBtnVcf {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--amber-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 13px; font-weight: 700; border: none;
+  color: var(--amber); flex-shrink: 0; cursor: pointer;
+}
+.actionBtnVcf:active { background: var(--amber); color: white; }

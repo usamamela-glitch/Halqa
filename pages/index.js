@@ -2,9 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabase'
 import NoteEditor from '../components/NoteEditor'
+import SearchPage from './search'
 import styles from '../styles/Home.module.css'
 
-const TABS = ['Qanungos', 'General']
+const TABS = ['Qanungos', 'General', 'Search']
 
 export default function Home() {
   const router = useRouter()
@@ -132,6 +133,8 @@ export default function Home() {
             <button className={styles.fab} onClick={createNote}>✏️</button>
           </div>
         )}
+
+        {tab === 'Search' && <SearchPage />}
       </main>
 
       {showAddQ && (

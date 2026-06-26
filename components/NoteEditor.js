@@ -1,45 +1,43 @@
-import { useState, useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import styles from '../styles/NoteEditor.module.css'
 
 export default function NoteEditor({ note, onClose, onDelete, table }) {
-  const [content, setContent] = useState(note.body || '')
-  const [images, setImages] = useState(note.images || [])
+  const editorRef = useRef(null)
+  const fileRef = useRef(null)
+  const saveTimer = useRef(null)
   const [uploading, setUploading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const saveTimer = useRef(null)
-  const fileRef = useRef(null)
-  const textareaRef = useRef(null)
-  const cursorPosRef = useRef(null)
 
-  // Auto-save
-  function triggerSave(text, imgs) {
+  // Load saved content into editor on mount
+  useEffect(() => {
+    if (!editorRef.current) return
+    editorRef.current.innerHTML = note.body || ''
+    // Place cursor at end
+    const range = document.createRange()
+    const sel = window.getSelection()
+    range.selectNodeContents(editorRef.current)
+    range.collapse(false)
+    sel.removeAllRanges()
+    sel.addRange(range)
+  }, [])
+
+  function triggerSave() {
     if (saveTimer.current) clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(() => {
-      supabase.from(table).update({ body: text, images: imgs }).eq('id', note.id)
+      const html = editorRef.current?.innerHTML || ''
+      supabase.from(table).update({ body: html }).eq('id', note.id)
     }, 800)
   }
 
+  // Save on unmount
   useEffect(() => {
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current)
-      supabase.from(table).update({ body: content, images }).eq('id', note.id)
+      const html = editorRef.current?.innerHTML || ''
+      supabase.from(table).update({ body: html }).eq('id', note.id)
     }
-  }, [content, images])
-
-  function handleTextChange(e) {
-    const val = e.target.value
-    setContent(val)
-    triggerSave(val, images)
-  }
-
-  // Save cursor position before file picker opens
-  function handleAddPhoto() {
-    if (textareaRef.current) {
-      cursorPosRef.current = textareaRef.current.selectionStart
-    }
-    fileRef.current?.click()
-  }
+  }, [])
 
   async function handleImagePick(e) {
     const file = e.target.files[0]
@@ -52,65 +50,52 @@ export default function NoteEditor({ note, onClose, onDelete, table }) {
 
     if (!error) {
       const { data } = supabase.storage.from('note-images').getPublicUrl(path)
-      const imageUrl = data.publicUrl
-      // Insert image marker at cursor position
-      const pos = cursorPosRef.current ?? content.length
-      const marker = `\n[IMG:${path}]\n`
-      const newContent = content.slice(0, pos) + marker + content.slice(pos)
-      const newImages = [...images, path]
-      setContent(newContent)
-      setImages(newImages)
-      triggerSave(newContent, newImages)
+      const url = data.publicUrl
+
+      // Insert image at cursor position
+      editorRef.current.focus()
+      const sel = window.getSelection()
+      if (sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0)
+        range.deleteContents()
+
+        // Insert line break before image
+        const br1 = document.createElement('br')
+        range.insertNode(br1)
+        range.setStartAfter(br1)
+
+        // Insert image
+        const img = document.createElement('img')
+        img.src = url
+        img.style.cssText = 'width:100%;border-radius:10px;display:block;margin:8px 0;'
+        img.setAttribute('data-path', path)
+        range.insertNode(img)
+        range.setStartAfter(img)
+
+        // Insert line break after image
+        const br2 = document.createElement('br')
+        range.insertNode(br2)
+        range.setStartAfter(br2)
+        range.collapse(true)
+        sel.removeAllRanges()
+        sel.addRange(range)
+      }
+      triggerSave()
     }
     setUploading(false)
     e.target.value = ''
   }
 
-  async function deleteImage(path) {
-    await supabase.storage.from('note-images').remove([path])
-    const newImages = images.filter(i => i !== path)
-    // Remove marker from content
-    const newContent = content.replace(`\n[IMG:${path}]\n`, '').replace(`[IMG:${path}]`, '')
-    setImages(newImages)
-    setContent(newContent)
-    triggerSave(newContent, newImages)
-  }
-
-  function getImageUrl(path) {
-    const { data } = supabase.storage.from('note-images').getPublicUrl(path)
-    return data.publicUrl
-  }
-
   async function handleDelete() {
-    if (images.length > 0) {
-      await supabase.storage.from('note-images').remove(images)
+    // Extract image paths from editor content and delete from storage
+    const imgs = editorRef.current?.querySelectorAll('img[data-path]') || []
+    const paths = Array.from(imgs).map(img => img.getAttribute('data-path'))
+    if (paths.length > 0) {
+      await supabase.storage.from('note-images').remove(paths)
     }
     await supabase.from(table).delete().eq('id', note.id)
     onDelete(note.id)
   }
-
-  // Render content with images inline
-  function renderContent() {
-    const imgRegex = /\[IMG:([^\]]+)\]/g
-    const parts = []
-    let lastIndex = 0
-    let match
-
-    while ((match = imgRegex.exec(content)) !== null) {
-      const before = content.slice(lastIndex, match.index).replace(/^\n/, '').replace(/\n$/, '')
-      if (before) parts.push({ type: 'text', value: before, key: `t-${lastIndex}` })
-      parts.push({ type: 'image', path: match[1], key: `i-${match[1]}` })
-      lastIndex = match.index + match[0].length
-    }
-
-    const after = content.slice(lastIndex).replace(/^\n/, '')
-    if (after) parts.push({ type: 'text', value: after, key: `t-end` })
-
-    return parts
-  }
-
-  // Check if content has any image markers
-  const hasImages = images.length > 0
 
   return (
     <div className={styles.page}>
@@ -120,59 +105,32 @@ export default function NoteEditor({ note, onClose, onDelete, table }) {
         <button className={styles.deleteBtn} onClick={() => setShowDeleteConfirm(true)}>Delete</button>
       </div>
 
-      <div className={styles.editorWrap}>
-        {!hasImages ? (
-          // Pure text mode — full height textarea
-          <textarea
-            ref={textareaRef}
-            className={styles.textArea}
-            value={content}
-            onChange={handleTextChange}
-            placeholder="Start typing…"
-            autoFocus
-          />
-        ) : (
-          // Mixed mode — render text and images inline
-          <div className={styles.mixedEditor}>
-            {renderContent().map(part => (
-              part.type === 'text' ? (
-                <textarea
-                  key={part.key}
-                  className={styles.inlineTextArea}
-                  defaultValue={part.value}
-                  onBlur={e => {
-                    // Update the full content when user finishes editing a segment
-                    const newContent = content.replace(part.value, e.target.value)
-                    setContent(newContent)
-                    triggerSave(newContent, images)
-                  }}
-                  placeholder={part.value ? '' : 'Continue typing…'}
-                />
-              ) : (
-                <div key={part.key} className={styles.inlineImageWrap}>
-                  <img src={getImageUrl(part.path)} className={styles.inlineImage} alt="" />
-                  <button className={styles.removeImage} onClick={() => deleteImage(part.path)}>×</button>
-                </div>
-              )
-            ))}
-          </div>
-        )}
-
+      <div className={styles.toolbar}>
         <button
-          className={styles.addPhotoBtn}
-          onClick={handleAddPhoto}
+          className={styles.photoBtn}
+          onClick={() => fileRef.current?.click()}
           disabled={uploading}
         >
           📷 {uploading ? 'Uploading…' : 'Add Photo'}
         </button>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          style={{ display: 'none' }}
-          onChange={handleImagePick}
-        />
       </div>
+
+      <div
+        ref={editorRef}
+        className={styles.editor}
+        contentEditable
+        suppressContentEditableWarning
+        onInput={triggerSave}
+        data-placeholder="Start typing…"
+      />
+
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleImagePick}
+      />
 
       {showDeleteConfirm && (
         <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) setShowDeleteConfirm(false) }}>

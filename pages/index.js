@@ -83,6 +83,7 @@ export default function Home() {
           <div className={styles.headerRight}>
             <span className={styles.villageCount}>{totalVillages} villages</span>
             {tab === 'Qanungos' && <button className={styles.addBtn} onClick={() => setShowAddQ(true)}>+ Qanungo</button>}
+            <a className={styles.mapBtn} href="/DISTRICT%20MAP%2021-09%20-2023%2005.pdf" target="_blank" rel="noreferrer" title="District Map">🗺</a>
           </div>
         </div>
       </header>

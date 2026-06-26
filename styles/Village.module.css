@@ -282,3 +282,37 @@
   background: var(--red-light); border: 1px solid #fecaca;
   border-radius: 10px; font-size: 14px; color: var(--red); font-weight: 500;
 }
+
+/* ── iOS NOTES ── */
+.notesListPage { padding: 0 0 100px; }
+
+.iosNotesList { list-style: none; display: flex; flex-direction: column; }
+.iosNoteItem {
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+}
+.iosNoteItem:active { background: var(--green-light); }
+.iosNoteTitle { font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.iosNoteMeta { display: flex; gap: 8px; align-items: baseline; }
+.iosNoteDate { font-size: 12px; color: var(--muted); flex-shrink: 0; }
+.iosNotePreview { font-size: 12px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ── NOTE EDITOR PAGE ── */
+.noteEditorPage { display: flex; flex-direction: column; min-height: 100vh; background: var(--white); }
+.noteEditorHeader {
+  background: var(--white); border-bottom: 1px solid var(--border);
+  padding: 52px 16px 10px;
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; z-index: 100;
+}
+.noteEditorBack { background: none; border: none; color: var(--green); font-size: 16px; font-weight: 500; padding: 0; }
+.noteEditorSaving { font-size: 12px; color: var(--muted); }
+.noteEditorDelete { background: none; border: none; color: var(--red); font-size: 14px; font-weight: 500; padding: 0; }
+.noteEditorArea {
+  flex: 1; padding: 16px;
+  border: none; outline: none; resize: none;
+  font-size: 16px; line-height: 1.7; color: var(--ink);
+  font-family: 'Inter', sans-serif;
+  min-height: calc(100vh - 80px);
+}

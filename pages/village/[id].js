@@ -19,6 +19,26 @@ function toTel(phone) {
   return `tel:${n}`
 }
 
+function downloadVCard(c) {
+  let tel = c.phone ? c.phone.replace(/\D/g, '') : ''
+  if (tel.startsWith('0')) tel = '+92' + tel.slice(1)
+  const vcf = [
+    'BEGIN:VCARD',
+    'VERSION:3.0',
+    `FN:${c.name}`,
+    tel ? `TEL;TYPE=CELL:${tel}` : '',
+    c.description ? `NOTE:${c.description}` : '',
+    'END:VCARD'
+  ].filter(Boolean).join('\n')
+  const blob = new Blob([vcf], { type: 'text/vcard' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `${c.name}.vcf`
+  a.click()
+  URL.revokeObjectURL(url)
+}
+
 export default function VillagePage() {
   const router = useRouter()
   const { id } = router.query
@@ -175,6 +195,7 @@ export default function VillagePage() {
                       {c.description && <span className={styles.contactDesc}>{c.description}</span>}
                     </div>
                     <div className={styles.contactActions} onClick={e => e.stopPropagation()}>
+                      <button className={styles.actionBtnVcf} onClick={() => downloadVCard(c)} title="Save to Contacts">👤+</button>
                       {c.phone && <>
                         <a className={styles.actionBtn} href={toTel(c.phone)}>📞</a>
                         <a className={styles.actionBtnWa} href={toWhatsApp(c.phone)} target="_blank" rel="noreferrer">

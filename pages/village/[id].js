@@ -241,10 +241,8 @@ export default function VillagePage() {
               </ul>
             )}
             <div className={styles.fabGroup}>
-              <div className={styles.fabGroup}>
-  <button className={styles.fabSecondary} onClick={importFromContacts} title="Import from Contacts">📥</button>
-  <button className={styles.fab} onClick={openAddContact}>＋</button>
-</div>
+              <button className={styles.fabSecondary} onClick={importFromContacts} title="Import from Contacts">📥</button>
+              <button className={styles.fab} onClick={openAddContact}>＋</button>
             </div>
           </>
         )}

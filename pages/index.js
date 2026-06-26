@@ -161,6 +161,7 @@ export default function Home() {
       {deleteQ && (
         <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) setDeleteQ(null) }}>
           <div className={styles.modal}>
+        
             <div className={styles.modalHandle} />
             <h2 className={styles.modalTitle}>Remove Qanungo?</h2>
             <p className={styles.modalBody}>This removes <strong>{deleteQ.name}</strong>. Its villages won't be deleted.</p>

@@ -95,29 +95,6 @@ export default function VillagePage() {
   }
 
   function openAddContact() { setContactForm({ name: '', phone: '', phone2: '', phone3: '', description: '' }); setContactModal('add') }
-  async function importFromContacts() {
-    if (!('contacts' in navigator && 'ContactsManager' in window)) {
-      alert('Contact import is not supported on this device.')
-      return
-    }
-    try {
-      const selected = await navigator.contacts.select(['name', 'tel'], { multiple: true })
-      if (!selected || selected.length === 0) return
-      setSavingContact(true)
-      for (const c of selected) {
-        const name = (c.name && c.name[0]) || 'Unknown'
-        const phone = (c.tel && c.tel[0]) || ''
-        const phone2 = (c.tel && c.tel[1]) || ''
-        const phone3 = (c.tel && c.tel[2]) || ''
-        await supabase.from('contacts').insert({ village_id: id, name: name.trim(), phone: phone.trim(), phone2: phone2.trim(), phone3: phone3.trim(), description: '' })
-      }
-      setSavingContact(false)
-      load()
-    } catch (err) {
-      setSavingContact(false)
-      alert('Import failed: ' + err.message)
-    }
-  }
   function openEditContact(c) { setContactForm({ name: c.name, phone: c.phone || '', phone2: c.phone2 || '', phone3: c.phone3 || '', description: c.description || '' }); setContactModal(c) }
 
   async function saveContact() {

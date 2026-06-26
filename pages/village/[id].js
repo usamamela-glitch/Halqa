@@ -217,11 +217,13 @@ export default function VillagePage() {
                 ))}
               </ul>
             )}
-           <div className={styles.fabGroup}>
+            <div className={styles.fabGroup}>
               <button className={styles.fab} onClick={openAddContact}>＋</button>
             </div>
           </>
         )}
+
+        {tab === 'Dynamics' && (
           <div className={styles.formPage}>
             <div className={styles.fieldGroup}><label className={styles.fieldLabel}>Our Group</label><textarea className={styles.textarea} placeholder="Describe the allied group…" value={dynForm.our_group} onChange={e => setDynForm(f => ({...f, our_group: e.target.value}))} rows={6} /></div>
             <div className={styles.fieldGroup}><label className={styles.fieldLabel}>Opposition Group</label><textarea className={styles.textarea} placeholder="Describe the opposing group…" value={dynForm.anti_group} onChange={e => setDynForm(f => ({...f, anti_group: e.target.value}))} rows={6} /></div>

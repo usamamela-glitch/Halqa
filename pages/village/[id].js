@@ -282,7 +282,9 @@ export default function VillagePage() {
             <h2 className={styles.modalTitle}>{contactModal === 'add' ? 'Add Contact' : 'Edit Contact'}</h2>
             {[
               { key: 'name', label: 'Full Name', placeholder: 'e.g. Muhammad Akram', type: 'text' },
-              { key: 'phone', label: 'Phone Number', placeholder: 'e.g. 0300-1234567', type: 'tel' },
+              { key: 'phone', label: 'Phone 1', placeholder: 'e.g. 0300-1234567', type: 'tel' },
+              { key: 'phone2', label: 'Phone 2 (optional)', placeholder: 'e.g. 0301-7654321', type: 'tel' },
+{ key: 'phone3', label: 'Phone 3 (optional)', placeholder: 'e.g. 0321-1122334', type: 'tel' },
               { key: 'description', label: 'Description (optional)', placeholder: 'e.g. Village elder', type: 'text' },
             ].map(f => (
               <div key={f.key} className={styles.fieldGroup}>

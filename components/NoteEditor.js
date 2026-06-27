@@ -5,21 +5,19 @@ import styles from '../styles/NoteEditor.module.css'
 export default function NoteEditor({ note, onClose, onDelete, table }) {
   const editorRef = useRef(null)
   const fileRef = useRef(null)
-  const lastSavedRef = useRef(note.body || '')
   const [uploading, setUploading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [saveStatus, setSaveStatus] = useState('saved')
 
   useEffect(() => {
     if (!editorRef.current) return
-    // Load content - fix any broken image src attributes
     let html = note.body || ''
-    // Replace data-path markers with proper img tags with fresh URLs
+    // Replace [IMG:path] markers with actual img tags with fresh URLs
     html = html.replace(/\[IMG:([^\]]+)\]/g, (match, path) => {
       const { data } = supabase.storage.from('note-images').getPublicUrl(path)
       return `<img src="${data.publicUrl}" data-path="${path}" style="width:100%;border-radius:10px;display:block;margin:8px 0;" />`
     })
-    // Fix any existing img tags that have broken src - refresh their URLs
+    // Also refresh any existing img tags
     const tempDiv = document.createElement('div')
     tempDiv.innerHTML = html
     tempDiv.querySelectorAll('img[data-path]').forEach(img => {
@@ -30,7 +28,6 @@ export default function NoteEditor({ note, onClose, onDelete, table }) {
       }
     })
     editorRef.current.innerHTML = tempDiv.innerHTML
-    // Place cursor at end
     const el = editorRef.current
     el.focus()
     const range = document.createRange()
@@ -41,24 +38,30 @@ export default function NoteEditor({ note, onClose, onDelete, table }) {
     sel.addRange(range)
   }, [])
 
-  async function saveNow() {
-    const html = editorRef.current?.innerHTML || ''
-    if (html === lastSavedRef.current) return
-    setSaveStatus('saving')
-    // Before saving, replace img src with data-path markers for reliable storage
-    const tempDiv = document.createElement('div')
-    tempDiv.innerHTML = html
-    tempDiv.querySelectorAll('img[data-path]').forEach(img => {
+  function getBodyToSave() {
+    if (!editorRef.current) return ''
+    // Clone the editor content
+    const clone = editorRef.current.cloneNode(true)
+    // Replace img tags with [IMG:path] markers
+    clone.querySelectorAll('img[data-path]').forEach(img => {
       const path = img.getAttribute('data-path')
-      const placeholder = document.createTextNode(`[IMG:${path}]`)
-      img.parentNode.replaceChild(placeholder, img)
+      const text = document.createTextNode(`[IMG:${path}]`)
+      img.parentNode.replaceChild(text, img)
     })
-    const bodyToSave = tempDiv.innerHTML
-    // Extract image paths
-    const paths = []
-    html.replace(/data-path="([^"]+)"/g, (_, p) => paths.push(p))
-    await supabase.from(table).update({ body: bodyToSave, images: paths }).eq('id', note.id)
-    lastSavedRef.current = html
+    return clone.innerHTML
+  }
+
+  function getImagePaths() {
+    if (!editorRef.current) return []
+    return Array.from(editorRef.current.querySelectorAll('img[data-path]'))
+      .map(img => img.getAttribute('data-path'))
+  }
+
+  async function saveNow() {
+    const body = getBodyToSave()
+    const images = getImagePaths()
+    setSaveStatus('saving')
+    await supabase.from(table).update({ body, images }).eq('id', note.id)
     setSaveStatus('saved')
   }
 
@@ -82,13 +85,9 @@ export default function NoteEditor({ note, onClose, onDelete, table }) {
       }
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
-  }, [])
-
-  useEffect(() => {
     return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange)
       clearTimeout(window._halqaSaveTimer)
-      saveNow()
     }
   }, [])
 
@@ -131,8 +130,7 @@ export default function NoteEditor({ note, onClose, onDelete, table }) {
   }
 
   async function handleDelete() {
-    const imgs = editorRef.current?.querySelectorAll('img[data-path]') || []
-    const paths = Array.from(imgs).map(img => img.getAttribute('data-path'))
+    const paths = getImagePaths()
     if (paths.length > 0) await supabase.storage.from('note-images').remove(paths)
     await supabase.from(table).delete().eq('id', note.id)
     onDelete(note.id)

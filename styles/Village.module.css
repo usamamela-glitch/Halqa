@@ -152,13 +152,11 @@
 
 /* FAB */
 .fab {
-  position: fixed; bottom: 24px; right: 20px;
   width: 56px; height: 56px; border-radius: 50%;
   background: var(--green); color: white;
   font-size: 26px; border: none;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 4px 16px rgba(26,92,56,0.4);
-  z-index: 200;
 }
 .fab:active { transform: scale(0.93); }
 

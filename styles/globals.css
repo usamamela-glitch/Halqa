@@ -3,7 +3,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --green:       #1a5c38;
+  --green:       #1a4a4a;
   --green-mid:   #2d7a50;
   --green-light: #e8f0eb;
   --green-pale:  #f2f6f3;
@@ -11,7 +11,7 @@
   --ink-soft:    #374840;
   --muted:       #6b7c72;
   --border:      #d4ddd7;
-  --bg:          #f5f7f5;
+  --bg:          #e8edf2;
   --white:       #ffffff;
   --red:         #c0392b;
   --red-light:   #fef2f2;

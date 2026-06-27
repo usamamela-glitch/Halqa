@@ -1,123 +1,176 @@
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 import styles from '../styles/NoteEditor.module.css'
 
 export default function NoteEditor({ note, onClose, onDelete, table }) {
-  const editorRef = useRef(null)
-  const fileRef = useRef(null)
-  const lastSavedRef = useRef(note.body || '')
+  const [blocks, setBlocks] = useState([]) // array of {type: 'text'|'image', content: string, id: string}
   const [uploading, setUploading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [saveStatus, setSaveStatus] = useState('saved') // 'saved' | 'saving' | 'unsaved'
+  const [saveStatus, setSaveStatus] = useState('saved')
+  const fileRef = useRef(null)
+  const saveTimer = useRef(null)
+  const activeTextRef = useRef(null)
+  const activeBlockId = useRef(null)
 
+  // Parse saved note into blocks on load
   useEffect(() => {
-    if (!editorRef.current) return
-    editorRef.current.innerHTML = note.body || ''
-    // Place cursor at end
-    const el = editorRef.current
-    el.focus()
-    const range = document.createRange()
-    const sel = window.getSelection()
-    range.selectNodeContents(el)
-    range.collapse(false)
-    sel.removeAllRanges()
-    sel.addRange(range)
+    const saved = note.body || ''
+    const imgs = note.images || []
+    
+    if (!saved && imgs.length === 0) {
+      setBlocks([{ type: 'text', content: '', id: genId() }])
+      return
+    }
+
+    // If we have images stored separately, build blocks from body + images
+    // Body may contain [IMG:path] markers or just be plain text
+    if (imgs.length > 0 && saved.includes('[IMG:')) {
+      const parts = []
+      let remaining = saved
+      let imgIndex = 0
+      
+      const imgRegex = /\[IMG:([^\]]+)\]/g
+      let match
+      let lastIndex = 0
+      
+      while ((match = imgRegex.exec(saved)) !== null) {
+        const textBefore = saved.slice(lastIndex, match.index).trim()
+        if (textBefore) parts.push({ type: 'text', content: stripHtml(textBefore), id: genId() })
+        parts.push({ type: 'image', content: match[1], id: genId() })
+        lastIndex = match.index + match[0].length
+      }
+      const textAfter = saved.slice(lastIndex).trim()
+      if (textAfter) parts.push({ type: 'text', content: stripHtml(textAfter), id: genId() })
+      
+      if (parts.length === 0) parts.push({ type: 'text', content: '', id: genId() })
+      // Ensure ends with text block
+      if (parts[parts.length - 1].type === 'image') parts.push({ type: 'text', content: '', id: genId() })
+      setBlocks(parts)
+    } else {
+      // Plain text note, no images or old HTML
+      const cleanText = stripHtml(saved)
+      const initial = [{ type: 'text', content: cleanText, id: genId() }]
+      // If images exist but no markers, append them at end
+      if (imgs.length > 0) {
+        imgs.forEach(path => initial.push({ type: 'image', content: path, id: genId() }))
+        initial.push({ type: 'text', content: '', id: genId() })
+      }
+      setBlocks(initial)
+    }
   }, [])
 
-  async function saveNow() {
-    const html = editorRef.current?.innerHTML || ''
-    if (html === lastSavedRef.current) return
+  function genId() {
+    return Math.random().toString(36).slice(2)
+  }
+
+  function stripHtml(html) {
+    if (!html) return ''
+    return html.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim()
+  }
+
+  function blocksToBody(bks) {
+    return bks.map(b => b.type === 'text' ? b.content : `[IMG:${b.content}]`).join('\n')
+  }
+
+  function blocksToImages(bks) {
+    return bks.filter(b => b.type === 'image').map(b => b.content)
+  }
+
+  async function saveNow(bks) {
+    const currentBlocks = bks || blocks
     setSaveStatus('saving')
-    await supabase.from(table).update({ body: html }).eq('id', note.id)
-    lastSavedRef.current = html
+    const body = blocksToBody(currentBlocks)
+    const images = blocksToImages(currentBlocks)
+    await supabase.from(table).update({ body, images }).eq('id', note.id)
     setSaveStatus('saved')
   }
 
-  function handleInput() {
+  function triggerSave(bks) {
+    clearTimeout(saveTimer.current)
     setSaveStatus('unsaved')
-    // Save after 600ms of inactivity
-    clearTimeout(window._halqaSaveTimer)
-    window._halqaSaveTimer = setTimeout(saveNow, 600)
+    saveTimer.current = setTimeout(() => saveNow(bks), 800)
   }
 
-  // Save when back button tapped
   async function handleBack() {
-    clearTimeout(window._halqaSaveTimer)
+    clearTimeout(saveTimer.current)
     await saveNow()
     onClose()
   }
 
-  // Save on page visibility change (user switches app)
   useEffect(() => {
-    function onVisibilityChange() {
-      if (document.visibilityState === 'hidden') {
-        clearTimeout(window._halqaSaveTimer)
-        const html = editorRef.current?.innerHTML || ''
-        if (html !== lastSavedRef.current) {
-          supabase.from(table).update({ body: html }).eq('id', note.id)
-          lastSavedRef.current = html
-        }
-      }
+    const onHide = () => {
+      clearTimeout(saveTimer.current)
+      saveNow()
     }
-    document.addEventListener('visibilitychange', onVisibilityChange)
-    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
-  }, [])
-
-  // Save on unmount as last resort
-  useEffect(() => {
+    document.addEventListener('visibilitychange', onHide)
     return () => {
-      clearTimeout(window._halqaSaveTimer)
-      const html = editorRef.current?.innerHTML || ''
-      if (html !== lastSavedRef.current) {
-        supabase.from(table).update({ body: html }).eq('id', note.id)
-      }
+      document.removeEventListener('visibilitychange', onHide)
+      clearTimeout(saveTimer.current)
     }
-  }, [])
+  }, [blocks])
+
+  function updateTextBlock(id, content) {
+    const newBlocks = blocks.map(b => b.id === id ? { ...b, content } : b)
+    setBlocks(newBlocks)
+    triggerSave(newBlocks)
+  }
 
   async function handleImagePick(e) {
     const file = e.target.files[0]
     if (!file) return
     setUploading(true)
+
     const ext = file.name.split('.').pop()
     const path = `${note.id}/${Date.now()}.${ext}`
     const { error } = await supabase.storage.from('note-images').upload(path, file)
+
     if (!error) {
-      const { data } = supabase.storage.from('note-images').getPublicUrl(path)
-      editorRef.current.focus()
-      const sel = window.getSelection()
-      if (sel.rangeCount > 0) {
-        const range = sel.getRangeAt(0)
-        range.deleteContents()
-        const br1 = document.createElement('br')
-        range.insertNode(br1)
-        range.setStartAfter(br1)
-        const img = document.createElement('img')
-        img.src = data.publicUrl
-        img.style.cssText = 'width:100%;border-radius:10px;display:block;margin:8px 0;'
-        img.setAttribute('data-path', path)
-        range.insertNode(img)
-        range.setStartAfter(img)
-        const br2 = document.createElement('br')
-        range.insertNode(br2)
-        range.setStartAfter(br2)
-        range.collapse(true)
-        sel.removeAllRanges()
-        sel.addRange(range)
-      }
-      setSaveStatus('unsaved')
-      clearTimeout(window._halqaSaveTimer)
-      window._halqaSaveTimer = setTimeout(saveNow, 600)
+      // Find the active text block and insert image after it
+      const currentBlocks = [...blocks]
+      const activeIdx = activeBlockId.current 
+        ? currentBlocks.findIndex(b => b.id === activeBlockId.current)
+        : currentBlocks.length - 1
+      
+      const insertAt = activeIdx >= 0 ? activeIdx + 1 : currentBlocks.length
+      const newImageBlock = { type: 'image', content: path, id: genId() }
+      const newTextBlock = { type: 'text', content: '', id: genId() }
+      
+      currentBlocks.splice(insertAt, 0, newImageBlock, newTextBlock)
+      setBlocks(currentBlocks)
+      triggerSave(currentBlocks)
     }
+
     setUploading(false)
     e.target.value = ''
   }
 
+  async function deleteImage(blockId, path) {
+    await supabase.storage.from('note-images').remove([path])
+    const newBlocks = blocks.filter(b => b.id !== blockId)
+    // Merge adjacent text blocks if needed
+    const merged = []
+    for (const b of newBlocks) {
+      if (b.type === 'text' && merged.length > 0 && merged[merged.length-1].type === 'text') {
+        merged[merged.length-1].content += (merged[merged.length-1].content && b.content ? '\n' : '') + b.content
+      } else {
+        merged.push({...b})
+      }
+    }
+    if (merged.length === 0) merged.push({ type: 'text', content: '', id: genId() })
+    setBlocks(merged)
+    triggerSave(merged)
+  }
+
   async function handleDelete() {
-    const imgs = editorRef.current?.querySelectorAll('img[data-path]') || []
-    const paths = Array.from(imgs).map(img => img.getAttribute('data-path'))
+    const paths = blocks.filter(b => b.type === 'image').map(b => b.content)
     if (paths.length > 0) await supabase.storage.from('note-images').remove(paths)
     await supabase.from(table).delete().eq('id', note.id)
     onDelete(note.id)
+  }
+
+  function getImageUrl(path) {
+    const { data } = supabase.storage.from('note-images').getPublicUrl(path)
+    return data.publicUrl
   }
 
   const statusLabel = saveStatus === 'saving' ? 'Saving…' : saveStatus === 'unsaved' ? 'Unsaved' : 'Saved ✓'
@@ -136,14 +189,33 @@ export default function NoteEditor({ note, onClose, onDelete, table }) {
         </button>
       </div>
 
-      <div
-        ref={editorRef}
-        className={styles.editor}
-        contentEditable
-        suppressContentEditableWarning
-        onInput={handleInput}
-        data-placeholder="Start typing…"
-      />
+      <div className={styles.editorScroll}>
+        {blocks.map((block, idx) => (
+          block.type === 'text' ? (
+            <textarea
+              key={block.id}
+              className={styles.textBlock}
+              value={block.content}
+              onChange={e => updateTextBlock(block.id, e.target.value)}
+              onFocus={() => { activeBlockId.current = block.id }}
+              placeholder={idx === 0 ? 'Start typing…' : ''}
+              rows={1}
+              style={{ height: 'auto', minHeight: '40px' }}
+              onInput={e => { e.target.style.height = 'auto'; e.target.style.height = e.target.scrollHeight + 'px' }}
+            />
+          ) : (
+            <div key={block.id} className={styles.imageBlock}>
+              <img
+                src={getImageUrl(block.content)}
+                className={styles.noteImage}
+                alt="note image"
+                onError={e => { e.target.style.display = 'none' }}
+              />
+              <button className={styles.removeImage} onClick={() => deleteImage(block.id, block.content)}>×</button>
+            </div>
+          )
+        ))}
+      </div>
 
       <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImagePick} />
 

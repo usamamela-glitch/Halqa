@@ -9,6 +9,7 @@ export default function QanungoPage() {
 
   const [qanungo, setQanungo] = useState(null)
   const [villages, setVillages] = useState([])
+  const [contactCounts, setContactCounts] = useState({})
   const [allQanungos, setAllQanungos] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -27,14 +28,18 @@ export default function QanungoPage() {
   const load = useCallback(async () => {
     if (!id) return
     setLoading(true)
-    const [{ data: q }, { data: vs }, { data: qs }] = await Promise.all([
+    const [{ data: q }, { data: vs }, { data: qs }, { data: cs }] = await Promise.all([
       supabase.from('qanungos').select('*').eq('id', id).single(),
       supabase.from('villages').select('*').eq('qanungo_id', id).order('pinned', { ascending: false }).order('name'),
       supabase.from('qanungos').select('*').order('name'),
+      supabase.from('contacts').select('village_id').in('village_id', (await supabase.from('villages').select('id').eq('qanungo_id', id)).data?.map(v => v.id) || []),
     ])
     setQanungo(q)
     setVillages(vs || [])
     setAllQanungos(qs || [])
+    const counts = {}
+    ;(cs || []).forEach(c => { counts[c.village_id] = (counts[c.village_id] || 0) + 1 })
+    setContactCounts(counts)
     setLoading(false)
   }, [id])
 
@@ -97,11 +102,11 @@ export default function QanungoPage() {
             {pinned.length > 0 && (
               <li className={styles.sectionLabel}>📌 Pinned</li>
             )}
-            {pinned.map(v => <VillageRow key={v.id} v={v} router={router} togglePin={togglePin} setDeleteTarget={setDeleteTarget} setReassignTarget={setReassignTarget} setReassignTo={setReassignTo} />)}
+            {pinned.map(v => <VillageRow key={v.id} v={v} router={router} togglePin={togglePin} setDeleteTarget={setDeleteTarget} setReassignTarget={setReassignTarget} setReassignTo={setReassignTo} contactCount={contactCounts[v.id] || 0} />)}
             {pinned.length > 0 && unpinned.length > 0 && (
               <li className={styles.sectionLabel}>All Villages</li>
             )}
-            {unpinned.map(v => <VillageRow key={v.id} v={v} router={router} togglePin={togglePin} setDeleteTarget={setDeleteTarget} setReassignTarget={setReassignTarget} setReassignTo={setReassignTo} />)}
+            {unpinned.map(v => <VillageRow key={v.id} v={v} router={router} togglePin={togglePin} setDeleteTarget={setDeleteTarget} setReassignTarget={setReassignTarget} setReassignTo={setReassignTo} contactCount={contactCounts[v.id] || 0} />)}
           </ul>
         )}
       </main>
@@ -174,13 +179,13 @@ export default function QanungoPage() {
   )
 }
 
-function VillageRow({ v, router, togglePin, setDeleteTarget, setReassignTarget, setReassignTo }) {
+function VillageRow({ v, router, togglePin, setDeleteTarget, setReassignTarget, setReassignTo, contactCount }) {
   return (
     <li className={styles.villageItem}>
       <button className={`${styles.villageCard} ${v.pinned ? styles.pinnedCard : ''}`} onClick={() => router.push(`/village/${v.id}`)}>
         <div className={styles.villageCardLeft}>
           <span className={styles.villageName}>{v.pinned ? '📌 ' : ''}{v.name}</span>
-          {v.registered_voters && <span className={styles.villageVoters}>{Number(v.registered_voters).toLocaleString()} voters</span>}
+          <span className={styles.villageVoters}>{contactCount} contact{contactCount !== 1 ? 's' : ''}{v.registered_voters ? ` · ${Number(v.registered_voters).toLocaleString()} voters` : ''}</span>
         </div>
         <span className={styles.arrow}>›</span>
       </button>

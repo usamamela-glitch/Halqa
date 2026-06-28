@@ -16,7 +16,6 @@
 /* TOP BAR */
 .topBar {
   background: var(--green);
-  background-image: repeating-linear-gradient(0deg, transparent, transparent 17px, rgba(255,255,255,0.07) 17px, rgba(255,255,255,0.07) 18px), repeating-linear-gradient(90deg, transparent, transparent 17px, rgba(255,255,255,0.07) 17px, rgba(255,255,255,0.07) 18px);
   padding: 52px 16px 10px;
   display: flex;
   align-items: center;
@@ -153,11 +152,13 @@
 
 /* FAB */
 .fab {
+  position: fixed; bottom: 24px; right: 20px;
   width: 56px; height: 56px; border-radius: 50%;
   background: var(--green); color: white;
   font-size: 26px; border: none;
   display: flex; align-items: center; justify-content: center;
   box-shadow: 0 4px 16px rgba(26,92,56,0.4);
+  z-index: 200;
 }
 .fab:active { transform: scale(0.93); }
 
@@ -324,6 +325,7 @@
   color: var(--amber); flex-shrink: 0; cursor: pointer;
 }
 .actionBtnVcf:active { background: var(--amber); color: white; }
+
 .fabGroup {
   position: fixed; bottom: 24px; right: 20px;
   display: flex; flex-direction: column; align-items: center; gap: 12px;
@@ -337,3 +339,12 @@
   box-shadow: 0 2px 10px rgba(0,0,0,0.15);
 }
 .fabSecondary:active { background: var(--green-light); }
+
+.actionBtnPin {
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; border: 1px solid var(--border);
+  flex-shrink: 0; cursor: pointer; opacity: 0.4;
+}
+.actionBtnPin.pinActive { opacity: 1; background: var(--green-light); border-color: var(--green-mid); }

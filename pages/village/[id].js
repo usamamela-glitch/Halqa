@@ -94,8 +94,15 @@ export default function VillagePage() {
     setEditInfo(false); load()
   }
 
-  function openAddContact() { setContactForm({ name: '', phone: '', phone2: '', phone3: '', description: '' }); setContactModal('add') }
-  function openEditContact(c) { setContactForm({ name: c.name, phone: c.phone || '', phone2: c.phone2 || '', phone3: c.phone3 || '', description: c.description || '' }); setContactModal(c) }
+  function openAddContact() {
+    setContactForm({ name: '', phone: '', phone2: '', phone3: '', description: '' })
+    setContactModal('add')
+  }
+
+  function openEditContact(c) {
+    setContactForm({ name: c.name, phone: c.phone || '', phone2: c.phone2 || '', phone3: c.phone3 || '', description: c.description || '' })
+    setContactModal(c)
+  }
 
   async function saveContact() {
     const { name, phone, phone2, phone3, description } = contactForm
@@ -124,15 +131,8 @@ export default function VillagePage() {
     if (data) { setNotes(prev => [data, ...prev]); setOpenNote(data) }
   }
 
-  function handleNoteClose() {
-    load()
-    setOpenNote(null)
-  }
-
-  function handleNoteDelete(noteId) {
-    setNotes(prev => prev.filter(n => n.id !== noteId))
-    setOpenNote(null)
-  }
+  function handleNoteClose() { load(); setOpenNote(null) }
+  function handleNoteDelete(noteId) { setNotes(prev => prev.filter(n => n.id !== noteId)); setOpenNote(null) }
 
   function stripHtml(html) {
     if (!html) return ''
@@ -223,10 +223,7 @@ export default function VillagePage() {
                 ))}
               </ul>
             )}
-            <div className={styles.fabGroup}>
-              <button className={styles.fabSecondary} onClick={importFromContacts} title="Import from Contacts">📥</button>
-              <button className={styles.fab} onClick={openAddContact}>＋</button>
-            </div>
+            <button className={styles.fab} onClick={openAddContact}>＋</button>
           </>
         )}
 

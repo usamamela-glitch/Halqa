@@ -69,7 +69,7 @@ export default function VillagePage() {
     setLoading(true)
     const [{ data: v }, { data: c }, { data: n }] = await Promise.all([
       supabase.from('villages').select('*').eq('id', id).single(),
-      supabase.from('contacts').select('*').eq('village_id', id).order('name'),
+      supabase.from('contacts').select('*').eq('village_id', id).order('pinned', { ascending: false }).order('name'),
       supabase.from('notes').select('*').eq('village_id', id).order('created_at', { ascending: false }),
     ])
     setVillage(v)
@@ -95,29 +95,6 @@ export default function VillagePage() {
   }
 
   function openAddContact() { setContactForm({ name: '', phone: '', phone2: '', phone3: '', description: '' }); setContactModal('add') }
-  async function importFromContacts() {
-    if (!('contacts' in navigator && 'ContactsManager' in window)) {
-      alert('Contact import is not supported on this device.')
-      return
-    }
-    try {
-      const selected = await navigator.contacts.select(['name', 'tel'], { multiple: true })
-      if (!selected || selected.length === 0) return
-      setSavingContact(true)
-      for (const c of selected) {
-        const name = (c.name && c.name[0]) || 'Unknown'
-        const phone = (c.tel && c.tel[0]) || ''
-        const phone2 = (c.tel && c.tel[1]) || ''
-        const phone3 = (c.tel && c.tel[2]) || ''
-        await supabase.from('contacts').insert({ village_id: id, name: name.trim(), phone: phone.trim(), phone2: phone2.trim(), phone3: phone3.trim(), description: '' })
-      }
-      setSavingContact(false)
-      load()
-    } catch (err) {
-      setSavingContact(false)
-      alert('Import failed: ' + err.message)
-    }
-  }
   function openEditContact(c) { setContactForm({ name: c.name, phone: c.phone || '', phone2: c.phone2 || '', phone3: c.phone3 || '', description: c.description || '' }); setContactModal(c) }
 
   async function saveContact() {
@@ -135,6 +112,11 @@ export default function VillagePage() {
   async function confirmDeleteContact() {
     await supabase.from('contacts').delete().eq('id', deleteContact.id)
     setDeleteContact(null); setContactModal(null); load()
+  }
+
+  async function togglePinContact(c) {
+    await supabase.from('contacts').update({ pinned: !c.pinned }).eq('id', c.id)
+    load()
   }
 
   async function createNote() {
@@ -225,6 +207,7 @@ export default function VillagePage() {
                       {c.description && <span className={styles.contactDesc}>{c.description}</span>}
                     </div>
                     <div className={styles.contactActions} onClick={e => e.stopPropagation()}>
+                      <button className={`${styles.actionBtnPin} ${c.pinned ? styles.pinActive : ''}`} onClick={() => togglePinContact(c)} title={c.pinned ? 'Unpin' : 'Pin'}>📌</button>
                       <button className={styles.actionBtnVcf} onClick={() => downloadVCard(c)} title="Save to Contacts">👤+</button>
                       {(c.phone || c.phone2 || c.phone3) && <>
                         <a className={styles.actionBtn} href={toTel(c.phone || c.phone2 || c.phone3)}>📞</a>

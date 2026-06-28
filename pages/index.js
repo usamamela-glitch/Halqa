@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { supabase } from '../lib/supabase'
 import NoteEditor from '../components/NoteEditor'
 import SearchPage from './search'
+import MainGroupsPage from './main-groups'
 import styles from '../styles/Home.module.css'
 
 const TABS = ['Qanungos', 'General', 'Search']
@@ -16,6 +17,8 @@ export default function Home() {
   const [generalNotes, setGeneralNotes] = useState([])
   const [loading, setLoading] = useState(true)
   const [openNote, setOpenNote] = useState(null)
+  const [pinnedCount, setPinnedCount] = useState(0)
+  const [showMainGroups, setShowMainGroups] = useState(false)
 
   const [showAddQ, setShowAddQ] = useState(false)
   const [newQName, setNewQName] = useState('')
@@ -24,13 +27,15 @@ export default function Home() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const [{ data: qs }, { data: vs }, { data: ns }] = await Promise.all([
+    const [{ data: qs }, { data: vs }, { data: ns }, { data: pc }] = await Promise.all([
       supabase.from('qanungos').select('*').order('name'),
       supabase.from('villages').select('id, qanungo_id'),
       supabase.from('general_notes').select('*').order('created_at', { ascending: false }),
+      supabase.from('contacts').select('id').eq('pinned', true),
     ])
     setQanungos(qs || [])
     setGeneralNotes(ns || [])
+    setPinnedCount((pc || []).length)
     const counts = {}; let total = 0
     ;(vs || []).forEach(v => { total++; if (v.qanungo_id) counts[v.qanungo_id] = (counts[v.qanungo_id] || 0) + 1 })
     setVillageCounts(counts); setTotalVillages(total)
@@ -77,6 +82,10 @@ export default function Home() {
     return lines[1]?.slice(0, 60) || 'No additional text'
   }
 
+  if (showMainGroups) {
+    return <MainGroupsPage onBack={() => setShowMainGroups(false)} />
+  }
+
   if (openNote) {
     return <NoteEditor note={openNote} onClose={handleNoteClose} onDelete={handleNoteDelete} table="general_notes" />
   }
@@ -106,6 +115,13 @@ export default function Home() {
             <div className={styles.empty}><div className={styles.emptyIcon}>🏛</div><h3>No Qanungos yet</h3><p>Tap "+ Qanungo" to add your first one.</p></div>
           ) : (
             <ul className={styles.qanungoList}>
+              <li className={styles.mainGroupsCard} onClick={() => setShowMainGroups(true)}>
+                <div className={styles.qanungoCardLeft}>
+                  <span className={styles.qanungoName}>⭐ Main Groups</span>
+                  <span className={styles.qanungoCount}>{pinnedCount} pinned contact{pinnedCount !== 1 ? 's' : ''}</span>
+                </div>
+                <span className={styles.arrow}>›</span>
+              </li>
               {qanungos.map(q => (
                 <li key={q.id} className={styles.qanungoItem}>
                   <button className={styles.qanungoCard} onClick={() => router.push(`/qanungo/${q.id}`)}>
@@ -161,7 +177,6 @@ export default function Home() {
       {deleteQ && (
         <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) setDeleteQ(null) }}>
           <div className={styles.modal}>
-        
             <div className={styles.modalHandle} />
             <h2 className={styles.modalTitle}>Remove Qanungo?</h2>
             <p className={styles.modalBody}>This removes <strong>{deleteQ.name}</strong>. Its villages won't be deleted.</p>

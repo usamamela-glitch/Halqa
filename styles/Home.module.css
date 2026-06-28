@@ -2,7 +2,6 @@
 
 .header {
   background: var(--green);
-  background-image: repeating-linear-gradient(0deg, transparent, transparent 17px, rgba(255,255,255,0.07) 17px, rgba(255,255,255,0.07) 18px), repeating-linear-gradient(90deg, transparent, transparent 17px, rgba(255,255,255,0.07) 17px, rgba(255,255,255,0.07) 18px);
   padding: 52px 16px 12px;
   position: sticky; top: 0; z-index: 100;
 }
@@ -150,6 +149,7 @@
 
 .fab { position: fixed; bottom: 24px; right: 20px; width: 56px; height: 56px; border-radius: 50%; background: var(--green); color: white; font-size: 24px; border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 16px rgba(26,92,56,0.4); z-index: 200; }
 .fab:active { transform: scale(0.93); }
+
 .mapBtn {
   width: 34px; height: 34px; border-radius: 50%;
   background: rgba(255,255,255,0.18);
@@ -157,3 +157,12 @@
   font-size: 17px; text-decoration: none; flex-shrink: 0;
 }
 .mapBtn:active { background: rgba(255,255,255,0.35); }
+
+.mainGroupsCard {
+  background: var(--green-light);
+  border: 1.5px solid var(--green-mid);
+  border-radius: 12px; padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; list-style: none; margin-bottom: 4px;
+}
+.mainGroupsCard:active { background: var(--green-light); opacity: 0.8; }

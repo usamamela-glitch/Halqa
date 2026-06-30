@@ -76,7 +76,7 @@ export default function VillagePage() {
     setContacts(c || [])
     setNotes(n || [])
     if (v) {
-      setInfoForm({ result_2018: v.result_2018 || '', result_2024: v.result_2024 || '', population: v.population || '', registered_voters: v.registered_voters || '' })
+      setInfoForm({ name: v.name || '', result_2018: v.result_2018 || '', result_2024: v.result_2024 || '', population: v.population || '', registered_voters: v.registered_voters || '' })
       setDynForm({ our_group: v.our_group || '', anti_group: v.anti_group || '' })
       setDevForm({ development: v.development || '' })
     }
@@ -87,6 +87,7 @@ export default function VillagePage() {
 
   async function saveInfo() {
     await supabase.from('villages').update({
+      name: infoForm.name?.trim() || village.name,
       result_2018: infoForm.result_2018, result_2024: infoForm.result_2024,
       population: infoForm.population ? parseInt(infoForm.population) : null,
       registered_voters: infoForm.registered_voters ? parseInt(infoForm.registered_voters) : null,
@@ -94,15 +95,8 @@ export default function VillagePage() {
     setEditInfo(false); load()
   }
 
-  function openAddContact() {
-    setContactForm({ name: '', phone: '', phone2: '', phone3: '', description: '' })
-    setContactModal('add')
-  }
-
-  function openEditContact(c) {
-    setContactForm({ name: c.name, phone: c.phone || '', phone2: c.phone2 || '', phone3: c.phone3 || '', description: c.description || '' })
-    setContactModal(c)
-  }
+  function openAddContact() { setContactForm({ name: '', phone: '', phone2: '', phone3: '', description: '' }); setContactModal('add') }
+  function openEditContact(c) { setContactForm({ name: c.name, phone: c.phone || '', phone2: c.phone2 || '', phone3: c.phone3 || '', description: c.description || '' }); setContactModal(c) }
 
   async function saveContact() {
     const { name, phone, phone2, phone3, description } = contactForm
@@ -131,8 +125,15 @@ export default function VillagePage() {
     if (data) { setNotes(prev => [data, ...prev]); setOpenNote(data) }
   }
 
-  function handleNoteClose() { load(); setOpenNote(null) }
-  function handleNoteDelete(noteId) { setNotes(prev => prev.filter(n => n.id !== noteId)); setOpenNote(null) }
+  function handleNoteClose() {
+    load()
+    setOpenNote(null)
+  }
+
+  function handleNoteDelete(noteId) {
+    setNotes(prev => prev.filter(n => n.id !== noteId))
+    setOpenNote(null)
+  }
 
   function stripHtml(html) {
     if (!html) return ''
@@ -223,7 +224,10 @@ export default function VillagePage() {
                 ))}
               </ul>
             )}
-            <button className={styles.fab} onClick={openAddContact}>＋</button>
+            <div className={styles.fabGroup}>
+              <button className={styles.fabSecondary} onClick={importFromContacts} title="Import from Contacts">📥</button>
+              <button className={styles.fab} onClick={openAddContact}>＋</button>
+            </div>
           </>
         )}
 
@@ -270,6 +274,7 @@ export default function VillagePage() {
             <div className={styles.modalHandle} />
             <h2 className={styles.modalTitle}>Village Info</h2>
             {[
+              { key: 'name', label: 'Village Name', placeholder: 'e.g. Chak 53/SB' },
               { key: 'result_2018', label: '2018 Election Result', placeholder: 'e.g. PTI win — 3,200 votes' },
               { key: 'result_2024', label: '2024 Election Result', placeholder: 'e.g. Independent — 2,800 votes' },
               { key: 'population', label: 'Population', placeholder: 'e.g. 4500', type: 'number' },

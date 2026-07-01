@@ -6,7 +6,7 @@ import SearchPage from './search'
 import MainGroupsPage from './main-groups'
 import styles from '../styles/Home.module.css'
 
-const TABS = ['Qanungos', 'General', 'Search']
+const TABS = ['Qanungos', 'General', 'Day to Day', 'Search']
 
 export default function Home() {
   const router = useRouter()
@@ -19,6 +19,8 @@ export default function Home() {
   const [openNote, setOpenNote] = useState(null)
   const [pinnedCount, setPinnedCount] = useState(0)
   const [showMainGroups, setShowMainGroups] = useState(false)
+  const [dayNote, setDayNote] = useState('')
+  const [dayNoteSaved, setDayNoteSaved] = useState('saved')
 
   const [showAddQ, setShowAddQ] = useState(false)
   const [newQName, setNewQName] = useState('')
@@ -36,6 +38,9 @@ export default function Home() {
     setQanungos(qs || [])
     setGeneralNotes(ns || [])
     setPinnedCount((pc || []).length)
+    // Load day-to-day note
+    const { data: dn } = await supabase.from('day_note').select('*').eq('id', 1).single()
+    if (dn) setDayNote(dn.body || '')
     const counts = {}; let total = 0
     ;(vs || []).forEach(v => { total++; if (v.qanungo_id) counts[v.qanungo_id] = (counts[v.qanungo_id] || 0) + 1 })
     setVillageCounts(counts); setTotalVillages(total)
@@ -55,6 +60,20 @@ export default function Home() {
     await supabase.from('villages').update({ qanungo_id: null }).eq('qanungo_id', q.id)
     await supabase.from('qanungos').delete().eq('id', q.id)
     setDeleteQ(null); load()
+  }
+
+  async function saveDayNote(text) {
+    setDayNoteSaved('saving')
+    await supabase.from('day_note').upsert({ id: 1, body: text })
+    setDayNoteSaved('saved')
+  }
+
+  function handleDayNoteChange(e) {
+    const text = e.target.value
+    setDayNote(text)
+    setDayNoteSaved('unsaved')
+    clearTimeout(window._dayNoteTimer)
+    window._dayNoteTimer = setTimeout(() => saveDayNote(text), 800)
   }
 
   async function createNote() {
@@ -157,6 +176,19 @@ export default function Home() {
           </div>
         )}
 
+        {tab === 'Day to Day' && (
+          <div className={styles.dayToDay}>
+            <div className={styles.dayNoteMeta}>
+              <span className={styles.dayNoteStatus}>{dayNoteSaved === 'saving' ? 'Saving…' : dayNoteSaved === 'unsaved' ? 'Unsaved' : 'Saved ✓'}</span>
+            </div>
+            <textarea
+              className={styles.dayNoteArea}
+              value={dayNote}
+              onChange={handleDayNoteChange}
+              placeholder="Your day-to-day scratchpad…"
+            />
+          </div>
+        )}
         {tab === 'Search' && <SearchPage />}
       </main>
 

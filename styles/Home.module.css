@@ -191,9 +191,10 @@
 .dayToDay {
   background: var(--white);
   border: 1px solid var(--border);
-  border-radius: 12px; padding: 14px 16px;
+  border-radius: 12px; padding: 12px 16px;
   display: flex; align-items: center; justify-content: space-between;
   cursor: pointer; list-style: none; margin-bottom: 4px;
+  min-height: unset; height: auto;
 }
 .dayToDay:active { opacity: 0.7; }
 

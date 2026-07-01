@@ -187,3 +187,36 @@
   font-family: 'Inter', sans-serif;
   -webkit-overflow-scrolling: touch;
 }
+
+.dayToDay {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  cursor: pointer; list-style: none; margin-bottom: 4px;
+}
+.dayToDay:active { opacity: 0.7; }
+
+.dayNotePage {
+  display: flex; flex-direction: column;
+  height: 100vh; background: var(--white);
+}
+.dayNoteHeader {
+  background: var(--green);
+  background-image: repeating-linear-gradient(0deg, transparent, transparent 17px, rgba(255,255,255,0.07) 17px, rgba(255,255,255,0.07) 18px), repeating-linear-gradient(90deg, transparent, transparent 17px, rgba(255,255,255,0.07) 17px, rgba(255,255,255,0.07) 18px);
+  padding: 52px 16px 12px;
+  display: flex; align-items: center; gap: 10px;
+  position: sticky; top: 0;
+}
+.dayNoteBack { background: none; border: none; color: white; font-size: 16px; font-weight: 500; padding: 0; }
+.dayNoteTitle { flex: 1; font-size: 17px; font-weight: 700; color: white; }
+.dayNoteStatus { font-size: 12px; color: rgba(255,255,255,0.7); }
+.dayNoteArea {
+  flex: 1; width: 100%;
+  padding: 16px 16px 40px;
+  border: none; outline: none; resize: none;
+  font-size: 16px; line-height: 1.75;
+  color: var(--ink); background: var(--white);
+  font-family: 'Inter', sans-serif;
+  -webkit-overflow-scrolling: touch;
+}

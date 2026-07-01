@@ -5,29 +5,15 @@ import styles from '../styles/NoteEditor.module.css'
 export default function NoteEditor({ note, onClose, onDelete, table }) {
   const editorRef = useRef(null)
   const fileRef = useRef(null)
+  const lastSavedRef = useRef(note.body || '')
   const [uploading, setUploading] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
-  const [saveStatus, setSaveStatus] = useState('saved')
+  const [saveStatus, setSaveStatus] = useState('saved') // 'saved' | 'saving' | 'unsaved'
 
   useEffect(() => {
     if (!editorRef.current) return
-    let html = note.body || ''
-    // Replace [IMG:path] markers with actual img tags with fresh URLs
-    html = html.replace(/\[IMG:([^\]]+)\]/g, (match, path) => {
-      const { data } = supabase.storage.from('note-images').getPublicUrl(path)
-      return `<img src="${data.publicUrl}" data-path="${path}" style="width:100%;border-radius:10px;display:block;margin:8px 0;" />`
-    })
-    // Also refresh any existing img tags
-    const tempDiv = document.createElement('div')
-    tempDiv.innerHTML = html
-    tempDiv.querySelectorAll('img[data-path]').forEach(img => {
-      const path = img.getAttribute('data-path')
-      if (path) {
-        const { data } = supabase.storage.from('note-images').getPublicUrl(path)
-        img.src = data.publicUrl
-      }
-    })
-    editorRef.current.innerHTML = tempDiv.innerHTML
+    editorRef.current.innerHTML = note.body || ''
+    // Place cursor at end
     const el = editorRef.current
     el.focus()
     const range = document.createRange()
@@ -38,56 +24,59 @@ export default function NoteEditor({ note, onClose, onDelete, table }) {
     sel.addRange(range)
   }, [])
 
-  function getBodyToSave() {
-    if (!editorRef.current) return ''
-    // Clone the editor content
-    const clone = editorRef.current.cloneNode(true)
-    // Replace img tags with [IMG:path] markers
-    clone.querySelectorAll('img[data-path]').forEach(img => {
-      const path = img.getAttribute('data-path')
-      const text = document.createTextNode(`[IMG:${path}]`)
-      img.parentNode.replaceChild(text, img)
-    })
-    return clone.innerHTML
-  }
-
-  function getImagePaths() {
-    if (!editorRef.current) return []
-    return Array.from(editorRef.current.querySelectorAll('img[data-path]'))
-      .map(img => img.getAttribute('data-path'))
-  }
-
   async function saveNow() {
-    const body = getBodyToSave()
-    const images = getImagePaths()
+    const html = editorRef.current?.innerHTML || ''
+    if (html === lastSavedRef.current) return
     setSaveStatus('saving')
-    await supabase.from(table).update({ body, images }).eq('id', note.id)
+    await supabase.from(table).update({ body: html }).eq('id', note.id)
+    lastSavedRef.current = html
     setSaveStatus('saved')
+  }
+
+  function handlePaste(e) {
+    e.preventDefault()
+    const text = e.clipboardData.getData('text/plain')
+    document.execCommand('insertText', false, text)
   }
 
   function handleInput() {
     setSaveStatus('unsaved')
+    // Save after 600ms of inactivity
     clearTimeout(window._halqaSaveTimer)
-    window._halqaSaveTimer = setTimeout(saveNow, 800)
+    window._halqaSaveTimer = setTimeout(saveNow, 600)
   }
 
+  // Save when back button tapped
   async function handleBack() {
     clearTimeout(window._halqaSaveTimer)
     await saveNow()
     onClose()
   }
 
+  // Save on page visibility change (user switches app)
   useEffect(() => {
     function onVisibilityChange() {
       if (document.visibilityState === 'hidden') {
         clearTimeout(window._halqaSaveTimer)
-        saveNow()
+        const html = editorRef.current?.innerHTML || ''
+        if (html !== lastSavedRef.current) {
+          supabase.from(table).update({ body: html }).eq('id', note.id)
+          lastSavedRef.current = html
+        }
       }
     }
     document.addEventListener('visibilitychange', onVisibilityChange)
+    return () => document.removeEventListener('visibilitychange', onVisibilityChange)
+  }, [])
+
+  // Save on unmount as last resort
+  useEffect(() => {
     return () => {
-      document.removeEventListener('visibilitychange', onVisibilityChange)
       clearTimeout(window._halqaSaveTimer)
+      const html = editorRef.current?.innerHTML || ''
+      if (html !== lastSavedRef.current) {
+        supabase.from(table).update({ body: html }).eq('id', note.id)
+      }
     }
   }, [])
 
@@ -123,14 +112,15 @@ export default function NoteEditor({ note, onClose, onDelete, table }) {
       }
       setSaveStatus('unsaved')
       clearTimeout(window._halqaSaveTimer)
-      window._halqaSaveTimer = setTimeout(saveNow, 800)
+      window._halqaSaveTimer = setTimeout(saveNow, 600)
     }
     setUploading(false)
     e.target.value = ''
   }
 
   async function handleDelete() {
-    const paths = getImagePaths()
+    const imgs = editorRef.current?.querySelectorAll('img[data-path]') || []
+    const paths = Array.from(imgs).map(img => img.getAttribute('data-path'))
     if (paths.length > 0) await supabase.storage.from('note-images').remove(paths)
     await supabase.from(table).delete().eq('id', note.id)
     onDelete(note.id)
@@ -158,6 +148,7 @@ export default function NoteEditor({ note, onClose, onDelete, table }) {
         contentEditable
         suppressContentEditableWarning
         onInput={handleInput}
+        onPaste={handlePaste}
         data-placeholder="Start typing…"
       />
 

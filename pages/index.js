@@ -39,7 +39,7 @@ export default function Home() {
     setQanungos(qs || [])
     setGeneralNotes(ns || [])
     setPinnedCount((pc || []).length)
-    const { data: dn } = await supabase.from('day_note').select('*').eq('id', 1).single()
+    const { data: dn } = await supabase.from('day_note').select('*').eq('id', 1).maybeSingle()
     if (dn) setDayNote(dn.body || '')
     const counts = {}; let total = 0
     ;(vs || []).forEach(v => { total++; if (v.qanungo_id) counts[v.qanungo_id] = (counts[v.qanungo_id] || 0) + 1 })

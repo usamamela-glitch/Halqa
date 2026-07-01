@@ -88,6 +88,7 @@ export default function QanungoPage() {
         <button className={styles.backBtn} onClick={() => router.push('/')}>‹</button>
         <h1 className={styles.title}>{qanungo.name}</h1>
         <span className={styles.count}>{villages.length} villages</span>
+        <button className={styles.homeBtn} onClick={() => router.push('/')} title="Home">🏠</button>
       </header>
 
       <main className={styles.main}>

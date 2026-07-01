@@ -349,3 +349,13 @@
   flex-shrink: 0; cursor: pointer; opacity: 0.4;
 }
 .actionBtnPin.pinActive { opacity: 1; background: var(--green-light); border-color: var(--green-mid); }
+-e 
+.homeBtn { background: rgba(255,255,255,0.18); border: none; color: white; padding: 6px 10px; border-radius: 16px; font-size: 15px; flex-shrink: 0; }
+
+.homeBtn {
+  background: rgba(255,255,255,0.18); border: none;
+  color: white; font-size: 16px;
+  padding: 4px 8px; border-radius: 8px;
+  flex-shrink: 0;
+}
+.homeBtn:active { background: rgba(255,255,255,0.28); }

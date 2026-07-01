@@ -62,7 +62,21 @@ export default function Home() {
     setDeleteQ(null); load()
   }
 
-async function createNote() {
+async function saveDayNote(text) {
+    setDayNoteSaved('saving')
+    await supabase.from('day_note').upsert({ id: 1, body: text })
+    setDayNoteSaved('saved')
+  }
+
+  function handleDayNoteChange(e) {
+    const text = e.target.value
+    setDayNote(text)
+    setDayNoteSaved('unsaved')
+    clearTimeout(window._dayNoteTimer)
+    window._dayNoteTimer = setTimeout(() => saveDayNote(text), 800)
+  }
+
+  async function createNote() {
     const { data } = await supabase.from('general_notes').insert({ body: '', images: [] }).select().single()
     if (data) { setGeneralNotes(prev => [data, ...prev]); setOpenNote(data) }
   }

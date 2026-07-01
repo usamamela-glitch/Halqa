@@ -166,3 +166,24 @@
   cursor: pointer; list-style: none; margin-bottom: 4px;
 }
 .mainGroupsCard:active { background: var(--green-light); opacity: 0.8; }
+
+.dayToDay {
+  display: flex; flex-direction: column;
+  height: calc(100vh - 160px);
+  padding: 8px 0 0;
+}
+.dayNoteMeta {
+  padding: 4px 16px 8px;
+  display: flex; justify-content: flex-end;
+}
+.dayNoteStatus { font-size: 12px; color: var(--muted); }
+.dayNoteArea {
+  flex: 1;
+  width: 100%;
+  padding: 0 16px 40px;
+  border: none; outline: none; resize: none;
+  font-size: 16px; line-height: 1.75;
+  color: var(--ink); background: var(--bg);
+  font-family: 'Inter', sans-serif;
+  -webkit-overflow-scrolling: touch;
+}

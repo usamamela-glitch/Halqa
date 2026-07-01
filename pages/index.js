@@ -6,7 +6,7 @@ import SearchPage from './search'
 import MainGroupsPage from './main-groups'
 import styles from '../styles/Home.module.css'
 
-const TABS = ['Qanungos', 'General', 'Day to Day', 'Search']
+const TABS = ['Qanungos', 'General', 'Search']
 
 export default function Home() {
   const router = useRouter()
@@ -19,6 +19,7 @@ export default function Home() {
   const [openNote, setOpenNote] = useState(null)
   const [pinnedCount, setPinnedCount] = useState(0)
   const [showMainGroups, setShowMainGroups] = useState(false)
+  const [showDayNote, setShowDayNote] = useState(false)
   const [dayNote, setDayNote] = useState('')
   const [dayNoteSaved, setDayNoteSaved] = useState('saved')
 
@@ -38,7 +39,6 @@ export default function Home() {
     setQanungos(qs || [])
     setGeneralNotes(ns || [])
     setPinnedCount((pc || []).length)
-    // Load day-to-day note
     const { data: dn } = await supabase.from('day_note').select('*').eq('id', 1).single()
     if (dn) setDayNote(dn.body || '')
     const counts = {}; let total = 0
@@ -62,21 +62,7 @@ export default function Home() {
     setDeleteQ(null); load()
   }
 
-  async function saveDayNote(text) {
-    setDayNoteSaved('saving')
-    await supabase.from('day_note').upsert({ id: 1, body: text })
-    setDayNoteSaved('saved')
-  }
-
-  function handleDayNoteChange(e) {
-    const text = e.target.value
-    setDayNote(text)
-    setDayNoteSaved('unsaved')
-    clearTimeout(window._dayNoteTimer)
-    window._dayNoteTimer = setTimeout(() => saveDayNote(text), 800)
-  }
-
-  async function createNote() {
+async function createNote() {
     const { data } = await supabase.from('general_notes').insert({ body: '', images: [] }).select().single()
     if (data) { setGeneralNotes(prev => [data, ...prev]); setOpenNote(data) }
   }
@@ -103,6 +89,25 @@ export default function Home() {
 
   if (showMainGroups) {
     return <MainGroupsPage onBack={() => setShowMainGroups(false)} />
+  }
+
+  if (showDayNote) {
+    return (
+      <div className={styles.dayNotePage}>
+        <div className={styles.dayNoteHeader}>
+          <button className={styles.dayNoteBack} onClick={() => { clearTimeout(window._dayNoteTimer); saveDayNote(dayNote); setShowDayNote(false) }}>‹ Back</button>
+          <span className={styles.dayNoteTitle}>Day to Day</span>
+          <span className={styles.dayNoteStatus}>{dayNoteSaved === 'saving' ? 'Saving…' : dayNoteSaved === 'unsaved' ? 'Unsaved' : 'Saved ✓'}</span>
+        </div>
+        <textarea
+          className={styles.dayNoteArea}
+          value={dayNote}
+          onChange={handleDayNoteChange}
+          placeholder="Your day-to-day scratchpad…"
+          autoFocus
+        />
+      </div>
+    )
   }
 
   if (openNote) {
@@ -141,6 +146,13 @@ export default function Home() {
                 </div>
                 <span className={styles.arrow}>›</span>
               </li>
+              <li className={styles.dayToDay} onClick={() => setShowDayNote(true)}>
+                <div className={styles.qanungoCardLeft}>
+                  <span className={styles.qanungoName}>📅 Day to Day</span>
+                  <span className={styles.qanungoCount}>{dayNote ? 'Tap to open' : 'Empty'}</span>
+                </div>
+                <span className={styles.arrow}>›</span>
+              </li>
               {qanungos.map(q => (
                 <li key={q.id} className={styles.qanungoItem}>
                   <button className={styles.qanungoCard} onClick={() => router.push(`/qanungo/${q.id}`)}>
@@ -176,19 +188,6 @@ export default function Home() {
           </div>
         )}
 
-        {tab === 'Day to Day' && (
-          <div className={styles.dayToDay}>
-            <div className={styles.dayNoteMeta}>
-              <span className={styles.dayNoteStatus}>{dayNoteSaved === 'saving' ? 'Saving…' : dayNoteSaved === 'unsaved' ? 'Unsaved' : 'Saved ✓'}</span>
-            </div>
-            <textarea
-              className={styles.dayNoteArea}
-              value={dayNote}
-              onChange={handleDayNoteChange}
-              placeholder="Your day-to-day scratchpad…"
-            />
-          </div>
-        )}
         {tab === 'Search' && <SearchPage />}
       </main>
 

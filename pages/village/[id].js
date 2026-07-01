@@ -95,15 +95,8 @@ export default function VillagePage() {
     setEditInfo(false); load()
   }
 
-  function openAddContact() {
-    setContactForm({ name: '', phone: '', phone2: '', phone3: '', description: '' })
-    setContactModal('add')
-  }
-
-  function openEditContact(c) {
-    setContactForm({ name: c.name, phone: c.phone || '', phone2: c.phone2 || '', phone3: c.phone3 || '', description: c.description || '' })
-    setContactModal(c)
-  }
+  function openAddContact() { setContactForm({ name: '', phone: '', phone2: '', phone3: '', description: '' }); setContactModal('add') }
+  function openEditContact(c) { setContactForm({ name: c.name, phone: c.phone || '', phone2: c.phone2 || '', phone3: c.phone3 || '', description: c.description || '' }); setContactModal(c) }
 
   async function saveContact() {
     const { name, phone, phone2, phone3, description } = contactForm
@@ -123,8 +116,15 @@ export default function VillagePage() {
   }
 
   async function togglePinContact(c) {
-    await supabase.from('contacts').update({ pinned: !c.pinned }).eq('id', c.id)
-    load()
+    const newPinned = !c.pinned
+    // Update locally first - no scroll reset
+    setContacts(prev => {
+      const updated = prev.map(x => x.id === c.id ? { ...x, pinned: newPinned } : x)
+      // Re-sort: pinned first, then by name
+      return [...updated.filter(x => x.pinned), ...updated.filter(x => !x.pinned).sort((a, b) => a.name.localeCompare(b.name))]
+    })
+    // Sync to Supabase in background
+    await supabase.from('contacts').update({ pinned: newPinned }).eq('id', c.id)
   }
 
   async function createNote() {
@@ -132,8 +132,15 @@ export default function VillagePage() {
     if (data) { setNotes(prev => [data, ...prev]); setOpenNote(data) }
   }
 
-  function handleNoteClose() { load(); setOpenNote(null) }
-  function handleNoteDelete(noteId) { setNotes(prev => prev.filter(n => n.id !== noteId)); setOpenNote(null) }
+  function handleNoteClose() {
+    load()
+    setOpenNote(null)
+  }
+
+  function handleNoteDelete(noteId) {
+    setNotes(prev => prev.filter(n => n.id !== noteId))
+    setOpenNote(null)
+  }
 
   function stripHtml(html) {
     if (!html) return ''
@@ -175,6 +182,7 @@ export default function VillagePage() {
       <header className={styles.topBar}>
         <button className={styles.backBtn} onClick={() => router.back()}>‹</button>
         <h1 className={styles.villageName}>{village.name}</h1>
+        <button className={styles.homeBtn} onClick={() => router.push('/')}>🏠</button>
         <button className={styles.editInfoBtn} onClick={() => setEditInfo(true)}>Edit</button>
       </header>
 

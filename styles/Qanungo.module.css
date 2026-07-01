@@ -94,3 +94,13 @@
 .btnSave { flex: 2; padding: 13px; background: var(--green); border: none; border-radius: 10px; font-size: 15px; font-weight: 600; color: white; }
 .btnSave:disabled { opacity: 0.6; }
 .btnDelete { flex: 2; padding: 13px; background: var(--red); border: none; border-radius: 10px; font-size: 15px; font-weight: 600; color: white; }
+-e 
+.homeBtn { background: rgba(255,255,255,0.18); border: none; color: white; padding: 6px 10px; border-radius: 16px; font-size: 15px; flex-shrink: 0; }
+
+.homeBtn {
+  background: rgba(255,255,255,0.18); border: none;
+  color: white; font-size: 16px;
+  padding: 4px 8px; border-radius: 8px;
+  flex-shrink: 0;
+}
+.homeBtn:active { background: rgba(255,255,255,0.28); }

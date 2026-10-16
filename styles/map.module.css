@@ -1,0 +1,21 @@
+.body { padding: 0; }
+.box {
+  position: fixed; left: 0; right: 0; bottom: 0;
+  top: calc(var(--safe-top) + 54px);
+  overflow: auto; -webkit-overflow-scrolling: touch;
+  background: #f4f6f2;
+  touch-action: pan-x pan-y;
+}
+.img { display: block; max-width: none; height: auto; -webkit-user-select: none; user-select: none; }
+.controls {
+  position: fixed; right: 16px; bottom: calc(var(--safe-bottom) + 20px); z-index: 5;
+  display: flex; flex-direction: column; gap: 10px;
+}
+.ctl {
+  width: 52px; height: 52px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--card); color: var(--teal);
+  box-shadow: var(--shadow-lg);
+}
+.ctl:disabled { opacity: 0.45; }
+.minus { width: 18px; height: 2.6px; border-radius: 2px; background: currentColor; }

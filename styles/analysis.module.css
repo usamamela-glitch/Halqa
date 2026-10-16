@@ -1,0 +1,41 @@
+.panel {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 16px; margin-top: 4px;
+}
+.hint { color: var(--ink-2); line-height: 1.5; font-size: 15px; }
+.warn { margin-top: 12px; padding: 10px 12px; border-radius: 12px; background: var(--amber-bg); color: #7a4f05; font-size: 14px; line-height: 1.45; }
+.error { margin-top: 14px; padding: 12px 14px; border-radius: 14px; background: var(--red-bg); color: var(--red); font-weight: 550; line-height: 1.45; }
+.notice {
+  display: flex; gap: 12px; align-items: flex-start;
+  padding: 16px; margin-bottom: 12px;
+  border-radius: var(--radius); background: var(--teal-50); color: var(--teal);
+}
+.notice p { color: var(--ink-2); margin-top: 3px; font-size: 14.5px; line-height: 1.45; }
+
+.report {
+  margin-top: 16px; padding: 18px 18px 22px;
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.thinking { display: flex; align-items: center; gap: 10px; color: var(--muted); font-weight: 600; }
+.pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--teal-500); animation: pulse 1.2s ease infinite; }
+.caret { display: inline-block; width: 8px; height: 18px; background: var(--teal-500); border-radius: 2px; animation: pulse 1s ease infinite; vertical-align: middle; }
+
+.md { font-size: 15.5px; line-height: 1.6; color: var(--ink); }
+.md h2 { font-size: 21px; font-weight: 800; letter-spacing: -0.5px; margin: 22px 0 8px; }
+.md h3 { font-size: 18px; font-weight: 750; letter-spacing: -0.3px; margin: 18px 0 6px; color: var(--teal); }
+.md h4 { font-size: 16px; font-weight: 750; margin: 14px 0 4px; }
+.md > :first-child { margin-top: 0; }
+.md p { margin: 8px 0; }
+.md ul, .md ol { margin: 6px 0 10px; padding-left: 22px; }
+.md li { margin: 4px 0; }
+.md strong { font-weight: 700; }
+.md hr { border: none; border-top: 1px solid var(--hair); margin: 16px 0; }
+
+.saved { list-style: none; background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+.savedItem { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 14px 16px; border-bottom: 1px solid var(--hair); text-align: left; }
+.saved li:last-child .savedItem { border-bottom: none; }
+.savedItem:active { background: var(--bg); }
+.savedTitle { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.savedDate { color: var(--muted); font-size: 14px; flex-shrink: 0; }

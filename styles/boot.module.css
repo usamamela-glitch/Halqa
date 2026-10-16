@@ -1,0 +1,22 @@
+.boot {
+  position: fixed; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 32px;
+  background-image: var(--grid), var(--header);
+  color: #fff; text-align: center;
+}
+.mark {
+  width: 84px; height: 84px; border-radius: 26px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.18);
+  font-size: 46px; font-weight: 700; line-height: 1;
+}
+.name { margin-top: 16px; font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+.text { margin-top: 18px; max-width: 300px; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,0.75); }
+.bar { margin-top: 28px; width: 180px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); overflow: hidden; }
+.barFill { width: 40%; height: 100%; border-radius: 2px; background: #7fe0c9; animation: slide 1.2s ease-in-out infinite; }
+.retry {
+  margin-top: 22px; height: 48px; padding: 0 26px; border-radius: 14px;
+  background: #fff; color: var(--teal); font-weight: 700;
+}
+@keyframes slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(260%); } }

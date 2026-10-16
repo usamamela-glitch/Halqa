@@ -1,0 +1,24 @@
+.stats { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 18px; }
+.result {
+  display: flex; flex-direction: column; gap: 3px;
+  background: rgba(255,255,255,0.09);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 14px; padding: 10px 12px;
+  min-width: 0;
+}
+.resultLabel { font-size: 11px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.6px; color: rgba(255,255,255,0.6); }
+.resultVal { font-size: 14.5px; font-weight: 650; line-height: 1.3; word-break: break-word; }
+.resultNum { font-size: 20px; font-weight: 800; letter-spacing: -0.5px; font-variant-numeric: tabular-nums; }
+
+.form { display: flex; flex-direction: column; gap: 18px; }
+.autoField {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  padding: 14px 14px 12px;
+}
+.autoHead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.autoStatus { font-size: 12.5px; font-weight: 650; color: var(--green); }
+.autoStatusOn { color: var(--amber); }
+.bigText { background: var(--bg); line-height: 1.55; min-height: 140px; overflow: hidden; }
+.twoCol { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+.twoCol > label { margin-top: 0; }

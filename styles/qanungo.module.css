@@ -1,0 +1,14 @@
+.row { padding: 15px 4px 15px 16px; gap: 12px; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.name { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; display: flex; align-items: center; gap: 6px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pin { color: var(--amber); display: inline-flex; }
+.meta { font-size: 14px; color: var(--muted); overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.pct { font-size: 13px; font-weight: 750; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+.pct_green { color: var(--green); }
+.pct_amber { color: var(--amber); }
+.pct_red { color: var(--red); }
+.more { width: 40px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--faint); border-radius: 12px; flex-shrink: 0; }
+.more:active { background: var(--hair); }
+.legend { display: flex; justify-content: center; gap: 18px; margin-top: 22px; font-size: 13px; color: var(--muted); font-weight: 550; }
+.legend span { display: inline-flex; align-items: center; gap: 8px; }
+.legend i { width: 8px; height: 8px; }

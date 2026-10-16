@@ -1,0 +1,24 @@
+.body { padding: 0; background: var(--card); min-height: calc(100% - var(--safe-top) - 54px); }
+
+.editor {
+  min-height: calc(100dvh - var(--safe-top) - 54px);
+  padding: 20px 20px calc(var(--safe-bottom) + 160px);
+  font-size: 17px; line-height: 1.6; color: var(--ink);
+  outline: none;
+  white-space: pre-wrap; word-wrap: break-word;
+  -webkit-user-select: text; user-select: text;
+}
+.editor img {
+  display: block; width: 100%; height: auto;
+  border-radius: 14px; margin: 10px 0;
+  box-shadow: var(--shadow);
+}
+
+.plain {
+  display: block; width: 100%;
+  min-height: calc(100dvh - var(--safe-top) - 54px);
+  padding: 20px 20px calc(var(--safe-bottom) + 160px);
+  border: none; outline: none; resize: none;
+  background: var(--card);
+  font-size: 17px; line-height: 1.6;
+}

@@ -1,0 +1,18 @@
+.group, .card {
+  background: var(--card); border: 1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+}
+.card { padding: 16px; }
+.row { display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; padding: 14px 16px; border-bottom: 1px solid var(--hair); }
+.row:last-child { border-bottom: none; }
+.rowLabel { color: var(--ink-2); font-weight: 550; flex-shrink: 0; }
+.rowVal { text-align: right; font-weight: 650; word-break: break-word; min-width: 0; }
+.tone_green { color: var(--green); }
+.tone_amber { color: var(--amber); }
+.tone_red { color: var(--red); font-weight: 550; font-size: 14px; }
+.note { margin-top: 10px; color: var(--muted); font-size: 14px; line-height: 1.5; padding: 0 2px; }
+.alert { padding: 14px 16px; border-radius: var(--radius); background: var(--amber-bg); color: #6b4504; line-height: 1.5; font-size: 14.5px; }
+.keyRow { display: flex; align-items: center; justify-content: space-between; padding: 4px 2px 12px; border-bottom: 1px solid var(--hair); margin-bottom: 14px; }
+.keyMask { font-family: ui-monospace, Menlo, monospace; font-size: 14px; color: var(--ink-2); }
+.link { color: var(--red); font-weight: 650; padding: 6px; }
+.version { text-align: center; margin-top: 28px; color: var(--faint); font-size: 13px; font-weight: 600; }

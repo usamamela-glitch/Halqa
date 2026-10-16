@@ -1,0 +1,39 @@
+.heroTop { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
+.brand { display: flex; flex-direction: column; }
+.brandTitle { font-size: 36px; font-weight: 800; letter-spacing: -1.4px; line-height: 1.05; }
+.brandUrdu { font-weight: 700; opacity: 0.55; margin-left: 8px; font-size: 28px; }
+.brandSub { margin-top: 6px; font-size: 14px; font-weight: 550; color: rgba(255,255,255,0.65); }
+
+.featureRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.feature {
+  flex-direction: column; align-items: flex-start; gap: 12px;
+  padding: 16px; min-height: 128px;
+}
+.feature .cardTitle { white-space: normal; }
+.featureStar { background: #fff4d6; color: #c98208; }
+.featureDay { background: var(--teal-50); color: var(--teal-500); }
+.featureText { display: flex; flex-direction: column; gap: 3px; min-width: 0; width: 100%; }
+.featureTitle { font-size: 16.5px; font-weight: 750; letter-spacing: -0.3px; }
+.featureSub { font-size: 13.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.qRow { padding: 16px 8px 16px 16px; }
+.qMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.qName { font-size: 17px; font-weight: 750; letter-spacing: -0.3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qMeta { font-size: 13.5px; color: var(--muted); }
+.progress { margin-top: 6px; height: 5px; border-radius: 3px; background: var(--hair); overflow: hidden; display: flex; }
+.progress span { height: 100%; }
+.moreBtn { width: 40px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--faint); border-radius: 12px; flex-shrink: 0; }
+.moreBtn:active { background: var(--hair); }
+
+/* Notes list */
+.notes { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; list-style: none; }
+.note { width: 100%; padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--hair); display: flex; flex-direction: column; gap: 3px; }
+.note:last-child { border-bottom: none; }
+.note:active { background: #f3f6f9; }
+.noteTitle { font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.noteMeta { display: flex; gap: 8px; font-size: 14px; color: var(--muted); min-width: 0; }
+.noteDate { color: var(--ink-2); font-weight: 600; flex-shrink: 0; }
+.notePreview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.villageRow { padding: 14px 16px; }
+.resultCount { font-size: 13px; font-weight: 700; color: var(--faint); }

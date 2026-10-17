@@ -23,6 +23,10 @@ Until it's run, the app still works: values for the new fields stay on the phone
 
 The person icon on a contact card (and "Save to iPhone" after adding a contact) downloads a vCard; iOS opens it with the details filled in, named "Name - Village".
 
+## Deploying
+
+`vercel.json` tells Vercel to run `npm run build` and serve the `out/` folder as plain static files. Without it Vercel's Next.js preset skips `out/sw.js`, and the app stops opening offline.
+
 ## Commands
 
 ```bash

@@ -1,16 +1,9 @@
 # Halqa v2: agreed decisions (16 Oct 2026)
 
-Paused until the build session resumes on a laptop. Give this file and the original briefing to the next session.
-
-## Status
-- A first version of v2 is built and tested against a simulated database. It is committed on branch `claude/review-requested-jvbtwm` but **not pushed**: GitHub refused Claude's access (error 403).
-- The live app (`main`, halqa-apps.vercel.app) is untouched.
-- A full source backup (`halqa-v2-source.zip`) was sent in chat.
-
-## Before building resumes
-1. Reconnect GitHub for Claude (claude.ai → Settings → Connectors → GitHub), and install the Claude GitHub App on the Halqa repo if asked. Then push the branch.
-2. Give Claude Supabase and Vercel access: create tokens, add `SUPABASE_ACCESS_TOKEN` and `VERCEL_TOKEN` in the cloud environment's settings, and allow these hosts: `zietsuiuzkfjjgbdybdd.supabase.co`, `api.supabase.com`, `api.vercel.com`, `vercel.com`, `*.vercel.app`. Never paste tokens into chat.
-3. Run the database migration `supabase/migrations/20261016000000_halqa_v2.sql`. It only adds things.
+## Status (17 Oct 2026)
+- v2 is live on `main` (halqa-apps.vercel.app), switched over after Usama tested it on his iPhone.
+- The database update `supabase/migrations/20261016000000_halqa_v2.sql` has been run.
+- Previous live version, for rollback: Vercel deployment `dpl_FS9AMxK6nZpz5mURyC9gnym93tLF` (commit 7e86dc3).
 
 ## Decided
 - **No login.** The app stays open to anyone with the URL, as now.

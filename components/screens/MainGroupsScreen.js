@@ -59,7 +59,7 @@ export default function MainGroupsScreen() {
           <div className={ui.sectionHead}><span>{g.name}</span><span>{g.items.length}</span></div>
           <ul className={ui.list}>
             {g.items.map(({ c, village }) => (
-              <ContactRow key={c.id} contact={c} subtitle={village?.name || 'Unknown village'} showContacted
+              <ContactRow key={c.id} contact={c} villageName={village?.name} subtitle={village?.name || 'Unknown village'} showContacted
                 onPress={() => push('village', { id: c.village_id, tab: 'Contacts', highlight: c.id })}
                 onUnpin={() => unpin(c)} />
             ))}

@@ -35,12 +35,8 @@ Paused until the build session resumes on a laptop. Give this file and the origi
 - **The pin button stays on the contact cards** (alongside call and WhatsApp). This needs changing from the current v2 build, which moved pin into the contact detail sheet.
 - Results / population / voters header as a 2×2 layout. Data unchanged.
 
-## Feature: Halqa contacts in iPhone Contacts (decided 17 Oct 2026, built)
-Halqa contacts appear in iPhone Contacts (and so in Phone and WhatsApp caller ID) through a read-only CardDAV account added once on each iPhone. Code: `lib/carddav.js`, `api/carddav.js`, `vercel.json`.
-- **Name style:** "Rana Asif - Lilliani".
-- **Who:** Usama and colleagues, with **one shared password** (Vercel env var `HALQA_CONTACTS_PASSWORD`). Changing it cuts everyone off until they enter the new one.
-- **Two logins:**
-  - `halqa-new` (Usama): only contacts added from 17 Oct 2026 on. His existing 730 are already saved on his iPhone.
-  - `halqa-all` (colleagues): every contact.
-- It's a separate "Halqa" account in Contacts, not the phone's own list. Changes come from Halqa only; edits on the iPhone are refused.
-- Updates arrive when the iPhone next checks, typically within 15–60 minutes.
+## Saving contacts to iPhone Contacts (decided 17 Oct 2026)
+The automatic iPhone Contacts sync (CardDAV) was built, then dropped at Usama's request: the iPhone never connected and the one-tap button from the old app is simpler.
+- A save-to-contacts button on each contact card, as in the old app: tap it, choose "Create New Contact", details are already filled in, tap Done.
+- After adding a contact, the confirmation also offers "Save to iPhone".
+- Name style: "Rana Asif - Lilliani".

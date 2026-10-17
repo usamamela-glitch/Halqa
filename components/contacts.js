@@ -44,7 +44,7 @@ export function ContactedBadge({ contact }) {
   return <span className={cx(ui.badge, ui[`badge_${level}`])}>{d === null ? 'Never' : d === 0 ? 'Today' : `${d}d`}</span>
 }
 
-export function ContactRow({ contact, subtitle, onPress, highlight, showContacted, onUnpin, rowRef }) {
+export function ContactRow({ contact, villageName, subtitle, onPress, highlight, showContacted, onUnpin, rowRef }) {
   const phones = phonesOf(contact)
   const tags = contact.tags || []
   return (
@@ -68,6 +68,11 @@ export function ContactRow({ contact, subtitle, onPress, highlight, showContacte
         <div className={s.rowActions} onClick={e => e.stopPropagation()}>
           <PinButton contact={contact} onUnpin={onUnpin} />
           <CallButtons contact={contact} />
+          {phonesOf(contact).length > 0 && (
+            <button className={cx(ui.iconBtn, s.saveBtn)} onClick={() => downloadVCard(contact, villageName)} aria-label={`Save ${contact.name} to iPhone Contacts`}>
+              <IconUserPlus size={19} />
+            </button>
+          )}
         </div>
       </Card>
     </li>
@@ -160,6 +165,7 @@ export function VillagePicker({ value, onChange, autoOpen }) {
   const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
   const [open, setOpen] = useState(!!autoOpen && !value)
   const [q, setQ] = useState('')
+  const pickedAt = useRef(0)
   const qName = useMemo(() => Object.fromEntries(qanungos.map(x => [x.id, x.name])), [qanungos])
   const selected = villages.find(v => v.id === value)
   const matches = useMemo(() => {
@@ -182,7 +188,11 @@ export function VillagePicker({ value, onChange, autoOpen }) {
           <div className={s.pickerName}>{selected.name}</div>
           <div className={s.pickerQ}>{qName[selected.qanungo_id] || 'No Qanungo'}</div>
         </div>
-        <button type="button" className={s.pickerChange} onClick={() => { setQ(''); setOpen(true) }}>Change</button>
+        <button type="button" className={s.pickerChange} onClick={() => {
+          // The list collapsing moves this button under the finger that just picked a village; ignore that stray tap.
+          if (Date.now() - pickedAt.current < 600) return
+          setQ(''); setOpen(true)
+        }}>Change</button>
       </div>
     )
   }
@@ -193,7 +203,8 @@ export function VillagePicker({ value, onChange, autoOpen }) {
         <div className={s.pickerList}>
           {matches.length === 0 && <div className={s.pickerItem}><span className={s.pickerQ}>No village found</span></div>}
           {matches.map(v => (
-            <button type="button" key={v.id} className={s.pickerItem} onClick={() => { onChange(v.id); setOpen(false) }}>
+            <button type="button" key={v.id} className={s.pickerItem} onMouseDown={e => e.preventDefault()}
+              onClick={() => { pickedAt.current = Date.now(); onChange(v.id); setOpen(false); setQ(''); document.activeElement?.blur?.() }}>
               <span className={s.pickerName}>{v.name}</span>
               <span className={s.pickerQ}>{qName[v.qanungo_id] || 'No Qanungo'}</span>
             </button>
@@ -260,7 +271,13 @@ function ContactForm({ initial, onDone, onOpenExisting, quick }) {
     else await updateRow('contacts', idRef.current, data)
     setLastVillage(f.village_id)
     setSaving(false)
-    toast(isNew ? `Saved ${name}` : 'Changes saved')
+    if (isNew && phonesOf(data).length) {
+      // Same flow as the old app: one tap opens the iPhone's "Create New Contact" with everything filled in.
+      const village = await db.villages.get(f.village_id)
+      toast(`Saved ${name}`, { label: 'Save to iPhone', onClick: () => downloadVCard(data, village?.name) }, 8000)
+    } else {
+      toast(isNew ? `Saved ${name}` : 'Changes saved')
+    }
     onDone(idRef.current)
   }
 

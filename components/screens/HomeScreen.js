@@ -308,7 +308,7 @@ function SearchTab({ villages, contacts }) {
           <div className={ui.sectionHead}><span>Contacts</span><span className={h.resultCount}>{contactHits.length}</span></div>
           <ul className={ui.list}>
             {contactHits.map(c => (
-              <ContactRow key={c.id} contact={c} subtitle={vById[c.village_id]?.name || 'Unknown village'}
+              <ContactRow key={c.id} contact={c} villageName={vById[c.village_id]?.name} subtitle={vById[c.village_id]?.name || 'Unknown village'}
                 onPress={() => push('village', { id: c.village_id, tab: 'Contacts', highlight: c.id })} />
             ))}
           </ul>

@@ -1,11 +1,12 @@
-.row { align-items: flex-start; padding: 14px 12px 14px 14px; gap: 12px; }
+.row { align-items: flex-start; flex-wrap: wrap; padding: 14px 12px 12px 14px; gap: 10px 12px; }
 .rowMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; padding-top: 1px; }
 .nameLine { display: flex; align-items: center; gap: 6px; min-width: 0; }
 .name { font-size: 16.5px; font-weight: 700; letter-spacing: -0.25px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .sub { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .desc { font-size: 14px; color: var(--ink-2); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
-.rowActions { display: flex; gap: 6px; flex-shrink: 0; align-self: center; }
+/* Own line under the details so the name keeps the full width, even on a small iPhone. */
+.rowActions { display: flex; gap: 8px; flex-basis: 100%; padding-left: 60px; }
 .pinBtn { background: var(--bg); color: var(--faint); }
 .pinBtn:active { background: var(--hair); }
 .pinBtnOn { background: var(--amber-bg); color: var(--amber); }
@@ -114,3 +115,5 @@
 }
 .switch:checked { background: var(--amber); }
 .switch:checked::after { transform: translateX(20px); }
+.saveBtn { background: var(--bg); color: var(--ink-2); }
+.saveBtn:active { background: var(--hair); }

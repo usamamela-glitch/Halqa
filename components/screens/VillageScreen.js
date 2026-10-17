@@ -181,7 +181,7 @@ function ContactsTab({ village, highlight, scrollRef, clearHighlight }) {
       ) : (
         <ul className={ui.list} style={{ marginTop: 12 }}>
           {list.map(c => (
-            <ContactRow key={c.id} contact={c} highlight={c.id === highlight} showContacted={!!c.last_contacted}
+            <ContactRow key={c.id} contact={c} villageName={village?.name} highlight={c.id === highlight} showContacted={!!c.last_contacted}
               rowRef={el => { rowRefs.current[c.id] = el }} onPress={() => sheets.open(c.id)} />
           ))}
         </ul>

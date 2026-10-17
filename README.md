@@ -17,7 +17,9 @@ The existing tables are unchanged. v2 only **adds** things — run `supabase/mig
 - `contacts.photo_path`, `contacts.tags`, `contacts.last_contacted`
 - the `contact-photos` storage bucket, plus upload/read policies for the photo buckets
 
-Until it's run, the app still works: values for the new fields stay on the phone and Settings shows "Database update needed".
+Saved AI analysis reports need `supabase/migrations/20261017000000_analysis_reports.sql` (the `analysis_reports` table, downloaded incrementally by `updated_at`).
+
+Until they're run, the app still works: values for the new fields stay on the phone and Settings shows "Database update needed".
 
 ## Saving contacts to the iPhone
 

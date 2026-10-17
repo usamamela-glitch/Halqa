@@ -15,6 +15,7 @@ export default function SettingsScreen() {
   const sync = useSyncState()
   const failed = useLiveQuery(() => db.failed.toArray(), [], [])
   const missing = useLiveQuery(async () => (await db.meta.get('missingColumns'))?.value || {}, [], {})
+  const missingTables = useLiveQuery(async () => (await db.meta.get('missingTables'))?.value || [], [], [])
   const [key, setKey] = useState('')
   const [savedKey, setSavedKey] = useState('')
   const [persisted, setPersisted] = useState(null)
@@ -38,7 +39,10 @@ export default function SettingsScreen() {
     toast('API key removed')
   }
 
-  const missingList = Object.entries(missing).flatMap(([t, cols]) => cols.map(c => `${t}.${c}`))
+  const missingList = [
+    ...Object.entries(missing).flatMap(([t, cols]) => cols.map(c => `${t}.${c}`)),
+    ...missingTables.map(t => `the ${t} table`),
+  ]
 
   return (
     <Screen title="Settings">

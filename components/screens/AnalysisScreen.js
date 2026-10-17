@@ -4,8 +4,8 @@ import { db } from '../../lib/db'
 import { useNav } from '../../lib/nav'
 import { runAnalysis, askFollowUp, describeError, getApiKey } from '../../lib/analysis'
 import { byName, shortDate } from '../../lib/domain'
-import { useLocalStorage } from '../../lib/hooks'
-import { Screen, Tabs, Field, Empty, cx, ui, useSyncState } from '../ui'
+import { insertRow, updateRow, deleteRow, restoreRow, newId } from '../../lib/store'
+import { Screen, Tabs, Field, Empty, cx, ui, useSyncState, useToast } from '../ui'
 import { VillagePicker } from '../contacts'
 import Markdown from '../Markdown'
 import { IconSparkles, IconKey } from '../Icons'
@@ -24,14 +24,17 @@ export default function AnalysisScreen() {
   const [error, setError] = useState(null)
   const [question, setQuestion] = useState('')
   const [followUp, setFollowUp] = useState('')
-  // report: { id, title, scope, target, at, turns: [{ q, a }] } — q is null for a standard report
+  // report: { id, title, scope, target, created_at, turns: [{ q, a }] } — q is null for a standard report.
+  // Saved in the analysis_reports table, so every report is kept and appears on every device.
   const [report, setReport] = useState(null)
   const historyRef = useRef(null)   // live API conversation for the report on screen
-  const [saved, setSaved] = useLocalStorage('halqa.reports', [])
+  const saved = useLiveQuery(() => db.analysis_reports.orderBy('created_at').reverse().toArray(), [], [])
+  const toast = useToast()
   const [hasKey, setHasKey] = useState(true)
   const abortRef = useRef(null)
 
   useEffect(() => { setHasKey(!!getApiKey()) }, [])
+  useEffect(() => { importOldReports() }, [])
   useEffect(() => () => abortRef.current?.abort(), [])
 
   const sortedQ = useMemo(() => [...qanungos].sort(byName), [qanungos])
@@ -39,10 +42,19 @@ export default function AnalysisScreen() {
   const target = scope === 'village' ? villageId : scope === 'qanungo' ? qanungoId : 'all'
   const ready = hasKey && online && !!target && !running
 
-  const turnsOf = r => r.turns || [{ q: null, a: r.text || '' }]   // older saved reports had just text
+  async function save(entry) {
+    const data = { title: entry.title, turns: entry.turns }
+    if (await db.analysis_reports.get(entry.id)) await updateRow('analysis_reports', entry.id, data)
+    else await insertRow('analysis_reports', { id: entry.id, scope: entry.scope, target: entry.target, created_at: entry.created_at, ...data })
+  }
 
-  function save(entry) {
-    setSaved(list => [entry, ...(list || []).filter(r => r.id !== entry.id)].slice(0, 12))
+  function remove() {
+    const row = saved.find(r => r.id === report.id)
+    historyRef.current = null
+    setReport(null)
+    if (!row) return
+    deleteRow('analysis_reports', row.id)
+    toast('Report deleted', { label: 'Undo', onClick: () => restoreRow('analysis_reports', row) })
   }
 
   // Streams one answer into the last turn of the report on screen.
@@ -72,7 +84,7 @@ export default function AnalysisScreen() {
   function run() {
     const q = question.trim() || null
     historyRef.current = null
-    const entry = { id: Date.now(), title: '', scope, target, at: new Date().toISOString(), turns: [{ q, a: '' }] }
+    const entry = { id: newId(), title: '', scope, target, created_at: new Date().toISOString(), turns: [{ q, a: '' }] }
     stream(entry, (signal, onText) => runAnalysis({ scope, id: target, question: q, signal, onText }))
       .then(ok => { if (ok) setQuestion('') })
   }
@@ -80,9 +92,9 @@ export default function AnalysisScreen() {
   function ask() {
     const q = followUp.trim()
     if (!q || !report) return
-    const prior = turnsOf(report)
+    const prior = report.turns
     const history = historyRef.current
-    const entry = { ...report, at: new Date().toISOString(), turns: [...prior, { q, a: '' }] }
+    const entry = { ...report, turns: [...prior, { q, a: '' }] }
     setFollowUp('')
     stream(entry, (signal, onText) => askFollowUp({ scope: report.scope, id: report.target, turns: prior, history, question: q, signal, onText }))
       .then(ok => { if (!ok) setFollowUp(q) })
@@ -91,7 +103,7 @@ export default function AnalysisScreen() {
   function openSaved(r) {
     historyRef.current = null
     setError(null)
-    setReport({ ...r, turns: turnsOf(r) })
+    setReport(r)
   }
 
   return (
@@ -152,6 +164,10 @@ export default function AnalysisScreen() {
             </div>
           ))}
 
+          {!running && saved.some(r => r.id === report.id) && (
+            <button className={a.delete} onClick={remove}>Delete this report</button>
+          )}
+
           {!running && report.scope && (
             <div className={a.followUp}>
               <textarea className={ui.textarea} rows={2} style={{ minHeight: 60 }} value={followUp} onChange={e => setFollowUp(e.target.value)}
@@ -164,15 +180,18 @@ export default function AnalysisScreen() {
         </div>
       )}
 
-      {!running && (saved || []).length > 0 && (
+      {!running && saved.length > 0 && (
         <div className={ui.section}>
-          <div className={ui.sectionHead}><span>Recent reports</span></div>
+          <div className={ui.sectionHead}><span>Saved reports</span><span>{saved.length}</span></div>
           <ul className={a.saved}>
             {saved.map(r => (
               <li key={r.id}>
                 <button className={a.savedItem} onClick={() => openSaved(r)}>
-                  <span className={a.savedTitle}>{r.title}{r.turns && r.turns.length > 1 ? ` · ${r.turns.length} answers` : ''}</span>
-                  <span className={a.savedDate}>{shortDate(r.at)}</span>
+                  <span className={a.savedMain}>
+                    <span className={a.savedTitle}>{r.title || 'Report'}{r.turns.length > 1 ? ` · ${r.turns.length} answers` : ''}</span>
+                    {r.turns[0]?.q && <span className={a.savedQ}>{r.turns[0].q}</span>}
+                  </span>
+                  <span className={a.savedDate}>{shortDate(r.created_at)}</span>
                 </button>
               </li>
             ))}
@@ -180,9 +199,27 @@ export default function AnalysisScreen() {
         </div>
       )}
 
-      {!report && !(saved || []).length && hasKey && (
+      {!report && !saved.length && hasKey && (
         <Empty icon={<IconSparkles size={28} />} title="No reports yet" text="Pick a village, a Qanungo or the whole constituency and tap Write report." />
       )}
     </Screen>
   )
+}
+
+// Reports used to be kept only on the phone (last 12). Move them into the database once.
+async function importOldReports() {
+  let old
+  try { old = JSON.parse(localStorage.getItem('halqa.reports') || '[]') } catch { return }
+  if (!Array.isArray(old) || !old.length) return
+  try { localStorage.removeItem('halqa.reports') } catch { return }   // first, so it can only run once
+  for (const r of old) {
+    await insertRow('analysis_reports', {
+      id: newId(),
+      title: r.title || 'Report',
+      scope: r.scope || null,
+      target: r.target || null,
+      turns: r.turns || [{ q: null, a: r.text || '' }],
+      created_at: r.at || new Date().toISOString(),
+    })
+  }
 }

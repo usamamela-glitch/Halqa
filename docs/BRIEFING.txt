@@ -1,0 +1,826 @@
+Halqa App — Briefing for Claude Code
+
+Oct 13, 2026 · @Usama Mela
+
+Letter to Claude Code
+
+Dear Claude Code,
+
+This document is written by Claude Sonnet 4.6, the version of Claude
+that designed, built, and iterated on the Halqa app over many months in
+collaboration with Usama Mela — Member of the National Assembly, NA-83
+Sargodha-II, Punjab, Pakistan.
+
+You are being asked to build a brand new version of Halqa from scratch.
+The original app works and is being actively used in the field, but it
+carries the weight of over 50 incremental edits, partial feature
+attempts, ghost code, and accumulated CSS conflicts. The time has come
+for a clean rebuild — same purpose, same data, better code, and a set of
+powerful new features that the original could not accommodate cleanly.
+
+Usama's data lives safely in Supabase and must be connected to the new
+app. Nothing in the database changes. You are only rebuilding the
+frontend and its architecture.
+
+Read this document carefully before writing a single line of code. It
+tells you everything: what the app does, what went wrong in the
+original, what must be in the new version, and how it should look and
+feel. This is your complete brief.
+
+What Halqa Is
+
+Halqa (حلقہ) is the Urdu word for constituency. It is a personal
+constituency management app built exclusively for Usama Mela to manage
+his parliamentary constituency of roughly 700,000 people across NA-83
+Sargodha-II.
+
+The app is not a public product. It is a private political intelligence
+tool. Think of it as a CRM for a politician — but one that understands
+how Pakistani politics actually works: the Qanungo administrative
+structure, village-level dynamics, group loyalties, development demands,
+and the importance of personal relationships with key people.
+
+The core problem it solves: A Pakistani MNA interacts with hundreds of
+villages, thousands of contacts, and constantly shifting political
+dynamics. Without a system, everything lives in the MNA's head or in
+WhatsApp notes. Halqa brings it all into one place — organised,
+searchable, and eventually AI-analysable.
+
+How the constituency is structured: Pakistani rural constituencies are
+administratively divided by Qanungos (revenue officers who oversee a
+group of villages). Usama has organised his app to mirror this: Qanungos
+→ Villages → Contacts. Each village has election results (2018 and
+2024), population, voter count, group dynamics (our group vs
+opposition), development notes, contacts, and notes.
+
+The end goal: Once the data is rich enough — every village documented,
+key contacts added, dynamics filled in — Usama plans to run Claude AI
+analysis on the entire dataset to get village-by-village strategic
+recommendations for the next election. The app is, in a sense, building
+the database that will power that analysis.
+
+Current usage: The app is live at halqa-apps.vercel.app, added to
+Usama's iPhone home screen as a PWA, and used daily in the field. A
+handful of trusted colleagues also have access via the same URL.
+
+Current Tech Stack
+
+The original app uses the following stack. The new app should use the
+same stack unless you have a strong reason to deviate (discuss before
+changing).
+
+Frontend: Next.js (React), JavaScript (not TypeScript), CSS Modules for
+styling
+
+Database & Storage: Supabase (PostgreSQL + Storage buckets)
+
+Deployment: Vercel (auto-deploy from GitHub)
+
+GitHub Repo: usamamela-glitch/Halqa — main branch
+
+Live URL: https://halqa-apps.vercel.app
+
+Supabase credentials (connect the new app to the existing database):
+
+-   Project URL: https://zietsuiuzkfjjgbdybdd.supabase.co
+
+-   Anon Key:
+    eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppZXRzdWl1emtmampnYmR5YmRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI0MDYxNTcsImV4cCI6MjA5Nzk4MjE1N30.0MiKalT81TjwWFQmXM3D6umtbYEAN8RS3SzmWZxTJZg
+
+Important note on credentials: In the original app, these were hardcoded
+directly in lib/supabase.js. This was intentional — environment
+variables caused persistent deployment issues on Vercel's free tier. You
+may try env vars, but if deployment breaks, hardcode them as before.
+This is a personal app with no sensitive user data beyond Usama's own
+political notes.
+
+Supabase Storage buckets:
+
+-   note-images — public bucket for images attached to notes
+
+-   maps — public bucket containing the district map PDF
+
+-   contact-photos — to be created for the new contact photo feature
+
+No authentication system. The app has no login. Anyone with the URL has
+full access. This is intentional — Usama shares the URL with 3-5 trusted
+people. Do not add authentication unless explicitly asked.
+
+Database Schema
+
+Do not alter the existing tables. The new app reads from and writes to
+these exact tables. You may add new tables for new features.
+
+qanungos
+
+-   id (uuid, primary key)
+
+-   name (text)
+
+-   created_at (timestamptz)
+
+villages
+
+-   id (uuid, primary key)
+
+-   name (text)
+
+-   qanungo_id (uuid, foreign key → qanungos)
+
+-   result_2018 (text) — free text, e.g. "PTI win — 3,200 votes"
+
+-   result_2024 (text)
+
+-   population (integer)
+
+-   registered_voters (integer)
+
+-   our_group (text) — dynamics: description of allied group
+
+-   anti_group (text) — dynamics: description of opposition group
+
+-   development (text) — development notes
+
+-   pinned (boolean, default false)
+
+-   created_at (timestamptz)
+
+contacts
+
+-   id (uuid, primary key)
+
+-   village_id (uuid, foreign key → villages)
+
+-   name (text)
+
+-   phone (text)
+
+-   phone2 (text)
+
+-   phone3 (text)
+
+-   description (text)
+
+-   pinned (boolean, default false)
+
+-   created_at (timestamptz)
+
+notes — village-level notes
+
+-   id (uuid, primary key)
+
+-   village_id (uuid, foreign key → villages)
+
+-   body (text) — HTML content from contenteditable. Images saved as
+    [IMG:path] markers.
+
+-   images (text[]) — array of Supabase Storage paths
+
+-   created_at (timestamptz)
+
+general_notes — homepage-level notes
+
+-   id (uuid, primary key)
+
+-   body (text)
+
+-   images (text[])
+
+-   created_at (timestamptz)
+
+day_note — single persistent scratchpad
+
+-   id (integer, primary key) — always row id=1
+
+-   body (text)
+
+Image handling note: When saving a note, replace <img> tags with
+[IMG:path] markers using the data-path attribute. When loading, replace
+[IMG:path] markers with fresh <img> tags using Supabase Storage public
+URLs. This avoids blob URL expiry issues.
+
+Current Features (Replicate All of These)
+
+Every feature listed here is working in the current app and must be in
+the new app.
+
+Home Screen
+
+-   Three tabs: Qanungos, General, Search
+
+-   Qanungos tab shows: ⭐ Main Groups card (pinned contacts), 📅 Day to
+    Day card (scratchpad), then the list of Qanungos with village count
+
+-   General tab: iOS-style note list → tap to open full-screen note
+    editor with photo support
+
+-   Search tab: global search across contacts (name, phone) and villages
+    simultaneously
+
+-   Header shows village count and a 🗺 map button that opens the
+    district map PDF from Supabase Storage
+
+-   Dark teal header with grid texture pattern
+
+Qanungo Page
+
+-   Lists villages with contact count and voter count
+
+-   Pin/unpin villages (pinned float to top)
+
+-   Move village to different Qanungo
+
+-   Delete village
+
+-   Home button (🏠) in header
+
+Village Page
+
+-   Sticky header: village name, 2018 result, 2024 result, population,
+    registered voters
+
+-   Edit button opens modal to edit all of the above including village
+    name
+
+-   Four tabs: Contacts, Dynamics, Development, Notes
+
+-   Home button (🏠) in header
+
+Contacts Tab
+
+-   List of contacts with avatar (initials), name, phones, description
+
+-   Search bar to filter contacts within the village
+
+-   Pin button (📌) on each contact — pinned contacts float to top
+
+-   Call button (📞), WhatsApp button, vCard save button (👤+)
+
+-   Three phone number fields per contact
+
+-   Add/edit/delete contacts via modal
+
+-   Pinned contacts automatically appear in Main Groups on home screen
+
+Dynamics Tab
+
+-   Two text areas: Our Group, Opposition Group
+
+-   Save button with visual confirmation
+
+Development Tab
+
+-   Single text area for development notes/schemes
+
+-   Save button with visual confirmation
+
+Notes Tab (Village)
+
+-   iOS-style note list
+
+-   Tap to open full-screen note editor
+
+-   Photo upload via 📷 button — uploads to Supabase Storage
+
+-   Auto-save every 800ms + on back button + on visibility change
+
+-   Saved ✓ / Saving… / Unsaved status indicator
+
+-   Images saved as [IMG:path] markers, reconstructed on load
+
+-   Delete note with confirmation
+
+Main Groups Page
+
+-   Auto-aggregates all pinned contacts from every village across the
+    app
+
+-   Shows village name under each contact
+
+-   Call + WhatsApp buttons
+
+-   Tap contact → navigates to that village
+
+-   Unpin button removes from list instantly
+
+Day to Day
+
+-   Single full-screen scratchpad accessible from home screen
+
+-   Auto-saves to day_note table (row id=1)
+
+-   Same save status indicator as notes
+
+Paste Handling
+
+-   Pasting into notes strips all formatting — plain text only inserted,
+    never rich HTML
+
+vCard Export
+
+-   👤+ button downloads a .vcf file
+
+-   Includes both FN and N fields for reliable iOS name pre-fill
+
+-   Includes all three phone numbers and description as NOTE
+
+Map
+
+-   🗺 button in home header opens district map PDF from Supabase Storage
+
+-   URL:
+    https://zietsuiuzkfjjgbdybdd.supabase.co/storage/v1/object/public/maps/DISTRICT%20MAP%2021-09%20-2023%2005.pdf
+
+The Journey — What We Went Through
+
+This section exists so you understand why we are rebuilding, and so you
+do not repeat the same mistakes.
+
+How the original was built: The original app was built iteratively in a
+Claude.ai chat session over many months. Claude Sonnet 4.6 wrote code,
+sent zip files or individual files, and Usama pasted them into GitHub
+manually via the web interface. Every change went: write code → download
+file → Cmd+A on GitHub → delete → paste → commit → Vercel deploys. This
+workflow, while functional, accumulated significant technical debt.
+
+The ghost code problem (CRITICAL — do not repeat): The single most
+persistent bug in the entire project was a ghost reference to a function
+called importFromContacts in pages/village/[id].js. The story: we
+attempted to build an "Import from Contacts" feature using the browser's
+navigator.contacts API. We discovered it is not supported on iOS Safari.
+We removed the feature — but we did it incrementally across multiple
+edits, and a line calling importFromContacts on a button remained in the
+file long after the function was deleted. Every time we edited the
+village page and deployed, this orphaned reference caused a client-side
+JavaScript crash — the infamous white screen with "Application error: a
+client-side exception has occurred." We fixed it, it came back, we fixed
+it again. It haunted us for weeks. Lesson: when you build the new app,
+never leave a function call without its definition. Run npm run build
+and check for errors before considering any file done.
+
+The CSS duplication problem: Because we were sending whole files for
+replacement, and because my local copy of the codebase occasionally
+drifted from what was on GitHub, CSS blocks sometimes got duplicated.
+The most notable case: a .dayToDay class appeared twice in
+Home.module.css — once with height: calc(100vh - 160px) making a card
+take up the full screen. Lesson: in the new app, use a proper local
+development environment. Never paste-replace files blindly.
+
+The image/notes saga: Notes images went through three formats:
+
+1.  First: blob:// URLs (pasted images) — expired when browser closed,
+    gone overnight
+
+2.  Second: full <img src="..."> HTML saved in the body column — URLs
+    worked but reconstruction on reload was unreliable
+
+3.  Third (current): [IMG:path] markers in body, reconstructed into img
+    tags on load using fresh Supabase Storage URLs
+
+Format 3 works correctly. Stick with it in the new app.
+
+The Vercel auto-deploy breakdown: After many failed deployments (syntax
+errors, missing functions, etc.), Vercel's GitHub webhook stopped
+triggering. We spent hours troubleshooting — disconnect/reconnect
+GitHub, deploy hooks, the 100 deployment/day free tier limit. Lesson:
+use a proper git workflow with Claude Code. Commit only when the build
+passes locally.
+
+The contenteditable notes editor: The note editor used a contenteditable
+div instead of a <textarea>. This was chosen for better mobile typing
+feel and inline image support. It caused persistent issues: auto-save
+comparing wrong HTML snapshots, paste events inserting rich HTML with
+invisible text colors, cursor position resets. The block-based textarea
+approach we tried as a replacement caused even more problems (lost
+formatting, broken autosave). We ended up back on contenteditable with
+careful paste handling. For the new app, consider whether a proper rich
+text library (like Tiptap or Quill) would be worth the dependency, or
+stick with the proven contenteditable approach with careful handling.
+
+Things that worked well from the start:
+
+-   Supabase integration — fast, reliable, well-documented
+
+-   CSS Variables for theming — changing --green globally changed the
+    entire app
+
+-   The Qanungo → Village → Contact structure — perfect fit for the
+    constituency
+
+-   The pinning system and Main Groups auto-aggregation — elegant and
+    loved by the user
+
+Why We Are Rebuilding
+
+The current app works. Usama uses it daily. The data is valuable and
+growing. So why rebuild?
+
+1. Clean code. The current codebase has accumulated over 50 incremental
+edits via paste-replace on GitHub. It has duplicate CSS blocks, ghost
+function references that occasionally resurface, inconsistent component
+structure, and no type safety. A fresh build with Claude Code — which
+can run the build locally and catch errors before they reach Vercel —
+will produce a codebase that is maintainable and debuggable.
+
+2. Offline mode (most important new feature). Usama is an MNA who spends
+days in his rural constituency. Signal is unreliable. The current app
+cannot load without internet. He loses data because he has to jot things
+in iPhone Notes and transfer them later. The new app must be
+offline-first: data stored locally on the device, synced to Supabase
+when connection is available. This is the single most impactful change.
+
+3. New features. Several features were discussed and deferred because
+adding them cleanly to the current codebase was too risky. The new app
+will include all of them from the start (see New Feature List section).
+
+4. Better UI/UX. The current UI is functional but minimal — cards that
+blink between pages, no animations, basic styling. The new app should
+feel like a polished native app: page slide transitions, spring
+animations on modals, a bolder visual design (Option B), and a
+professional feel consistent with a product that could eventually be
+sold to other politicians.
+
+5. Commercial potential. There are 1,064 parliamentary constituencies in
+Pakistan. A well-built, beautiful, AI-powered version of this app could
+be sold to other MNAs and MPAs. The rebuild should be built with that
+quality bar in mind, even though the immediate user is one person.
+
+New App Feature List
+
+All features from the current app (see section above) plus the following
+new ones.
+
+1. Offline Mode (Highest Priority) The app must work completely without
+internet. Architecture:
+
+-   Use a local database on the device (IndexedDB via a library like
+    Dexie.js, or SQLite via the Origin Private File System)
+
+-   All reads and writes go to the local database first — instant, no
+    network dependency
+
+-   When internet is available, a background sync process pushes local
+    changes to Supabase
+
+-   When the app opens with internet, pull the latest from Supabase and
+    update local
+
+-   Conflict resolution: last-write-wins (acceptable since it's
+    primarily one user)
+
+-   The user should never know or care whether they are online or
+    offline — the app just works
+
+2. Claude AI Analysis A dedicated Analysis section accessible from the
+home screen. Three analysis modes:
+
+-   Analyze a specific village (pull all data for that village, generate
+    a report)
+
+-   Analyze a specific Qanungo (aggregate all villages within it)
+
+-   Analyze the entire constituency (full dataset — village by village
+    report)
+
+Output format for each: factual summary (vote history, group dynamics,
+key contacts, development status) + strategic recommendation (who to
+prioritise, what issues to address, risk level, what to do next).
+
+Implementation: pull data from Supabase, send to Claude API (model:
+claude-opus-5-5 or latest Opus), display streamed response. Usama will
+supply his own Claude API key. Build a settings screen where the API key
+can be entered and stored locally.
+
+3. Contact Profile Photos Each contact can have a profile photo.
+
+-   📷 button when adding/editing a contact: opens camera or photo
+    library
+
+-   Photo uploaded to Supabase Storage bucket contact-photos
+
+-   Displayed as circular avatar when opening a contact
+
+-   Falls back to initials avatar if no photo
+
+4. Quick-Add Contact (Home Screen) A floating ⚡ button in the bottom
+right of the home screen (Qanungos tab).
+
+-   Tapping opens a slide-up modal
+
+-   Fields: Name, Phone, Village (searchable dropdown of all villages),
+    Description (optional)
+
+-   Pre-selects the last village used
+
+-   Saves directly to the contacts table
+
+-   Designed for speed — adding a contact in under 10 seconds while in
+    the field
+
+5. Last Contacted Tracker Each contact has a "Last Contacted" date.
+
+-   A "✓ Contacted" button on each contact card logs today's date
+
+-   Main Groups page shows how many days since last contact
+
+-   Colour coding: green (< 7 days), amber (7-30 days), red (> 30 days)
+
+-   Solves Usama's problem of people feeling he is out of touch
+
+6. Village Completion Indicator Each village card in the Qanungo list
+shows a completion percentage.
+
+-   Green dot: dynamics filled + development filled + at least 1 contact
+
+-   Amber dot: partially filled
+
+-   Red dot: empty
+
+-   Gives Usama a visual sense of data gaps before the AI analysis
+
+7. Contact Tags Each contact can have one or more tags: Influencer, Key
+Voter, Opposition, Neutral, Government Officer, Religious Leader, Youth,
+Other.
+
+-   Tags shown as chips on the contact card
+
+-   Filterable in the contact search
+
+-   Used by the AI analysis to segment contacts by type
+
+8. Constituency Heatmap A visual map tab on the home screen showing all
+villages colour-coded by 2024 election result.
+
+-   Green: PTI/our candidate won
+
+-   Red: opponent won
+
+-   Yellow: close result
+
+-   Implementation: a simple SVG or Canvas rendering using approximate
+    GPS coordinates. Not a full map — a schematic that shows the
+    relative distribution of strong/weak villages.
+
+9. Main Groups Grouped by Qanungo In the Main Groups page, pinned
+contacts are grouped under their Qanungo name as section headers instead
+of one flat list.
+
+10. Maps for Large Villages For major towns (Lilliani, Kot Momin,
+Bhabra, Moazzamabad, Doda, Bhagtanwala), a map tab on the village page
+showing suburbs/Deras.
+
+-   Each suburb has a name and 1-2 key contacts
+
+-   Not clickable initially — just a visual layout
+
+-   Implemented using a simple canvas/SVG where Usama can label areas
+
+-   To be built iteratively; foundation should be in place
+
+11. Page Transitions & Animations
+
+-   Slide in from right when navigating forward
+
+-   Slide back from left when going back
+
+-   Spring animation on modals (slide up)
+
+-   Card press effect (slight scale on tap)
+
+-   Makes the app feel native, not like a website
+
+12. vCard Name Pre-Fill Fix Include both FN and N fields in vCard
+generation. N field format: N:LastName;FirstName;;; This ensures iOS
+always pre-fills the name when saving to Contacts.
+
+14. Search Result → Direct Contact Navigation When a contact is tapped
+in the global search results, the app navigates to that village's
+Contacts tab and automatically scrolls to that specific contact, which
+is briefly highlighted (a short yellow/teal flash) so the user can
+immediately see it. No manual scrolling required. This replaces the
+current behaviour where search takes the user only to the top of the
+village page.
+
+13. WhatsApp Broadcast (Future/Optional) In-app message composition,
+send to selected contacts or groups via WhatsApp Business API.
+Deprioritise — implement only if the core app is solid and Usama
+requests it.
+
+Design Direction
+
+Chosen style: Option B — Bold & Modern
+
+The current app is functional but minimal. The new app should feel like
+a polished, premium product.
+
+Color Scheme (keep exactly):
+
+-   Primary: Dark teal #1a4a4a
+
+-   Header gradient: linear-gradient(135deg, #1a4a4a 0%, #0d2e2e 100%)
+
+-   Body background: Blue-grey #e8edf2
+
+-   Cards: White #ffffff
+
+-   Card border: #d4dde8
+
+Header design:
+
+-   Gradient background (dark teal to deeper teal)
+
+-   Shows key stats in the header: total villages, total contacts,
+    pinned count
+
+-   Bold typography, larger font size
+
+-   Grid texture pattern (subtle repeating lines)
+
+Typography:
+
+-   Font: Inter (already in use)
+
+-   Headings: font-weight 800, letter-spacing -1px
+
+-   Body: font-weight 400-500
+
+-   Bigger and bolder than the current app
+
+Cards:
+
+-   Slightly larger padding
+
+-   Stronger shadow: box-shadow: 0 2px 8px rgba(0,0,0,0.08)
+
+-   Teal dot indicator on left of Qanungo cards
+
+-   Smooth hover/active states
+
+Page Transitions:
+
+-   Forward navigation (tap a card): new page slides in from right
+
+-   Back navigation: page slides back to left
+
+-   Duration: 250-300ms
+
+-   Easing: ease-in-out
+
+-   Use Framer Motion or CSS transitions — whichever integrates more
+    cleanly with Next.js
+
+Modal Animations:
+
+-   Modals slide up from bottom (like iOS sheets)
+
+-   Spring animation: slight overshoot and settle
+
+-   Backdrop fades in
+
+Card Press Effect:
+
+-   On tap: scale(0.97), slight background darkening
+
+-   On release: spring back to normal
+
+-   Makes the app feel tactile and native
+
+Mobile-first design:
+
+-   The app is used exclusively on iPhone (added to home screen as PWA)
+
+-   Design for a 390px viewport (iPhone 14 Pro)
+
+-   All tap targets minimum 44x44px (Apple HIG)
+
+-   Bottom padding on all scrollable views to account for home indicator
+
+-   Safe area insets respected (especially at the top)
+
+No desktop design needed — this app is never used on a desktop. Mobile
+only.
+
+Instructions to Claude Code
+
+You are building a brand new Next.js app from scratch. Here is exactly
+how to approach this.
+
+Step 1: Set up the project
+
+-   npx create-next-app@latest halqa-v2 --no-typescript --no-tailwind
+    --no-eslint
+
+-   Install dependencies: npm install @supabase/supabase-js dexie
+    framer-motion
+
+-   Dexie.js for IndexedDB (offline storage), Framer Motion for
+    animations
+
+-   Copy the Supabase credentials from the Tech Stack section into
+    lib/supabase.js
+
+Step 2: Set up offline-first architecture FIRST Before building any UI,
+set up the data layer:
+
+-   Create a Dexie database (lib/db.js) that mirrors the Supabase
+    schema: tables for qanungos, villages, contacts, notes,
+    general_notes, day_note
+
+-   Write a sync service (lib/sync.js) that:
+
+    -   On app load (if online): pulls latest from Supabase into Dexie
+
+    -   After any local write: immediately writes to Dexie, then pushes
+        to Supabase in background
+
+    -   If Supabase push fails: queues the operation and retries when
+        connection restored
+
+-   All React components read from Dexie, never directly from Supabase
+
+-   This architecture means the UI is always fast (local reads) and
+    works offline
+
+Step 3: Build components in this order
+
+1.  Layout and navigation shell with Framer Motion page transitions
+
+2.  Home screen (Qanungos tab, General tab, Search tab)
+
+3.  Qanungo page
+
+4.  Village page with all four tabs
+
+5.  Main Groups page
+
+6.  Day to Day scratchpad
+
+7.  Note editor
+
+8.  Quick-Add contact modal
+
+9.  Analysis section (last — needs Claude API key setup)
+
+Step 4: Run npm run build after every component Do not accumulate
+multiple changes before building. Build and fix after each component.
+This prevents the cascading errors that plagued the original.
+
+Critical rules — do not break these:
+
+1.  Never leave a function call without its definition. If a button
+    calls handleSomething, that function must exist in the same file
+    before you commit.
+
+2.  Check for ghost references before every build. Search the file for
+    any function names used in JSX that are not defined above.
+
+3.  Never save blob:// URLs. Images must be uploaded to Supabase Storage
+    and saved as [IMG:path] markers.
+
+4.  Always include both FN and N fields in vCard generation.
+
+5.  No authentication. Do not add a login system.
+
+6.  Mobile only. Do not waste time on responsive desktop layouts.
+
+7.  Keep the same database. Do not drop or rename existing columns. You
+    may add new columns and tables.
+
+On the offline implementation: The offline mode is the most complex part
+of this build. Take it seriously. Test it by:
+
+-   Loading the app
+
+-   Turning off WiFi/mobile data
+
+-   Adding a contact, editing a village's dynamics
+
+-   Turning connectivity back on
+
+-   Verifying the changes appear in Supabase
+
+If you are unsure about the offline architecture, research the
+Dexie.js + Supabase sync pattern before starting. There are
+well-documented approaches for this.
+
+On the Claude AI Analysis: The Claude API key will be provided by Usama.
+Build a simple settings screen where he can enter it. Store it in
+localStorage (acceptable for this personal app). When analysis is
+triggered, pull all relevant data from the local Dexie database, format
+it into a well-structured prompt, and stream the response from the
+Claude API. The prompt should include the user's own notes and
+descriptions — they are the most valuable data for analysis.
+
+On deployment: Once the app is working locally, create a new Vercel
+project (do not overwrite the existing halqa-apps project, which should
+remain live until the new app is tested). Connect to a new GitHub repo
+usamamela-glitch/halqa-v2. Once Usama confirms the new app is working
+correctly, he will update his iPhone home screen bookmark.
+
+Finally: This app is used by a Member of Parliament in Pakistan to
+manage his political constituency. The data inside it is sensitive
+political intelligence. Build it with that seriousness. The person who
+will use it most is not a developer — he is a politician with an iPhone,
+in the field, meeting people all day. Every interaction should be fast,
+intuitive, and forgiving of mistakes. When in doubt, optimise for speed
+of data entry and reliability over cleverness.

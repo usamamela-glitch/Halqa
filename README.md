@@ -19,6 +19,12 @@ The existing tables are unchanged. v2 only **adds** things — run `supabase/mig
 
 Until it's run, the app still works: values for the new fields stay on the phone and Settings shows "Database update needed".
 
+## iPhone Contacts (CardDAV)
+
+`api/carddav.js` is a Vercel function (routed from `/carddav/*` by `vercel.json`) serving Halqa contacts read-only to iPhone Contacts. Logic is in `lib/carddav.js`. Logins `halqa-all` (every contact) and `halqa-new` (added since `NEW_SINCE`) share the password in the Vercel env var `HALQA_CONTACTS_PASSWORD`. On the iPhone: Settings → Contacts → Accounts → Add Account → Other → Add CardDAV Account, server `<app domain>/carddav/`.
+
+`vercel.json` sets the project to plain static output (`out/`) so the root `api/` folder is deployed as functions.
+
 ## Commands
 
 ```bash

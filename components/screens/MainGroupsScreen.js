@@ -53,7 +53,7 @@ export default function MainGroupsScreen() {
       }
     >
       {contacts.length === 0 ? (
-        <Empty icon={<IconStar size={28} />} title="No pinned contacts yet" text="Open any contact and tap Pin. They'll appear here, grouped by Qanungo." />
+        <Empty icon={<IconStar size={28} />} title="No pinned contacts yet" text="Tap the pin on any contact. They'll appear here, grouped by Qanungo." />
       ) : groups.map(g => (
         <div key={g.name} className={ui.section}>
           <div className={ui.sectionHead}><span>{g.name}</span><span>{g.items.length}</span></div>

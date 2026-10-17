@@ -38,7 +38,7 @@ export default function HomeScreen() {
         <>
           <div className={h.heroTop}>
             <div className={h.brand}>
-              <div className={h.brandTitle}>Halqa<span className={h.brandUrdu}>حلقہ</span></div>
+              <div className={h.brandTitle}>Halqa</div>
               <div className={h.brandSub}>NA-83 Sargodha-II</div>
             </div>
             <SyncPill />

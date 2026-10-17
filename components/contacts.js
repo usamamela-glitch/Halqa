@@ -16,10 +16,25 @@ export function CallButtons({ contact }) {
   const phone = phonesOf(contact)[0]
   if (!phone) return null
   return (
-    <div className={s.rowActions} onClick={e => e.stopPropagation()}>
+    <>
       <a className={ui.iconBtn} href={telHref(phone)} aria-label={`Call ${contact.name}`}><IconPhone size={19} /></a>
       <a className={cx(ui.iconBtn, ui.iconBtnWa)} href={waHref(phone)} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${contact.name}`}><IconWhatsApp size={20} /></a>
-    </div>
+    </>
+  )
+}
+
+function PinButton({ contact, onUnpin }) {
+  const toast = useToast()
+  async function toggle() {
+    if (contact.pinned && onUnpin) return onUnpin()
+    await updateRow('contacts', contact.id, { pinned: !contact.pinned })
+    toast(contact.pinned ? `Unpinned ${contact.name}` : `Pinned ${contact.name}`)
+  }
+  return (
+    <button className={cx(ui.iconBtn, s.pinBtn, contact.pinned && s.pinBtnOn)} onClick={toggle}
+      aria-label={`${contact.pinned ? 'Unpin' : 'Pin'} ${contact.name}`} aria-pressed={!!contact.pinned}>
+      <IconPin size={18} filled={!!contact.pinned} />
+    </button>
   )
 }
 
@@ -39,12 +54,6 @@ export function ContactRow({ contact, subtitle, onPress, highlight, showContacte
         <div className={s.rowMain}>
           <div className={s.nameLine}>
             <span className={s.name}>{contact.name}</span>
-            {contact.pinned && !onUnpin && <span className={s.pinMark}><IconPin size={14} filled /></span>}
-            {onUnpin && (
-              <button className={s.unpin} onClick={e => { e.stopPropagation(); onUnpin() }} aria-label={`Unpin ${contact.name}`}>
-                <IconPin size={15} filled />
-              </button>
-            )}
           </div>
           {subtitle && <span className={s.sub}>{subtitle}</span>}
           <span className={s.sub}>{phones.join(' · ') || 'No number'}</span>
@@ -56,7 +65,10 @@ export function ContactRow({ contact, subtitle, onPress, highlight, showContacte
             </div>
           )}
         </div>
-        <CallButtons contact={contact} />
+        <div className={s.rowActions} onClick={e => e.stopPropagation()}>
+          <PinButton contact={contact} onUnpin={onUnpin} />
+          <CallButtons contact={contact} />
+        </div>
       </Card>
     </li>
   )
@@ -208,7 +220,7 @@ function useDuplicate(phones, selfId) {
 
 // ---------- Add / edit form ----------
 
-const EMPTY = { name: '', phone: '', phone2: '', phone3: '', description: '', tags: [], photo_path: null, village_id: null }
+const EMPTY = { name: '', phone: '', phone2: '', phone3: '', description: '', tags: [], photo_path: null, village_id: null, pinned: false }
 
 function ContactForm({ initial, onDone, onOpenExisting, quick }) {
   const toast = useToast()
@@ -244,7 +256,7 @@ function ContactForm({ initial, onDone, onOpenExisting, quick }) {
     // the database migration has been run.
     if (f.tags.length || (initial.tags || []).length) data.tags = f.tags
     if (f.photo_path !== (initial.photo_path || null)) data.photo_path = f.photo_path
-    if (isNew) await insertRow('contacts', { id: idRef.current, pinned: false, ...data })
+    if (isNew) await insertRow('contacts', { id: idRef.current, pinned: !!f.pinned, ...data })
     else await updateRow('contacts', idRef.current, data)
     setLastVillage(f.village_id)
     setSaving(false)
@@ -290,6 +302,16 @@ function ContactForm({ initial, onDone, onOpenExisting, quick }) {
       <Field label="Village">
         <VillagePicker value={f.village_id} onChange={v => set('village_id', v)} autoOpen={quick} />
       </Field>
+
+      {isNew && (
+        <label className={s.pinSwitch}>
+          <span className={s.pinSwitchText}>
+            <IconPin size={18} filled={!!f.pinned} />
+            <span>Pin to Main Groups</span>
+          </span>
+          <input type="checkbox" className={s.switch} checked={!!f.pinned} onChange={e => set('pinned', e.target.checked)} />
+        </label>
+      )}
 
       <Field label="Description">
         <textarea className={ui.textarea} style={{ minHeight: 76 }} rows={2} value={f.description} onChange={e => set('description', e.target.value)} placeholder="e.g. Village elder, numberdar" />

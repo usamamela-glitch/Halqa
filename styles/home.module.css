@@ -1,7 +1,6 @@
 .heroTop { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; }
 .brand { display: flex; flex-direction: column; }
 .brandTitle { font-size: 36px; font-weight: 800; letter-spacing: -1.4px; line-height: 1.05; }
-.brandUrdu { font-weight: 700; opacity: 0.55; margin-left: 8px; font-size: 28px; }
 .brandSub { margin-top: 6px; font-size: 14px; font-weight: 550; color: rgba(255,255,255,0.65); }
 
 .featureRow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }

@@ -47,6 +47,10 @@ export default async function handler(req, res) {
       password: process.env.HALQA_CONTACTS_PASSWORD,
       load,
     })
+    // One line per request (no passwords) so connection problems can be traced in Vercel logs.
+    const user = (req.headers.authorization || '').startsWith('Basic ')
+      ? Buffer.from(req.headers.authorization.slice(6), 'base64').toString('utf8').split(':')[0] : '-'
+    console.log(`carddav ${req.method} ${path} depth=${req.headers.depth || '-'} user=${user} -> ${out.status} ua=${req.headers['user-agent'] || '-'}`)
     res.writeHead(out.status, { 'Cache-Control': 'no-store', ...out.headers })
     res.end(out.body)
   } catch (e) {

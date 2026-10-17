@@ -19,7 +19,7 @@ function FirstLoad() {
   const offline = !st.online
   return (
     <div className={s.boot}>
-      <div className={s.mark}>ح</div>
+      <div className={s.mark}>H</div>
       <div className={s.name}>Halqa</div>
       {offline ? (
         <>

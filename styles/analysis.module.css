@@ -39,3 +39,14 @@
 .savedItem:active { background: var(--bg); }
 .savedTitle { font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .savedDate { color: var(--muted); font-size: 14px; flex-shrink: 0; }
+
+/* Conversation: report or answer, then follow-up questions and answers */
+.reportTitle { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 12px; }
+.turn + .turn { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--hair); }
+.question {
+  margin: 0 0 14px auto; width: fit-content; max-width: 88%;
+  padding: 10px 14px; border-radius: 16px 16px 4px 16px;
+  background: var(--teal); color: #fff; font-size: 15.5px; line-height: 1.45; font-weight: 550;
+  white-space: pre-wrap;
+}
+.followUp { margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--hair); }

@@ -1,12 +1,13 @@
-import { useMemo } from 'react'
+import { useMemo, useRef } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
 import { useNav } from '../../lib/nav'
 import { updateRow } from '../../lib/store'
 import { byName, daysSince, contactedLevel } from '../../lib/domain'
-import { Screen, Empty, ui, useToast } from '../ui'
+import { Screen, Empty, cx, ui, useToast } from '../ui'
 import { ContactRow } from '../contacts'
 import { IconStar } from '../Icons'
+import m from '../../styles/maingroups.module.css'
 
 export default function MainGroupsScreen() {
   const { push } = useNav()
@@ -14,6 +15,7 @@ export default function MainGroupsScreen() {
   const contacts = useLiveQuery(() => db.contacts.filter(c => !!c.pinned).toArray(), [], [])
   const villages = useLiveQuery(() => db.villages.toArray(), [], [])
   const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
+  const sectionRefs = useRef({})
 
   const groups = useMemo(() => {
     const vById = Object.fromEntries(villages.map(v => [v.id, v]))
@@ -54,9 +56,19 @@ export default function MainGroupsScreen() {
     >
       {contacts.length === 0 ? (
         <Empty icon={<IconStar size={28} />} title="No pinned contacts yet" text="Tap the pin on any contact. They'll appear here, grouped by Qanungo." />
-      ) : groups.map(g => (
-        <div key={g.name} className={ui.section}>
-          <div className={ui.sectionHead}><span>{g.name}</span><span>{g.items.length}</span></div>
+      ) : (<>
+        {/* Jump straight to a Qanungo instead of scrolling the whole list. Stays at the top while scrolling. */}
+        <nav className={m.jump} aria-label="Jump to Qanungo">
+          {groups.map(g => (
+            <button key={g.name} type="button" className={m.jumpBtn}
+              onClick={() => sectionRefs.current[g.name]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              {g.name}<span className={m.jumpCount}>{g.items.length}</span>
+            </button>
+          ))}
+        </nav>
+        {groups.map(g => (
+        <div key={g.name} className={cx(ui.section, m.section)} ref={el => { sectionRefs.current[g.name] = el }}>
+          <h2 className={m.head}><span>{g.name}</span><span className={m.headCount}>{g.items.length}</span></h2>
           <ul className={ui.list}>
             {g.items.map(({ c, village }) => (
               <ContactRow key={c.id} contact={c} villageName={village?.name} subtitle={village?.name || 'Unknown village'} showContacted
@@ -65,7 +77,8 @@ export default function MainGroupsScreen() {
             ))}
           </ul>
         </div>
-      ))}
+        ))}
+      </>)}
     </Screen>
   )
 }

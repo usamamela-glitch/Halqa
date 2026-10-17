@@ -1,0 +1,31 @@
+/* Qanungo jump strip: sticks just under the top bar. */
+.jump {
+  position: sticky; top: calc(var(--safe-top) + 54px); z-index: 20;
+  display: flex; gap: 8px; overflow-x: auto;
+  margin: -4px -16px 0; padding: 10px 16px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--hair);
+  scrollbar-width: none;
+}
+.jump::-webkit-scrollbar { display: none; }
+.jumpBtn {
+  flex-shrink: 0; height: 38px; padding: 0 14px; border-radius: 19px;
+  display: inline-flex; align-items: center; gap: 7px;
+  font-size: 15px; font-weight: 650; white-space: nowrap;
+  background: var(--card); color: var(--ink); border: 1px solid var(--border);
+}
+.jumpBtn:active { background: var(--teal-50); }
+.jumpCount { font-size: 13px; font-weight: 700; color: var(--muted); }
+
+/* Lands just below the bar and the jump strip. */
+.section { scroll-margin-top: calc(var(--safe-top) + 54px + 66px); }
+.section:first-of-type { margin-top: 14px; }
+.head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin: 0; padding: 4px 4px 10px;
+  font-size: 22px; font-weight: 800; letter-spacing: -0.5px; color: var(--teal);
+}
+.headCount {
+  font-size: 14px; font-weight: 700; color: var(--teal);
+  background: var(--teal-50); border-radius: 12px; padding: 3px 10px;
+}

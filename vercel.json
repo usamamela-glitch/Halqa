@@ -3,10 +3,20 @@
   "buildCommand": "npm run build",
   "outputDirectory": "out",
   "redirects": [
-    { "source": "/.well-known/carddav", "destination": "/carddav/", "permanent": true }
+    {
+      "source": "/.well-known/carddav",
+      "destination": "/carddav/",
+      "permanent": true
+    }
   ],
   "rewrites": [
-    { "source": "/carddav", "destination": "/api/carddav?p=" },
-    { "source": "/carddav/:path*", "destination": "/api/carddav?p=:path*" }
+    {
+      "source": "/carddav",
+      "destination": "/api/carddav?p="
+    },
+    {
+      "source": "/carddav/(.*)",
+      "destination": "/api/carddav?p=$1"
+    }
   ]
 }

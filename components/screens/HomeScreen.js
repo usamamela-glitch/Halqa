@@ -9,6 +9,7 @@ import { phoneDigits, phonesOf } from '../../lib/phone'
 import { Screen, BarButton, Tabs, Card, Sheet, ActionSheet, Empty, Field, SearchBox, SyncPill, cx, ui, useToast } from '../ui'
 import { ContactRow, useContactSheets } from '../contacts'
 import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers } from '../Icons'
+import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import h from '../../styles/home.module.css'
 
 const TABS = ['Qanungos', 'Notes', 'Search']
@@ -29,7 +30,7 @@ export default function HomeScreen() {
       barTitle={null}
       actions={
         <>
-          <BarButton onClick={() => push('map')} aria-label="District map"><IconMap size={21} /></BarButton>
+          {SHOW_MAP && <BarButton onClick={() => push('map')} aria-label="District map"><IconMap size={21} /></BarButton>}
           <BarButton onClick={() => push('analysis')} aria-label="AI analysis"><IconSparkles size={21} /></BarButton>
           <BarButton onClick={() => push('settings')} aria-label="Settings"><IconSettings size={21} /></BarButton>
         </>
@@ -39,7 +40,7 @@ export default function HomeScreen() {
           <div className={h.heroTop}>
             <div className={h.brand}>
               <div className={h.brandTitle}>Halqa</div>
-              <div className={h.brandSub}>NA-83 Sargodha-II</div>
+              <div className={h.brandSub}>{CONSTITUENCY}</div>
             </div>
             <SyncPill />
           </div>

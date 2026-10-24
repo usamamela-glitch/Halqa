@@ -334,20 +334,18 @@ function ContactForm({ initial, onDone, onOpenExisting, quick }) {
         <textarea className={ui.textarea} style={{ minHeight: 76 }} rows={2} value={f.description} onChange={e => set('description', e.target.value)} placeholder="e.g. Village elder, numberdar" />
       </Field>
 
-      {!quick && (
-        <div className={ui.field}>
-          <span className={ui.label}>Tags</span>
-          <div className={s.tagGrid}>
-            {TAGS.map(t => {
-              const on = f.tags.includes(t)
-              return (
-                <button type="button" key={t} className={cx(ui.chipBtn, on && ui.chipBtnOn)}
-                  onClick={() => set('tags', on ? f.tags.filter(x => x !== t) : [...f.tags, t])}>{t}</button>
-              )
-            })}
-          </div>
+      <div className={ui.field}>
+        <span className={ui.label}>Tags</span>
+        <div className={s.tagGrid}>
+          {TAGS.map(t => {
+            const on = f.tags.includes(t)
+            return (
+              <button type="button" key={t} className={cx(ui.chipBtn, on && ui.chipBtnOn)}
+                onClick={() => set('tags', on ? f.tags.filter(x => x !== t) : [...f.tags, t])}>{t}</button>
+            )
+          })}
         </div>
-      )}
+      </div>
 
       <button type="submit" className={cx(ui.btn, ui.btnPrimary, ui.btnBlock)} style={{ marginTop: 22 }} disabled={!f.name.trim() || !f.village_id || saving}>
         {isNew ? 'Save contact' : 'Save changes'}

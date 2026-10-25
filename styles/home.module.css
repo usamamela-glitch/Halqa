@@ -36,3 +36,7 @@
 
 .villageRow { padding: 14px 16px; }
 .resultCount { font-size: 13px; font-weight: 700; color: var(--faint); }
+
+/* Shown while iPhone contacts are waiting to be sorted */
+.importCard { margin-bottom: 12px; border-color: var(--teal-500); }
+.importIcon { background: var(--teal-50); color: var(--teal); }

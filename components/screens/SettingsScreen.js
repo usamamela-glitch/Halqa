@@ -5,13 +5,15 @@ import { syncNow } from '../../lib/sync'
 import { getApiKey, setApiKey } from '../../lib/analysis'
 import { shortDate } from '../../lib/domain'
 import { Screen, Field, cx, ui, useSyncState, useToast } from '../ui'
-import { IconRefresh } from '../Icons'
+import { IconRefresh, IconDownload } from '../Icons'
+import { useNav } from '../../lib/nav'
 import st from '../../styles/settings.module.css'
 
 const APP_VERSION = '2.0.0'
 
 export default function SettingsScreen() {
   const toast = useToast()
+  const { push } = useNav()
   const sync = useSyncState()
   const failed = useLiveQuery(() => db.failed.toArray(), [], [])
   const missing = useLiveQuery(async () => (await db.meta.get('missingColumns'))?.value || {}, [], {})
@@ -80,6 +82,16 @@ export default function SettingsScreen() {
           </div>
         </div>
       )}
+
+      <div className={ui.section}>
+        <div className={ui.sectionHead}><span>iPhone contacts</span></div>
+        <div className={st.card}>
+          <p className={st.note} style={{ marginTop: 0 }}>Bring in the contacts saved in your iPhone's Contacts app. Anyone already in Halqa is left out.</p>
+          <button className={cx(ui.btn, ui.btnSecondary, ui.btnBlock)} style={{ marginTop: 12 }} onClick={() => push('import')}>
+            <IconDownload size={19} />Import contacts
+          </button>
+        </div>
+      </div>
 
       <div className={ui.section}>
         <div className={ui.sectionHead}><span>Claude API key</span></div>

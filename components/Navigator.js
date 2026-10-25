@@ -9,6 +9,7 @@ import NoteScreen from './screens/NoteScreen'
 import MapScreen from './screens/MapScreen'
 import SettingsScreen from './screens/SettingsScreen'
 import AnalysisScreen from './screens/AnalysisScreen'
+import ImportScreen from './screens/ImportScreen'
 
 const SCREENS = {
   home: HomeScreen,
@@ -20,6 +21,7 @@ const SCREENS = {
   map: MapScreen,
   settings: SettingsScreen,
   analysis: AnalysisScreen,
+  import: ImportScreen,
 }
 
 // iOS-like push: 300ms, decelerating.

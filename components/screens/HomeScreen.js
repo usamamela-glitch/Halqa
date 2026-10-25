@@ -8,7 +8,7 @@ import { plainText } from '../../lib/images'
 import { phoneDigits, phonesOf } from '../../lib/phone'
 import { Screen, BarButton, Tabs, Card, Sheet, ActionSheet, Empty, Field, SearchBox, SyncPill, cx, ui, useToast } from '../ui'
 import { ContactRow, useContactSheets } from '../contacts'
-import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers } from '../Icons'
+import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers, IconDownload } from '../Icons'
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import h from '../../styles/home.module.css'
 
@@ -68,6 +68,7 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
   const toast = useToast()
   const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
   const dayNote = useLiveQuery(() => db.day_note.get(1), [])
+  const toSort = useLiveQuery(() => db.import_queue.count(), [], 0)
   const [menu, setMenu] = useState(null)
   const [nameSheet, setNameSheet] = useState(null) // { id?, name }
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -108,6 +109,16 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
 
   return (
     <>
+      {toSort > 0 && (
+        <Card className={h.importCard} onClick={() => push('import')}>
+          <span className={cx(ui.featureIcon, h.importIcon)}><IconDownload size={21} /></span>
+          <span className={h.featureText}>
+            <span className={h.featureTitle}>{toSort.toLocaleString()} iPhone contacts to sort</span>
+            <span className={h.featureSub}>Continue importing</span>
+          </span>
+          <IconChevron size={18} />
+        </Card>
+      )}
       <div className={h.featureRow}>
         <Card className={h.feature} onClick={() => push('mainGroups')}>
           <span className={cx(ui.featureIcon, h.featureStar)}><IconStar size={22} filled /></span>

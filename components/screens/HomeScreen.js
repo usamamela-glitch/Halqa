@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
 import { useNav, useScreen } from '../../lib/nav'
@@ -23,6 +23,16 @@ export default function HomeScreen() {
   const villages = useLiveQuery(() => db.villages.toArray(), [], [])
   const contacts = useLiveQuery(() => db.contacts.toArray(), [], [])
   const pinnedCount = contacts.filter(c => c.pinned).length
+
+  // The "Save to Halqa" Shortcut (iPhone share menu) opens /?add=1&name=…&phone=…:
+  // show Quick Add with the shared contact filled in.
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search)
+    if (!p.has('add')) return
+    const phones = (p.get('phone') || '').split(/[\n,;]+/).map(s => s.trim()).filter(Boolean)
+    window.history.replaceState(null, '', window.location.pathname)
+    sheets.quickAdd({ village_id: null, name: (p.get('name') || '').trim(), phone: phones[0] || '', phone2: phones[1] || '', phone3: phones[2] || '' })
+  }, [])
 
   return (
     <Screen
@@ -53,7 +63,7 @@ export default function HomeScreen() {
       }
       tabs={<Tabs id="home" tabs={TABS} value={tab} onChange={t => setParams(key, { tab: t })} />}
     >
-      {tab === 'Qanungos' && <QanungosTab villages={villages} contacts={contacts} pinnedCount={pinnedCount} onQuickAdd={sheets.quickAdd} />}
+      {tab === 'Qanungos' && <QanungosTab villages={villages} contacts={contacts} pinnedCount={pinnedCount} onQuickAdd={() => sheets.quickAdd()} />}
       {tab === 'Notes' && <NotesTab />}
       {tab === 'Search' && <SearchTab villages={villages} contacts={contacts} />}
       {sheets.element}

@@ -302,7 +302,7 @@ function ContactForm({ initial, onDone, onOpenExisting, quick }) {
       <Field label="Phone">
         <input className={ui.input} type="tel" inputMode="tel" value={f.phone} onChange={e => set('phone', e.target.value)} placeholder="0300-1234567" autoComplete="off" />
       </Field>
-      {!quick && showMore && (
+      {showMore && (
         <>
           <Field label="Phone 2"><input className={ui.input} type="tel" inputMode="tel" value={f.phone2} onChange={e => set('phone2', e.target.value)} placeholder="Optional" /></Field>
           <Field label="Phone 3"><input className={ui.input} type="tel" inputMode="tel" value={f.phone3} onChange={e => set('phone3', e.target.value)} placeholder="Optional" /></Field>
@@ -365,7 +365,7 @@ export function useContactSheets() {
   const api = {
     open: id => { setForm(null); setView(id) },
     add: villageId => { setView(null); setFormKey(k => k + 1); setForm({ initial: { village_id: villageId }, quick: false }) },
-    quickAdd: () => { setView(null); setFormKey(k => k + 1); setForm({ initial: { village_id: lastVillage }, quick: true }) },
+    quickAdd: (prefill = {}) => { setView(null); setFormKey(k => k + 1); setForm({ initial: { village_id: lastVillage, ...prefill }, quick: true }) },
   }
 
   const element = (

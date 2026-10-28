@@ -69,6 +69,42 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - can be deleted (with undo)
   - older reports can be continued later
 
+## "Save to Halqa" Shortcut (built 28 Oct 2026, working)
+- In WhatsApp: hold a shared contact → Forward → share button → **Save to Halqa**. Halqa opens in Safari on Quick Add with the name and number(s) filled in. The village is always left for him to choose.
+- Link format: `/?add=1&name=<encoded>&phone=<encoded numbers, one per line>`, handled in `HomeScreen.js`.
+- The Shortcut on his iPhone, in order:
+  1. Receive **Contacts** from Share Sheet
+  2. Get Name from Shortcut Input
+  3. URL Encode
+  4. Get Phone Numbers from Shortcut Input
+  5. URL Encode
+  6. Text: `https://halqa-apps.vercel.app/?add=1&name=[encoded name]&phone=[encoded phones]`
+  7. Open URLs
+
+## Next up: daily list + weekly AI briefing (agreed in principle, details to finalise)
+- **"In touch" replaces "Last contacted".** A person counts as in touch when:
+  - he taps call or WhatsApp in Halqa (recorded instantly, no question),
+  - they appear in his daily list, or
+  - he opens their card.
+
+  Seeing someone on screen counts as contact. The manual "Contacted" toggle goes. Cards show "In touch: 3 days ago", or "Not yet".
+- **Daily list:** 35 a day, 15 pinned + 20 unpinned.
+  - Picked at random from those not seen for longest, so everyone rotates through: pinned roughly monthly, unpinned roughly every 5 months.
+  - "Show me 35 more" button.
+  - The list stays the same all day.
+  - "Remove from list" for people who have died or moved (undoable from their card).
+  - Each card shows name, village, tags, description, call and WhatsApp.
+- **Purpose:** direct contact with ordinary (unpinned) constituents, not only through the influential pinned people.
+- **Weekly AI briefing:** generated on the first open each Monday (or on demand), saved with the reports.
+  - It covers last week's coverage, focus villages and the reasons, named people with talking points, and warning signs.
+  - People it names are boosted in the daily list.
+  - Cost is about $1 a week.
+- **Still open:**
+  - Does scrolling past people elsewhere (village lists, search) count as seen? Proposed: only if they stay on screen for 1–2 seconds.
+  - The briefing's focus.
+  - Optional one-line note after a contact.
+- **Timing:** Usama is first finishing sorting the remaining ~700 imported contacts.
+
 ## Ideas Usama is considering (not started)
 - **Seeing a caller's Halqa profile when they call or WhatsApp.** A full profile on the call screen is impossible on iOS. Options offered:
   1. A "Paste number" button in Search that opens the matching profile.

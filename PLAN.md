@@ -81,29 +81,43 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   6. Text: `https://halqa-apps.vercel.app/?add=1&name=[encoded name]&phone=[encoded phones]`
   7. Open URLs
 
-## Next up: daily list + weekly AI briefing (agreed in principle, details to finalise)
-- **"In touch" replaces "Last contacted".** A person counts as in touch when:
-  - he taps call or WhatsApp in Halqa (recorded instantly, no question),
-  - they appear in his daily list, or
-  - he opens their card.
+## Next up: daily list + monthly AI briefing (spec agreed 29 Oct 2026, not built yet)
 
-  Seeing someone on screen counts as contact. The manual "Contacted" toggle goes. Cards show "In touch: 3 days ago", or "Not yet".
-- **Daily list:** 35 a day, 15 pinned + 20 unpinned.
-  - Picked at random from those not seen for longest, so everyone rotates through: pinned roughly monthly, unpinned roughly every 5 months.
-  - "Show me 35 more" button.
-  - The list stays the same all day.
-  - "Remove from list" for people who have died or moved (undoable from their card).
-  - Each card shows name, village, tags, description, call and WhatsApp.
-- **Purpose:** direct contact with ordinary (unpinned) constituents, not only through the influential pinned people.
-- **Weekly AI briefing:** generated on the first open each Monday (or on demand), saved with the reports.
-  - It covers last week's coverage, focus villages and the reasons, named people with talking points, and warning signs.
-  - People it names are boosted in the daily list.
-  - Cost is about $1 a week.
-- **Still open:**
-  - Does scrolling past people elsewhere (village lists, search) count as seen? Proposed: only if they stay on screen for 1–2 seconds.
-  - The briefing's focus.
-  - Optional one-line note after a contact.
-- **Timing:** Usama is first finishing sorting the remaining ~700 imported contacts.
+**"In touch" replaces "Last contacted"** (the manual toggle goes). A person is in touch today when he:
+- taps **WhatsApp** or **call** on them, anywhere in Halqa, or
+- **opens their contact card**, anywhere.
+
+Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", or "Not yet".
+
+**Daily list:**
+1. A new day brings **35 people: 15 pinned + 20 unpinned**. They're picked at random from those not in touch for the longest.
+2. The list stays the same all day.
+3. **Leftovers carry forward:** anyone not handled stays in the list the next day, and the list is topped up to 35 (keeping the 15/20 split).
+4. **Each card shows:** name, village, tags, description, "in touch" age, WhatsApp, call, Later, Don't show again.
+5. **WhatsApp or call, or opening the card:** marks them in touch and removes them from the list. No replacement; progress shows e.g. "12 of 35 done".
+6. **Later:** removes them now, brings them back in about a week, and **a new random person of the same kind (pinned or unpinned) takes their place**.
+7. **Don't show again** (died, or any other reason): they stay in Halqa but leave the list for good. They can be brought back from their card, and Settings lists everyone hidden. A replacement is added the same way as Later.
+8. **Undo** for a few seconds after each action.
+9. **"Show me 35 more"** brings another batch.
+10. **New people** added to Halqa (Quick Add, the Shortcut, import) come up in the list about **a week after being added**.
+11. Everything works offline; "in touch" dates sync to all devices.
+
+**Rotation:** with 799 pinned and 2,079 unpinned (29 Oct), pinned people come round about every 2 months and unpinned about every 3½ months, faster with "Show me 35 more".
+
+**Monthly AI briefing:**
+- Written on the first open of each month, or on demand. Saved with the reports, with follow-up questions.
+- **It covers:**
+  - Gaps: villages and important people not in touch.
+  - Weak spots: villages lost or narrowly won in 2024, and the attention they've had.
+  - About 15 people to see this month, each with a reason and a talking point.
+  - Progress compared with last month.
+
+**Not wanted:**
+- ready-made WhatsApp greeting
+- category/village weighting
+- a morning notification
+- a coverage figure on the home screen
+- a one-line note after contact
 
 ## Ideas Usama is considering (not started)
 - **Seeing a caller's Halqa profile when they call or WhatsApp.** A full profile on the call screen is impossible on iOS. Options offered:

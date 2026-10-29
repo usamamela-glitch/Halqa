@@ -38,3 +38,21 @@
 .briefingReady { background: var(--teal); color: #fff; }
 .briefingText { flex: 1; display: flex; flex-direction: column; gap: 1px; }
 .briefingText span { font-size: 13.5px; font-weight: 500; opacity: 0.85; }
+
+/* Home page card (teal, like the header) */
+.homeCard {
+  width: 100%; margin-bottom: 12px; padding: 16px 18px; text-align: left;
+  display: flex; flex-direction: column; gap: 10px;
+  border-radius: var(--radius); color: #fff;
+  background: var(--header), var(--teal);
+  background-image: var(--grid), var(--header);
+  box-shadow: 0 6px 18px rgba(26, 74, 74, 0.28);
+}
+.homeCard:active { transform: scale(0.99); }
+.homeTop { display: flex; align-items: center; gap: 10px; }
+.homeTitle { font-size: 20px; font-weight: 800; letter-spacing: -0.4px; }
+.homeCount { flex: 1; text-align: right; font-size: 15px; opacity: 0.9; }
+.homeCount strong { font-size: 18px; }
+.homeBar { display: block; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
+.homeBarFill { display: block; height: 100%; border-radius: 4px; background: #7fe0a8; transition: width 300ms ease; }
+.homeBrief { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; color: #ffe08a; }

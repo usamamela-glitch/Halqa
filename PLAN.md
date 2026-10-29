@@ -115,7 +115,7 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
 **Where it lives in the code:**
 - `lib/daily.js`: picking the list, Later, Don't show, Show more.
 - `lib/touch.js`: recording "in touch".
-- `components/screens/TodayTab.js`: the Today tab, which is the first tab on the home screen.
+- `components/screens/TodayScreen.js`: the daily list screen, plus the teal "Today" card at the top of the home page (Qanungos tab, which stays the home page).
 - `lib/briefing.js`: the automatic monthly run. The first one is October 2026's, written on 1 Nov.
 - Briefing prompt: `lib/analysis.js`, scope `briefing`, targets `month:YYYY-MM` or `last30:YYYY-MM-DD`.
 - The list itself is kept on the phone (`db.meta 'daily'`).

@@ -4,15 +4,19 @@ import { db } from '../../lib/db'
 import { ensureToday, showMore, setAside, SPLIT } from '../../lib/daily'
 import { inTouchToday } from '../../lib/touch'
 import { daysSince, contactedLabel } from '../../lib/domain'
-import { Avatar, Empty, cx, ui, useToast } from '../ui'
-import { CallButtons } from '../contacts'
+import { Screen, Avatar, Empty, cx, ui, useToast } from '../ui'
+import { CallButtons, useContactSheets } from '../contacts'
 import { IconPin, IconCheck, IconBolt, IconSparkles, IconChevron } from '../Icons'
 import { useNav } from '../../lib/nav'
 import t from '../../styles/today.module.css'
 
-// Home's first tab: today's 35 people (15 pinned + 20 unpinned).
-export default function TodayTab({ contacts, villages, onOpen, onQuickAdd }) {
+// The daily list: today's 35 people (15 pinned + 20 unpinned). Opened from the
+// teal card at the top of the home page.
+export default function TodayScreen() {
   const toast = useToast()
+  const sheets = useContactSheets()
+  const contacts = useLiveQuery(() => db.contacts.toArray(), [], [])
+  const villages = useLiveQuery(() => db.villages.toArray(), [], [])
   const daily = useLiveQuery(async () => (await db.meta.get('daily'))?.value || null, [], null)
   const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
   const [busy, setBusy] = useState(false)
@@ -55,11 +59,11 @@ export default function TodayTab({ contacts, villages, onOpen, onQuickAdd }) {
     toast(n ? `${n} more people added` : 'Everyone available is already in today’s list')
   }
 
-  if (!daily) return null
   const total = rows.length
 
   return (
-    <div className={t.wrap}>
+    <Screen title="Today" subtitle={`${SPLIT.pinned + SPLIT.unpinned} people to be in touch with`}>
+    {daily && <div className={t.wrap}>
       {briefing.writing && !briefing.latest && (
         <div className={t.briefing}><IconSparkles size={20} /><span>Writing your monthly briefing…</span></div>
       )}
@@ -88,7 +92,7 @@ export default function TodayTab({ contacts, villages, onOpen, onQuickAdd }) {
             const d = daysSince(c.last_contacted)
             return (
               <li key={it.id} className={t.card}>
-                <button className={t.main} onClick={() => onOpen(c.id)}>
+                <button className={t.main} onClick={() => sheets.open(c.id)}>
                   <Avatar name={c.name} photo={c.photo_path} size={46} />
                   <span className={t.text}>
                     <span className={t.name}>
@@ -118,7 +122,41 @@ export default function TodayTab({ contacts, villages, onOpen, onQuickAdd }) {
         Show me {SPLIT.pinned + SPLIT.unpinned} more
       </button>
 
-      <button className={ui.fab} onClick={onQuickAdd} aria-label="Quick add contact"><IconBolt size={28} className={ui.fabBolt} /></button>
-    </div>
+      <button className={ui.fab} onClick={() => sheets.quickAdd()} aria-label="Quick add contact"><IconBolt size={28} className={ui.fabBolt} /></button>
+    </div>}
+    {sheets.element}
+    </Screen>
+  )
+}
+
+// Teal card at the top of the home page: today's progress, and a note when a
+// new monthly briefing is ready. Tapping it opens the daily list.
+export function TodayCard({ contacts }) {
+  const { push } = useNav()
+  const daily = useLiveQuery(async () => (await db.meta.get('daily'))?.value || null, [], null)
+  const briefingReady = useLiveQuery(async () => {
+    const latest = (await db.analysis_reports.toArray())
+      .filter(r => r.scope === 'briefing' && r.target?.startsWith('month:'))
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))[0]
+    const seen = (await db.meta.get('briefingSeen'))?.value
+    return latest && latest.id !== seen ? latest.title.replace('Monthly briefing · ', '') : null
+  }, [], null)
+  useEffect(() => { ensureToday() }, [])
+
+  const byId = useMemo(() => new Map(contacts.map(c => [c.id, c])), [contacts])
+  const rows = (daily?.items || []).filter(it => it.state === 'open' && byId.get(it.id))
+  const done = rows.filter(it => inTouchToday(byId.get(it.id))).length
+  const total = rows.length
+
+  return (
+    <button className={t.homeCard} onClick={() => push('today')}>
+      <span className={t.homeTop}>
+        <span className={t.homeTitle}>Today</span>
+        <span className={t.homeCount}><strong>{done}</strong> of {total || SPLIT.pinned + SPLIT.unpinned} in touch</span>
+        <IconChevron size={20} />
+      </span>
+      <span className={t.homeBar}><span className={t.homeBarFill} style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></span>
+      {briefingReady && <span className={t.homeBrief}><IconSparkles size={15} />{briefingReady} briefing is ready</span>}
+    </button>
   )
 }

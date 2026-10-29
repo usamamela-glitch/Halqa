@@ -11,15 +11,15 @@ import { maybeAutoBriefing } from '../../lib/briefing'
 import { ContactRow, useContactSheets } from '../contacts'
 import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers, IconDownload } from '../Icons'
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
-import TodayTab from './TodayTab'
+import { TodayCard } from './TodayScreen'
 import h from '../../styles/home.module.css'
 
-const TABS = ['Today', 'Qanungos', 'Notes', 'Search']
+const TABS = ['Qanungos', 'Notes', 'Search']
 
 export default function HomeScreen() {
   const { push, setParams } = useNav()
   const { key, params } = useScreen()
-  const tab = params.tab || 'Today'
+  const tab = params.tab || 'Qanungos'
   const sheets = useContactSheets()
 
   const villages = useLiveQuery(() => db.villages.toArray(), [], [])
@@ -69,7 +69,6 @@ export default function HomeScreen() {
       }
       tabs={<Tabs id="home" tabs={TABS} value={tab} onChange={t => setParams(key, { tab: t })} />}
     >
-      {tab === 'Today' && <TodayTab contacts={contacts} villages={villages} onOpen={sheets.open} onQuickAdd={() => sheets.quickAdd()} />}
       {tab === 'Qanungos' && <QanungosTab villages={villages} contacts={contacts} pinnedCount={pinnedCount} onQuickAdd={() => sheets.quickAdd()} />}
       {tab === 'Notes' && <NotesTab />}
       {tab === 'Search' && <SearchTab villages={villages} contacts={contacts} />}
@@ -126,6 +125,7 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
 
   return (
     <>
+      <TodayCard contacts={contacts} />
       {toSort > 0 && (
         <Card className={h.importCard} onClick={() => push('import')}>
           <span className={cx(ui.featureIcon, h.importIcon)}><IconDownload size={21} /></span>

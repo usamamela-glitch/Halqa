@@ -10,6 +10,7 @@ import MapScreen from './screens/MapScreen'
 import SettingsScreen from './screens/SettingsScreen'
 import AnalysisScreen from './screens/AnalysisScreen'
 import ImportScreen from './screens/ImportScreen'
+import TodayScreen from './screens/TodayScreen'
 
 const SCREENS = {
   home: HomeScreen,
@@ -22,6 +23,7 @@ const SCREENS = {
   settings: SettingsScreen,
   analysis: AnalysisScreen,
   import: ImportScreen,
+  today: TodayScreen,
 }
 
 // iOS-like push: 300ms, decelerating.

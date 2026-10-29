@@ -19,6 +19,8 @@ The existing tables are unchanged. v2 only **adds** things — run `supabase/mig
 
 Saved AI analysis reports need `supabase/migrations/20261017000000_analysis_reports.sql` (the `analysis_reports` table, downloaded incrementally by `updated_at`).
 
+The daily list and monthly briefing need `supabase/migrations/20261029000000_daily_list.sql` (`contacts.list_hidden`, `contacts.snoozed_until`, `analysis_reports.meta`).
+
 Until they're run, the app still works: values for the new fields stay on the phone and Settings shows "Database update needed".
 
 ## Saving contacts to the iPhone

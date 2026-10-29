@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
 import { syncNow } from '../../lib/sync'
+import { updateRow } from '../../lib/store'
 import { getApiKey, setApiKey } from '../../lib/analysis'
 import { shortDate } from '../../lib/domain'
 import { Screen, Field, cx, ui, useSyncState, useToast } from '../ui'
@@ -14,6 +15,8 @@ const APP_VERSION = '2.0.0'
 export default function SettingsScreen() {
   const toast = useToast()
   const { push } = useNav()
+  const hidden = useLiveQuery(() => db.contacts.filter(c => !!c.list_hidden).toArray(), [], [])
+  const [showHidden, setShowHidden] = useState(false)
   const sync = useSyncState()
   const failed = useLiveQuery(() => db.failed.toArray(), [], [])
   const missing = useLiveQuery(async () => (await db.meta.get('missingColumns'))?.value || {}, [], {})
@@ -79,6 +82,25 @@ export default function SettingsScreen() {
             {failed.slice(-10).reverse().map(f => (
               <Row key={f.id} label={`${f.op} ${f.table}`} value={f.error} tone="red" />
             ))}
+          </div>
+        </div>
+      )}
+
+      {hidden.length > 0 && (
+        <div className={ui.section}>
+          <div className={ui.sectionHead}><span>Hidden from the daily list</span><span>{hidden.length}</span></div>
+          <div className={st.card}>
+            <p className={st.note} style={{ marginTop: 0 }}>People you chose “Don't show” for. They're still in Halqa.</p>
+            {showHidden ? (
+              hidden.sort((a, b) => a.name.localeCompare(b.name)).map(c => (
+                <div key={c.id} className={st.keyRow}>
+                  <span>{c.name}</span>
+                  <button className={st.link} onClick={() => { updateRow('contacts', c.id, { list_hidden: false }); toast(`${c.name} is back in the daily list`) }}>Show again</button>
+                </div>
+              ))
+            ) : (
+              <button className={cx(ui.btn, ui.btnSecondary, ui.btnBlock)} style={{ marginTop: 12 }} onClick={() => setShowHidden(true)}>See who's hidden</button>
+            )}
           </div>
         </div>
       )}

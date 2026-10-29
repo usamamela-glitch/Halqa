@@ -81,7 +81,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   6. Text: `https://halqa-apps.vercel.app/?add=1&name=[encoded name]&phone=[encoded phones]`
   7. Open URLs
 
-## Next up: daily list + monthly AI briefing (spec agreed 29 Oct 2026, not built yet)
+## Daily list + monthly AI briefing (built 29 Oct 2026)
 
 **"In touch" replaces "Last contacted"** (the manual toggle goes). A person is in touch today when he:
 - taps **WhatsApp** or **call** on them, anywhere in Halqa, or
@@ -111,6 +111,15 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
   - Weak spots: villages lost or narrowly won in 2024, and the attention they've had.
   - About 15 people to see this month, each with a reason and a talking point.
   - Progress compared with last month.
+
+**Where it lives in the code:**
+- `lib/daily.js`: picking the list, Later, Don't show, Show more.
+- `lib/touch.js`: recording "in touch".
+- `components/screens/TodayTab.js`: the Today tab, which is the first tab on the home screen.
+- `lib/briefing.js`: the automatic monthly run. The first one is October 2026's, written on 1 Nov.
+- Briefing prompt: `lib/analysis.js`, scope `briefing`, targets `month:YYYY-MM` or `last30:YYYY-MM-DD`.
+- The list itself is kept on the phone (`db.meta 'daily'`).
+- `contacts.list_hidden`, `contacts.snoozed_until` and `analysis_reports.meta` need `supabase/migrations/20261029000000_daily_list.sql`.
 
 **Not wanted:**
 - ready-made WhatsApp greeting

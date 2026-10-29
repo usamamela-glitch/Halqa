@@ -1,0 +1,40 @@
+.wrap { padding-bottom: 96px; }   /* room for the ⚡ button */
+
+.progress {
+  padding: 14px 16px; margin-bottom: 12px;
+  background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+}
+.progressText { font-size: 15px; color: var(--ink-2); margin-bottom: 9px; }
+.progressText strong { font-size: 18px; color: var(--teal); }
+.bar { height: 8px; border-radius: 4px; background: var(--bg); overflow: hidden; }
+.barFill { height: 100%; border-radius: 4px; background: var(--green); transition: width 300ms ease; }
+
+.list { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
+.main { width: 100%; display: flex; gap: 12px; padding: 14px 14px 10px; text-align: left; align-items: flex-start; }
+.main:active { background: var(--bg); }
+.text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.name { display: flex; align-items: center; gap: 6px; font-size: 16.5px; font-weight: 700; letter-spacing: -0.2px; }
+.pin { color: var(--amber); display: inline-flex; }
+.place { font-size: 14px; color: var(--muted); }
+.desc { font-size: 14px; color: var(--ink-2); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.meta { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; align-items: center; }
+.touch { font-size: 12.5px; font-weight: 600; color: var(--muted); margin-right: 2px; }
+.touchNone { color: var(--amber); }
+
+.actions { display: flex; align-items: center; gap: 8px; padding: 0 14px 14px; }
+.later, .hide {
+  height: 40px; padding: 0 12px; border-radius: 12px;
+  font-size: 14px; font-weight: 650; background: var(--bg); color: var(--ink-2); white-space: nowrap;
+}
+.hide { color: var(--muted); font-weight: 600; }
+.later:active, .hide:active { background: var(--hair); }
+
+.briefing {
+  width: 100%; margin-bottom: 12px; padding: 13px 16px; text-align: left;
+  display: flex; align-items: center; gap: 12px;
+  background: var(--teal-50); color: var(--teal); border-radius: var(--radius); font-weight: 600;
+}
+.briefingReady { background: var(--teal); color: #fff; }
+.briefingText { flex: 1; display: flex; flex-direction: column; gap: 1px; }
+.briefingText span { font-size: 13.5px; font-weight: 500; opacity: 0.85; }

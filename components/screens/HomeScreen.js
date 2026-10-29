@@ -6,23 +6,29 @@ import { insertRow, updateRow, deleteRow } from '../../lib/store'
 import { villageCompletion, byName, shortDate, TAGS } from '../../lib/domain'
 import { plainText } from '../../lib/images'
 import { phoneDigits, phonesOf } from '../../lib/phone'
-import { Screen, BarButton, Tabs, Card, Sheet, ActionSheet, Empty, Field, SearchBox, SyncPill, cx, ui, useToast } from '../ui'
+import { Screen, BarButton, Tabs, Card, Sheet, ActionSheet, Empty, Field, SearchBox, SyncPill, cx, ui, useToast, useSyncState } from '../ui'
+import { maybeAutoBriefing } from '../../lib/briefing'
 import { ContactRow, useContactSheets } from '../contacts'
 import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers, IconDownload } from '../Icons'
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
+import TodayTab from './TodayTab'
 import h from '../../styles/home.module.css'
 
-const TABS = ['Qanungos', 'Notes', 'Search']
+const TABS = ['Today', 'Qanungos', 'Notes', 'Search']
 
 export default function HomeScreen() {
   const { push, setParams } = useNav()
   const { key, params } = useScreen()
-  const tab = params.tab || 'Qanungos'
+  const tab = params.tab || 'Today'
   const sheets = useContactSheets()
 
   const villages = useLiveQuery(() => db.villages.toArray(), [], [])
   const contacts = useLiveQuery(() => db.contacts.toArray(), [], [])
   const pinnedCount = contacts.filter(c => c.pinned).length
+
+  // On the first open of a new month, write last month's briefing in the background.
+  const { lastSync } = useSyncState()
+  useEffect(() => { if (lastSync) maybeAutoBriefing() }, [lastSync])
 
   // The "Save to Halqa" Shortcut (iPhone share menu) opens /?add=1&name=…&phone=…:
   // show Quick Add with the shared contact filled in.
@@ -63,6 +69,7 @@ export default function HomeScreen() {
       }
       tabs={<Tabs id="home" tabs={TABS} value={tab} onChange={t => setParams(key, { tab: t })} />}
     >
+      {tab === 'Today' && <TodayTab contacts={contacts} villages={villages} onOpen={sheets.open} onQuickAdd={() => sheets.quickAdd()} />}
       {tab === 'Qanungos' && <QanungosTab villages={villages} contacts={contacts} pinnedCount={pinnedCount} onQuickAdd={() => sheets.quickAdd()} />}
       {tab === 'Notes' && <NotesTab />}
       {tab === 'Search' && <SearchTab villages={villages} contacts={contacts} />}

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
 import { insertRow, updateRow, deleteRow, restoreRow, newId } from '../lib/store'
@@ -6,6 +6,7 @@ import { savePhoto } from '../lib/images'
 import { telHref, waHref, phonesOf, phoneDigits, downloadVCard } from '../lib/phone'
 import { TAGS, daysSince, contactedLevel, contactedLabel, byName } from '../lib/domain'
 import { useLocalStorage } from '../lib/hooks'
+import { markInTouch } from '../lib/touch'
 import { Card, Avatar, Sheet, Field, cx, ui, useToast } from './ui'
 import { IconPhone, IconWhatsApp, IconPin, IconCheck, IconUserPlus, IconEdit, IconCamera } from './Icons'
 import s from '../styles/contacts.module.css'
@@ -17,8 +18,8 @@ export function CallButtons({ contact }) {
   if (!phone) return null
   return (
     <>
-      <a className={ui.iconBtn} href={telHref(phone)} aria-label={`Call ${contact.name}`}><IconPhone size={19} /></a>
-      <a className={cx(ui.iconBtn, ui.iconBtnWa)} href={waHref(phone)} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${contact.name}`}><IconWhatsApp size={20} /></a>
+      <a className={ui.iconBtn} href={telHref(phone)} onClick={() => markInTouch(contact.id)} aria-label={`Call ${contact.name}`}><IconPhone size={19} /></a>
+      <a className={cx(ui.iconBtn, ui.iconBtnWa)} href={waHref(phone)} onClick={() => markInTouch(contact.id)} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${contact.name}`}><IconWhatsApp size={20} /></a>
     </>
   )
 }
@@ -41,7 +42,7 @@ function PinButton({ contact, onUnpin }) {
 export function ContactedBadge({ contact }) {
   const d = daysSince(contact.last_contacted)
   const level = contactedLevel(d)
-  return <span className={cx(ui.badge, ui[`badge_${level}`])}>{d === null ? 'Never' : d === 0 ? 'Today' : `${d}d`}</span>
+  return <span className={cx(ui.badge, ui[`badge_${level}`])}>{d === null ? 'Not yet' : d === 0 ? 'Today' : `${d}d`}</span>
 }
 
 export function ContactRow({ contact, villageName, subtitle, onPress, highlight, showContacted, onUnpin, rowRef }) {
@@ -85,14 +86,21 @@ function ContactDetail({ id, onEdit, onClose }) {
   const toast = useToast()
   const contact = useLiveQuery(() => (id ? db.contacts.get(id) : undefined), [id])
   const village = useLiveQuery(() => (contact?.village_id ? db.villages.get(contact.village_id) : undefined), [contact?.village_id])
+  // Opening the card counts as being in touch. Remember when it was before, to show it.
+  const [before, setBefore] = useState(undefined)
+  useEffect(() => {
+    let live = true
+    db.contacts.get(id).then(c => { if (live) setBefore(c ? c.last_contacted || null : null) }).then(() => markInTouch(id))
+    return () => { live = false }
+  }, [id])
   if (!contact) return null
   const phones = phonesOf(contact)
-  const d = daysSince(contact.last_contacted)
-  const level = contactedLevel(d)
+  const prev = before === undefined ? undefined : daysSince(before)
 
-  async function markContacted() {
-    await updateRow('contacts', contact.id, { last_contacted: new Date().toISOString() })
-    toast(`Marked ${contact.name.split(' ')[0]} as contacted today`)
+  async function toggleListHidden() {
+    const hide = !contact.list_hidden
+    await updateRow('contacts', contact.id, { list_hidden: hide })
+    toast(hide ? `${contact.name} won't appear in the daily list` : `${contact.name} is back in the daily list`)
   }
 
   async function togglePin() {
@@ -119,14 +127,9 @@ function ContactDetail({ id, onEdit, onClose }) {
         )}
       </div>
 
-      <div className={s.contactedBox}>
-        <div className={s.contactedText}>
-          <span className={s.contactedLabel}>Last contacted</span>
-          <span className={s.contactedVal} style={{ color: level === 'none' ? 'var(--muted)' : `var(--${level})` }}>{contactedLabel(d)}</span>
-        </div>
-        <button className={cx(s.contactedBtn, d === 0 && s.contactedDone)} onClick={markContacted}>
-          <IconCheck size={17} />{d === 0 ? 'Done' : 'Contacted'}
-        </button>
+      <div className={s.touchLine}>
+        <IconCheck size={16} />
+        <span>In touch today{prev !== undefined && prev !== 0 ? ` · before this: ${contactedLabel(prev).toLowerCase()}` : ''}</span>
       </div>
 
       {phones.length > 0 && (
@@ -134,8 +137,8 @@ function ContactDetail({ id, onEdit, onClose }) {
           {phones.map(p => (
             <div key={p} className={s.phoneRow}>
               <span className={s.phoneNum}>{p}</span>
-              <a className={ui.iconBtn} href={telHref(p)} aria-label="Call"><IconPhone size={19} /></a>
-              <a className={cx(ui.iconBtn, ui.iconBtnWa)} href={waHref(p)} target="_blank" rel="noreferrer" aria-label="WhatsApp"><IconWhatsApp size={20} /></a>
+              <a className={ui.iconBtn} href={telHref(p)} onClick={() => markInTouch(contact.id)} aria-label="Call"><IconPhone size={19} /></a>
+              <a className={cx(ui.iconBtn, ui.iconBtnWa)} href={waHref(p)} onClick={() => markInTouch(contact.id)} target="_blank" rel="noreferrer" aria-label="WhatsApp"><IconWhatsApp size={20} /></a>
             </div>
           ))}
         </div>
@@ -153,6 +156,9 @@ function ContactDetail({ id, onEdit, onClose }) {
         </button>
       </div>
 
+      <button className={s.listLink} onClick={toggleListHidden}>
+        {contact.list_hidden ? 'Hidden from the daily list · Show again' : "Don't show in the daily list"}
+      </button>
       <button className={s.deleteLink} onClick={remove}>Delete contact</button>
     </>
   )

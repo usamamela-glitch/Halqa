@@ -117,3 +117,12 @@
 .switch:checked::after { transform: translateX(20px); }
 .saveBtn { background: var(--bg); color: var(--ink-2); }
 .saveBtn:active { background: var(--hair); }
+
+/* "In touch" line in the contact sheet */
+.touchLine {
+  margin-top: 16px; padding: 11px 14px; border-radius: 14px;
+  display: flex; align-items: center; gap: 8px;
+  background: var(--green-bg, #e7f6ee); color: var(--green, #1d8a4e);
+  font-size: 14.5px; font-weight: 600;
+}
+.listLink { display: block; margin: 18px auto 0; font-size: 14.5px; font-weight: 600; color: var(--muted); padding: 6px; }

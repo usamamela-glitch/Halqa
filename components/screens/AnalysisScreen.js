@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
-import { useNav } from '../../lib/nav'
+import { useNav, useScreen } from '../../lib/nav'
+import { onDemandTarget } from '../../lib/briefing'
+import { setMeta } from '../../lib/db'
 import { runAnalysis, askFollowUp, describeError, getApiKey } from '../../lib/analysis'
 import { byName, shortDate } from '../../lib/domain'
 import { insertRow, updateRow, deleteRow, restoreRow, newId } from '../../lib/store'
@@ -15,6 +17,7 @@ const MODES = ['Village', 'Qanungo', 'Constituency']
 
 export default function AnalysisScreen() {
   const { push } = useNav()
+  const { params } = useScreen()
   const { online } = useSyncState()
   const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
   const [mode, setMode] = useState('Village')
@@ -35,6 +38,11 @@ export default function AnalysisScreen() {
 
   useEffect(() => { setHasKey(!!getApiKey()) }, [])
   useEffect(() => { importOldReports() }, [])
+  // Opened from the home card ("Your October briefing is ready").
+  useEffect(() => {
+    if (!params.open) return
+    db.analysis_reports.get(params.open).then(r => { if (r) { openSaved(r); setMeta('briefingSeen', r.id) } })
+  }, [params.open])
   useEffect(() => () => abortRef.current?.abort(), [])
 
   const sortedQ = useMemo(() => [...qanungos].sort(byName), [qanungos])
@@ -43,7 +51,7 @@ export default function AnalysisScreen() {
   const ready = hasKey && online && !!target && !running
 
   async function save(entry) {
-    const data = { title: entry.title, turns: entry.turns }
+    const data = { title: entry.title, turns: entry.turns, ...(entry.meta ? { meta: entry.meta } : {}) }
     if (await db.analysis_reports.get(entry.id)) await updateRow('analysis_reports', entry.id, data)
     else await insertRow('analysis_reports', { id: entry.id, scope: entry.scope, target: entry.target, created_at: entry.created_at, ...data })
   }
@@ -68,7 +76,7 @@ export default function AnalysisScreen() {
     try {
       const res = await ask(ctrl.signal, onText)
       historyRef.current = res.history
-      const done = { ...entry, title: res.title || entry.title, turns: [...entry.turns.slice(0, -1), { ...entry.turns[entry.turns.length - 1], a: res.text }] }
+      const done = { ...entry, title: res.title || entry.title, ...(res.stats ? { meta: { stats: res.stats } } : {}), turns: [...entry.turns.slice(0, -1), { ...entry.turns[entry.turns.length - 1], a: res.text }] }
       setReport(done)
       save(done)
       return true
@@ -98,6 +106,13 @@ export default function AnalysisScreen() {
     setFollowUp('')
     stream(entry, (signal, onText) => askFollowUp({ scope: report.scope, id: report.target, turns: prior, history, question: q, signal, onText }))
       .then(ok => { if (!ok) setFollowUp(q) })
+  }
+
+  function briefingNow() {
+    const target = onDemandTarget()
+    historyRef.current = null
+    const entry = { id: newId(), title: 'Monthly briefing', scope: 'briefing', target, created_at: new Date().toISOString(), turns: [{ q: null, a: '' }] }
+    stream(entry, (signal, onText) => runAnalysis({ scope: 'briefing', id: target, signal, onText }))
   }
 
   function openSaved(r) {
@@ -148,6 +163,13 @@ export default function AnalysisScreen() {
           </button>
         )}
       </div>
+
+      {!running && (
+        <button className={a.briefingBtn} onClick={briefingNow} disabled={!hasKey || !online}>
+          <span className={a.briefingTitle}>Monthly briefing</span>
+          <span className={a.briefingSub}>Written automatically on the 1st of each month. Tap to write one now, covering the last 30 days.</span>
+        </button>
+      )}
 
       {error && <p className={a.error}>{error}</p>}
 

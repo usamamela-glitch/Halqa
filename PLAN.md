@@ -92,9 +92,9 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
 **Daily list:**
 1. A new day brings **35 people: 15 pinned + 20 unpinned**. They're picked at random from those not in touch for the longest.
 2. The list stays the same all day.
-3. **Leftovers carry forward:** anyone not handled stays in the list the next day, and the list is topped up to 35 (keeping the 15/20 split).
+3. **Leftovers carry forward:** anyone not ticked Done stays in the list the next day, and the list is topped up to 35 (keeping the 15/20 split).
 4. **Each card shows:** name, village, tags, description, "in touch" age, WhatsApp, call, Later, Don't show again.
-5. **WhatsApp or call, or opening the card:** marks them in touch and removes them from the list. No replacement; progress shows e.g. "12 of 35 done".
+5. **WhatsApp or call, or opening the card:** marks them in touch, but **they stay in the list**, marked "✓ In touch today". Only the **✓ Done** button takes someone off the list (with Undo). Progress counts Done, e.g. "12 of 35 done".
 6. **Later:** removes them now, brings them back in about a week, and **a new random person of the same kind (pinned or unpinned) takes their place**.
 7. **Don't show again** (died, or any other reason): they stay in Halqa but leave the list for good. They can be brought back from their card, and Settings lists everyone hidden. A replacement is added the same way as Later.
 8. **Undo** for a few seconds after each action.

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
-import { ensureToday, showMore, setAside, SPLIT } from '../../lib/daily'
+import { ensureToday, showMore, setAside, markDone, SPLIT } from '../../lib/daily'
 import { inTouchToday } from '../../lib/touch'
 import { daysSince, contactedLabel } from '../../lib/domain'
 import { Screen, Avatar, Empty, cx, ui, useToast } from '../ui'
@@ -42,10 +42,15 @@ export default function TodayScreen() {
   const vById = useMemo(() => Object.fromEntries(villages.map(v => [v.id, v])), [villages])
   const qName = useMemo(() => Object.fromEntries(qanungos.map(q => [q.id, q.name])), [qanungos])
 
-  const rows = (daily?.items || []).filter(it => it.state === 'open' && byId.get(it.id))
-  const done = rows.filter(it => inTouchToday(byId.get(it.id)))
-  const todo = rows.filter(it => !inTouchToday(byId.get(it.id)))
+  const rows = (daily?.items || []).filter(it => (it.state === 'open' || it.state === 'done') && byId.get(it.id))
+  const done = rows.filter(it => it.state === 'done')
+  const todo = rows.filter(it => it.state === 'open')
     .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'pinned' ? -1 : 1))
+
+  async function tick(c) {
+    const undo = await markDone(c.id)
+    toast(`${c.name} — done`, { label: 'Undo', onClick: undo })
+  }
 
   async function aside(c, how) {
     const undo = await setAside(c.id, how)
@@ -76,14 +81,14 @@ export default function TodayScreen() {
       )}
       <div className={t.progress}>
         <div className={t.progressText}>
-          <strong>{done.length}</strong> of {total} in touch today
+          <strong>{done.length}</strong> of {total} done today
         </div>
         <div className={t.bar}><div className={t.barFill} style={{ width: `${total ? (done.length / total) * 100 : 0}%` }} /></div>
       </div>
 
       {todo.length === 0 ? (
         <Empty icon={<IconCheck size={28} />} title={total ? 'All done for today' : 'Nobody to show'}
-          text={total ? `You were in touch with ${done.length} people from today's list.` : 'Everyone is either in touch today, set aside for later, or hidden.'} />
+          text={total ? `You've ticked off all ${done.length} people in today's list.` : 'Everyone is either done today, set aside for later, or hidden.'} />
       ) : (
         <ul className={t.list}>
           {todo.map(it => {
@@ -92,6 +97,7 @@ export default function TodayScreen() {
             const d = daysSince(c.last_contacted)
             return (
               <li key={it.id} className={t.card}>
+                <div className={t.top}>
                 <button className={t.main} onClick={() => sheets.open(c.id)}>
                   <Avatar name={c.name} photo={c.photo_path} size={46} />
                   <span className={t.text}>
@@ -102,11 +108,17 @@ export default function TodayScreen() {
                     <span className={t.place}>{v ? v.name : 'No village'}{v && qName[v.qanungo_id] ? ` · ${qName[v.qanungo_id]}` : ''}</span>
                     {c.description && <span className={t.desc}>{c.description}</span>}
                     <span className={t.meta}>
-                      <span className={cx(t.touch, d === null && t.touchNone)}>In touch: {contactedLabel(d).toLowerCase()}</span>
+                      {inTouchToday(c)
+                        ? <span className={cx(t.touch, t.touchToday)}>✓ In touch today</span>
+                        : <span className={cx(t.touch, d === null && t.touchNone)}>In touch: {contactedLabel(d).toLowerCase()}</span>}
                       {(c.tags || []).map(tag => <span key={tag} className={ui.chip}>{tag}</span>)}
                     </span>
                   </span>
                 </button>
+                <button className={t.done} onClick={() => tick(c)} aria-label={`Done with ${c.name}`}>
+                  <IconCheck size={22} /><span>Done</span>
+                </button>
+                </div>
                 <div className={t.actions}>
                   <CallButtons contact={c} />
                   <button className={t.later} onClick={() => aside(c, 'later')}>Later</button>
@@ -144,15 +156,15 @@ export function TodayCard({ contacts }) {
   useEffect(() => { ensureToday() }, [])
 
   const byId = useMemo(() => new Map(contacts.map(c => [c.id, c])), [contacts])
-  const rows = (daily?.items || []).filter(it => it.state === 'open' && byId.get(it.id))
-  const done = rows.filter(it => inTouchToday(byId.get(it.id))).length
+  const rows = (daily?.items || []).filter(it => (it.state === 'open' || it.state === 'done') && byId.get(it.id))
+  const done = rows.filter(it => it.state === 'done').length
   const total = rows.length
 
   return (
     <button className={t.homeCard} onClick={() => push('today')}>
       <span className={t.homeTop}>
         <span className={t.homeTitle}>Today</span>
-        <span className={t.homeCount}><strong>{done}</strong> of {total || SPLIT.pinned + SPLIT.unpinned} in touch</span>
+        <span className={t.homeCount}><strong>{done}</strong> of {total || SPLIT.pinned + SPLIT.unpinned} done</span>
         <IconChevron size={20} />
       </span>
       <span className={t.homeBar}><span className={t.homeBarFill} style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></span>

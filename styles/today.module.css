@@ -56,3 +56,14 @@
 .homeBar { display: block; height: 7px; border-radius: 4px; background: rgba(255, 255, 255, 0.18); overflow: hidden; }
 .homeBarFill { display: block; height: 100%; border-radius: 4px; background: #7fe0a8; transition: width 300ms ease; }
 .homeBrief { display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 600; color: #ffe08a; }
+
+/* Card top row: details (opens the contact) + ✓ Done */
+.top { display: flex; align-items: flex-start; }
+.top .main { flex: 1; min-width: 0; }
+.done {
+  flex-shrink: 0; margin: 12px 12px 0 0; width: 58px; height: 58px; border-radius: 16px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+  background: var(--green-bg); color: var(--green); font-size: 12px; font-weight: 700;
+}
+.done:active { transform: scale(0.94); background: #cdeedb; }
+.touchToday { color: var(--green); }

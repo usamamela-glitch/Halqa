@@ -81,6 +81,14 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   6. Text: `https://halqa-apps.vercel.app/?add=1&name=[encoded name]&phone=[encoded phones]`
   7. Open URLs
 
+- **Second Shortcut, "Save number to Halqa"** (for forwarded text such as "03007100764 rana Shahbaz"):
+  1. Receive **Text** from Share Sheet
+  2. URL Encode Shortcut Input
+  3. Text: `https://halqa-apps.vercel.app/?add=1&text=[URL Encoded Text]`
+  4. Open URLs
+
+  Halqa (`parseSharedText` in `lib/importContacts.js`) reads the first number, the name (from the same or the previous line) and a village mentioned anywhere in the message.
+
 ## Daily list + monthly AI briefing (built 29 Oct 2026)
 
 **"In touch" replaces "Last contacted"** (the manual toggle goes). A person is in touch today when he:

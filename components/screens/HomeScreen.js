@@ -12,6 +12,7 @@ import { ContactRow, useContactSheets } from '../contacts'
 import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers, IconDownload } from '../Icons'
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import { TodayCard } from './TodayScreen'
+import { parseSharedText } from '../../lib/importContacts'
 import h from '../../styles/home.module.css'
 
 const TABS = ['Qanungos', 'Notes', 'Search']
@@ -30,14 +31,20 @@ export default function HomeScreen() {
   const { lastSync } = useSyncState()
   useEffect(() => { if (lastSync) maybeAutoBriefing() }, [lastSync])
 
-  // The "Save to Halqa" Shortcut (iPhone share menu) opens /?add=1&name=…&phone=…:
-  // show Quick Add with the shared contact filled in.
+  // The "Save to Halqa" Shortcuts (iPhone share menu) open Quick Add filled in:
+  //   /?add=1&name=…&phone=…  a shared contact card (numbers one per line)
+  //   /?add=1&text=…          a shared message such as "03007100764 rana Shahbaz"
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
     if (!p.has('add')) return
-    const phones = (p.get('phone') || '').split(/[\n,;]+/).map(s => s.trim()).filter(Boolean)
     window.history.replaceState(null, '', window.location.pathname)
-    sheets.quickAdd({ village_id: null, name: (p.get('name') || '').trim(), phone: phones[0] || '', phone2: phones[1] || '', phone3: phones[2] || '' })
+    ;(async () => {
+      let name = (p.get('name') || '').trim()
+      let phones = (p.get('phone') || '').split(/[\n,;]+/).map(s => s.trim()).filter(Boolean)
+      let villageId = null
+      if (p.has('text')) ({ name, phones, villageId } = parseSharedText(p.get('text'), await db.villages.toArray()))
+      sheets.quickAdd({ village_id: villageId, name, phone: phones[0] || '', phone2: phones[1] || '', phone3: phones[2] || '' })
+    })()
   }, [])
 
   return (

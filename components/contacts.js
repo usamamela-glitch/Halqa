@@ -7,19 +7,46 @@ import { telHref, waHref, phonesOf, phoneDigits, downloadVCard } from '../lib/ph
 import { TAGS, daysSince, contactedLevel, contactedLabel, byName } from '../lib/domain'
 import { useLocalStorage } from '../lib/hooks'
 import { markInTouch } from '../lib/touch'
-import { Card, Avatar, Sheet, Field, cx, ui, useToast } from './ui'
+import { Card, Avatar, Sheet, ActionSheet, Field, cx, ui, useToast } from './ui'
 import { IconPhone, IconWhatsApp, IconPin, IconCheck, IconUserPlus, IconEdit, IconCamera } from './Icons'
 import s from '../styles/contacts.module.css'
 
 // ---------- Row ----------
 
+// The number to WhatsApp: the one chosen before, or the only one. null = ask.
+export function whatsappNumber(contact) {
+  const phones = phonesOf(contact)
+  if (phones.length <= 1) return phones[0] || null
+  return phones.find(p => phoneDigits(p) === phoneDigits(contact.whatsapp_phone || '')) || null
+}
+
+// Opens WhatsApp on a number, records "in touch", and remembers the number when
+// the contact has more than one (WhatsApp won't tell other apps which is on it).
+export function openWhatsApp(contact, phone) {
+  window.open(waHref(phone), '_blank', 'noopener')
+  markInTouch(contact.id)
+  if (phonesOf(contact).length > 1 && phoneDigits(phone) !== phoneDigits(contact.whatsapp_phone || '')) {
+    updateRow('contacts', contact.id, { whatsapp_phone: phone })
+  }
+}
+
 export function CallButtons({ contact }) {
-  const phone = phonesOf(contact)[0]
+  const [choosing, setChoosing] = useState(false)
+  const phones = phonesOf(contact)
+  const phone = phones[0]
   if (!phone) return null
+  const wa = whatsappNumber(contact)
   return (
     <>
       <a className={ui.iconBtn} href={telHref(phone)} onClick={() => markInTouch(contact.id)} aria-label={`Call ${contact.name}`}><IconPhone size={19} /></a>
-      <a className={cx(ui.iconBtn, ui.iconBtnWa)} href={waHref(phone)} onClick={() => markInTouch(contact.id)} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${contact.name}`}><IconWhatsApp size={20} /></a>
+      {wa ? (
+        <a className={cx(ui.iconBtn, ui.iconBtnWa)} href={waHref(wa)} onClick={() => markInTouch(contact.id)} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${contact.name}`}><IconWhatsApp size={20} /></a>
+      ) : (
+        <button className={cx(ui.iconBtn, ui.iconBtnWa)} onClick={() => setChoosing(true)} aria-label={`WhatsApp ${contact.name}`}><IconWhatsApp size={20} /></button>
+      )}
+      <ActionSheet open={choosing} onClose={() => setChoosing(false)} title="Which number is on WhatsApp?"
+        text={`Halqa will remember it for ${contact.name}.`}
+        items={phones.map(p => ({ label: p, icon: <IconWhatsApp size={20} />, onClick: () => openWhatsApp(contact, p) }))} />
     </>
   )
 }
@@ -138,7 +165,7 @@ function ContactDetail({ id, onEdit, onClose }) {
             <div key={p} className={s.phoneRow}>
               <span className={s.phoneNum}>{p}</span>
               <a className={ui.iconBtn} href={telHref(p)} onClick={() => markInTouch(contact.id)} aria-label="Call"><IconPhone size={19} /></a>
-              <a className={cx(ui.iconBtn, ui.iconBtnWa)} href={waHref(p)} onClick={() => markInTouch(contact.id)} target="_blank" rel="noreferrer" aria-label="WhatsApp"><IconWhatsApp size={20} /></a>
+              <button className={cx(ui.iconBtn, ui.iconBtnWa, phones.length > 1 && whatsappNumber(contact) === p && s.waChosen)} onClick={() => openWhatsApp(contact, p)} aria-label="WhatsApp"><IconWhatsApp size={20} /></button>
             </div>
           ))}
         </div>

@@ -126,3 +126,6 @@
   font-size: 14.5px; font-weight: 600;
 }
 .listLink { display: block; margin: 18px auto 0; font-size: 14.5px; font-weight: 600; color: var(--muted); padding: 6px; }
+
+/* The number remembered as being on WhatsApp (contacts with several numbers) */
+.waChosen { box-shadow: 0 0 0 2px #13a150 inset; }

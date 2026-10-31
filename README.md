@@ -21,6 +21,8 @@ Saved AI analysis reports need `supabase/migrations/20261017000000_analysis_repo
 
 The daily list and monthly briefing need `supabase/migrations/20261029000000_daily_list.sql` (`contacts.list_hidden`, `contacts.snoozed_until`, `analysis_reports.meta`).
 
+The remembered WhatsApp number needs `supabase/migrations/20261031000000_whatsapp_number.sql` (`contacts.whatsapp_phone`).
+
 Until they're run, the app still works: values for the new fields stay on the phone and Settings shows "Database update needed".
 
 ## Saving contacts to the iPhone

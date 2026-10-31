@@ -50,6 +50,11 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - pinned contacts grouped by Qanungo, under large headings
   - a sticky strip of Qanungo buttons at the top jumps to each section
 
+- **WhatsApp with several numbers** (31 Oct 2026):
+  - WhatsApp won't tell other apps which number is on it, so the first tap shows a chooser.
+  - The choice is remembered in `contacts.whatsapp_phone` (migration `20261031000000_whatsapp_number.sql`).
+  - Using a number's own WhatsApp button on the contact card changes the remembered number.
+
 ## Importing iPhone contacts (built 25 Oct 2026, one-time)
 - **Purpose:** a one-time import of the roughly 5,660 contacts in his iPhone, of which at least 3,500 belong in Halqa. From now on he saves new people directly in Halqa.
 - **How:** export a .vcf from the Contacts app (Lists → hold "All Contacts" → Export → Save to Files), then Settings → Import contacts → choose the file.

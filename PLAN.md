@@ -2,13 +2,15 @@
 
 Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain language, and show him screenshots or test links before changes he hasn't seen.
 
-## Status (26 Oct 2026)
+## Status (31 Oct 2026)
 - v2 is live on `main` (halqa-apps.vercel.app). Usama has no laptop: he works from the Claude app on his iPhone.
 - **How changes ship:** commit on `claude/review-requested-jvbtwm`, run `npm run build`, push the branch, then push the same commit to `main`. Vercel deploys `main` to production. After each deploy, check that `/` and `/sw.js` return 200.
 - **Access:** the cloud environment "Usama" stores network secrets for `api.supabase.com` and `api.vercel.com` (Name `Authorization`, Prefix `Bearer`). The Vercel token ("Claude Halqa") never expires. GitHub access comes from the Claude GitHub connector.
-- **Database updates** (both have been run):
+- **Database updates** (all four have been run):
   - `supabase/migrations/20261016000000_halqa_v2.sql`
   - `supabase/migrations/20261017000000_analysis_reports.sql`
+  - `supabase/migrations/20261029000000_daily_list.sql` (daily list: Later, Don't show, briefing stats)
+  - `supabase/migrations/20261031000000_whatsapp_number.sql` (remembered WhatsApp number)
   
   The auto-mode safety check blocks Claude from running SQL that changes the live database, so Usama pastes the SQL into the Supabase SQL Editor himself. Give him the **contents**, not the file name. "Run without RLS" is the right choice.
 - **Weekly check-up:** a scheduled task, "Halqa weekly check-up", runs every Monday at 8:53 PKT. It is read-only and notifies him only if something needs attention.
@@ -29,9 +31,10 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - Header: "Halqa" + "NA-83 Sargodha-II", with three number boxes: Villages · Contacts · Pinned.
 - Sync badge (Synced / Offline · N waiting).
 - Header icons: map, AI analysis, settings.
-- Main Groups and Day to Day side by side.
+- Tabs: Qanungos · Notes · Search. **Qanungos stays the home page.**
+- A teal **"Today" card** under the tabs ("Today · 12 of 35 done", a progress bar, and "October 2026 briefing is ready" when one is waiting). Tapping it opens the daily list.
+- Main Groups and Day to Day side by side, under the Today card.
 - Qanungo cards: "…" menu (Rename / Remove), contact count, thin completion bar.
-- Tabs: Qanungos · Notes · Search.
 - ⚡ Quick Add, bottom right.
 - A card "N iPhone contacts to sort" appears while an import is unfinished.
 
@@ -49,11 +52,10 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **Main Groups:**
   - pinned contacts grouped by Qanungo, under large headings
   - a sticky strip of Qanungo buttons at the top jumps to each section
-
-- **WhatsApp with several numbers** (31 Oct 2026):
-  - WhatsApp won't tell other apps which number is on it, so the first tap shows a chooser.
-  - The choice is remembered in `contacts.whatsapp_phone` (migration `20261031000000_whatsapp_number.sql`).
-  - Using a number's own WhatsApp button on the contact card changes the remembered number.
+- **WhatsApp with several numbers** (built 31 Oct 2026):
+  - WhatsApp won't tell other apps which number is on it, so the first WhatsApp tap on someone with 2–3 numbers asks "Which number is on WhatsApp?".
+  - The choice is remembered in `contacts.whatsapp_phone` and syncs; after that the WhatsApp button goes straight to that number.
+  - On the contact card each number has its own WhatsApp button; the remembered one has a green outline, and using another one changes the remembered number.
 
 ## Importing iPhone contacts (built 25 Oct 2026, one-time)
 - **Purpose:** a one-time import of the roughly 5,660 contacts in his iPhone, of which at least 3,500 belong in Halqa. From now on he saves new people directly in Halqa.
@@ -108,7 +110,7 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
 1. A new day brings **35 people: 15 pinned + 20 unpinned**. They're picked at random from those not in touch for the longest.
 2. The list stays the same all day.
 3. **Leftovers carry forward:** anyone not ticked Done stays in the list the next day, and the list is topped up to 35 (keeping the 15/20 split).
-4. **Each card shows:** name, village, tags, description, "in touch" age, WhatsApp, call, Later, Don't show again.
+4. **Each card shows:** name, village, tags, description, "in touch" age, then buttons: **✓ Done**, WhatsApp, call, Later, Don't show.
 5. **WhatsApp or call, or opening the card:** marks them in touch, but **they stay in the list**, marked "✓ In touch today". Only the **✓ Done** button takes someone off the list (with Undo). Progress counts Done, e.g. "12 of 35 done".
 6. **Later:** removes them now, brings them back in about a week, and **a new random person of the same kind (pinned or unpinned) takes their place**.
 7. **Don't show again** (died, or any other reason): they stay in Halqa but leave the list for good. They can be brought back from their card, and Settings lists everyone hidden. A replacement is added the same way as Later.
@@ -116,6 +118,8 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
 9. **"Show me 35 more"** brings another batch.
 10. **New people** added to Halqa (Quick Add, the Shortcut, import) come up in the list about **a week after being added**.
 11. Everything works offline; "in touch" dates sync to all devices.
+
+**First days of use (31 Oct):** 2,884 contacts, 805 pinned. 42 people in touch that day, 25 set to Later, 9 hidden.
 
 **Rotation:** with 799 pinned and 2,079 unpinned (29 Oct), pinned people come round about every 2 months and unpinned about every 3½ months, faster with "Show me 35 more".
 
@@ -146,7 +150,7 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
 ## Ideas Usama is considering (not started)
 - **Seeing a caller's Halqa profile when they call or WhatsApp.** A full profile on the call screen is impossible on iOS. Options offered:
   1. A "Paste number" button in Search that opens the matching profile.
-  2. Back Tap plus a Shortcut that opens Halqa on the copied number.
+  2. Back Tap plus a Shortcut that opens Halqa on the copied number. (Back Tap is now used by "Save number to Halqa", so this would need Triple Tap.)
   3. Getting Halqa details into the iPhone contact name, either by adding tags to the saved vCard name or by retrying the automatic CardDAV sync on `halqa-apps.vercel.app/carddav/`. The code for that is in git history, commit b396b61.
 - **A copy of Halqa for a friend** (another politician, with his own accounts):
   - A clean copy (no key, no history, none of Usama's notes) plus `SETUP.md` and `supabase/setup.sql` was sent to Usama as `halqa-clean-copy.zip`.

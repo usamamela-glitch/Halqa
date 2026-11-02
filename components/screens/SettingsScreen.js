@@ -8,6 +8,7 @@ import { shortDate } from '../../lib/domain'
 import { Screen, Field, cx, ui, useSyncState, useToast } from '../ui'
 import { IconRefresh, IconDownload } from '../Icons'
 import { useNav } from '../../lib/nav'
+import { lastProblem } from '../Recover'
 import st from '../../styles/settings.module.css'
 
 const APP_VERSION = '2.0.0'
@@ -17,6 +18,7 @@ export default function SettingsScreen() {
   const { push } = useNav()
   const hidden = useLiveQuery(() => db.contacts.filter(c => !!c.list_hidden).toArray(), [], [])
   const [showHidden, setShowHidden] = useState(false)
+  const [problem] = useState(lastProblem)
   const sync = useSyncState()
   const failed = useLiveQuery(() => db.failed.toArray(), [], [])
   const missing = useLiveQuery(async () => (await db.meta.get('missingColumns'))?.value || {}, [], {})
@@ -137,6 +139,7 @@ export default function SettingsScreen() {
       </div>
 
       <p className={st.version}>Halqa {APP_VERSION}</p>
+      {problem && <p className={st.problem}>Last problem ({shortDate(problem.at)}): {problem.message}</p>}
     </Screen>
   )
 }

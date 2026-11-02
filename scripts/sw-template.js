@@ -15,8 +15,13 @@ self.addEventListener('install', event => {
 
 self.addEventListener('activate', event => {
   event.waitUntil(
+    // Keep the version before this one too: a copy of Halqa still open from
+    // before the update may yet ask for its old files.
     caches.keys()
-      .then(keys => Promise.all(keys.filter(k => k.startsWith('halqa-app-') && k !== APP_CACHE).map(k => caches.delete(k))))
+      .then(keys => {
+        const old = keys.filter(k => k.startsWith('halqa-app-') && k !== APP_CACHE)
+        return Promise.all(old.slice(0, -1).map(k => caches.delete(k)))
+      })
       .then(() => self.clients.claim())
   )
 })

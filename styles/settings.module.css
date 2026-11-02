@@ -15,4 +15,5 @@
 .keyRow { display: flex; align-items: center; justify-content: space-between; padding: 4px 2px 12px; border-bottom: 1px solid var(--hair); margin-bottom: 14px; }
 .keyMask { font-family: ui-monospace, Menlo, monospace; font-size: 14px; color: var(--ink-2); }
 .link { color: var(--red); font-weight: 650; padding: 6px; }
+.problem { text-align: center; margin: 6px 16px 0; color: var(--faint); font-size: 11px; line-height: 1.4; word-break: break-word; }
 .version { text-align: center; margin-top: 28px; color: var(--faint); font-size: 13px; font-weight: 600; }

@@ -116,10 +116,11 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
 5. **WhatsApp or call, or opening the card:** marks them in touch, but **they stay in the list**, marked "✓ In touch today". Only the **✓ Done** button takes someone off the list (with Undo). Progress counts Done, e.g. "12 of 35 done".
 6. **Later:** removes them now, brings them back in about a week, and **a new random person of the same kind (pinned or unpinned) takes their place**.
 7. **Don't show again** (died, or any other reason): they stay in Halqa but leave the list for good. They can be brought back from their card, and Settings lists everyone hidden. A replacement is added the same way as Later.
-8. **Undo** for a few seconds after each action.
-9. **"Show me 35 more"** brings another batch.
-10. **New people** added to Halqa (Quick Add, the Shortcut, import) come up in the list about **a week after being added**.
-11. Everything works offline; "in touch" dates sync to all devices.
+8. **Deleting** someone on today's list, or hiding them from their contact card, also brings in a replacement, so the list stays at 35 (fixed 3 Nov; before that the list dropped to 34).
+9. **Undo** for a few seconds after each action.
+10. **"Show me 35 more"** brings another batch.
+11. **New people** added to Halqa (Quick Add, the Shortcut, import) come up in the list about **a week after being added**.
+12. Everything works offline; "in touch" dates sync to all devices.
 
 **First days of use (31 Oct):** 2,884 contacts, 805 pinned. 42 people in touch that day, 25 set to Later, 9 hidden.
 

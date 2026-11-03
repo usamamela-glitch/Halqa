@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
-import { ensureToday, showMore, setAside, markDone, SPLIT } from '../../lib/daily'
+import { tidyToday, showMore, setAside, markDone, SPLIT } from '../../lib/daily'
 import { inTouchToday } from '../../lib/touch'
 import { daysSince, contactedLabel } from '../../lib/domain'
 import { Screen, Avatar, Empty, cx, ui, useToast } from '../ui'
@@ -32,8 +32,8 @@ export default function TodayScreen() {
 
   // Build today's list on open, and again if the app is left open past midnight.
   useEffect(() => {
-    ensureToday()
-    const onShow = () => { if (document.visibilityState === 'visible') ensureToday() }
+    tidyToday()
+    const onShow = () => { if (document.visibilityState === 'visible') tidyToday() }
     document.addEventListener('visibilitychange', onShow)
     return () => document.removeEventListener('visibilitychange', onShow)
   }, [])
@@ -153,7 +153,7 @@ export function TodayCard({ contacts }) {
     const seen = (await db.meta.get('briefingSeen'))?.value
     return latest && latest.id !== seen ? latest.title.replace('Monthly briefing · ', '') : null
   }, [], null)
-  useEffect(() => { ensureToday() }, [])
+  useEffect(() => { tidyToday() }, [contacts.length])
 
   const byId = useMemo(() => new Map(contacts.map(c => [c.id, c])), [contacts])
   const rows = (daily?.items || []).filter(it => (it.state === 'open' || it.state === 'done') && byId.get(it.id))

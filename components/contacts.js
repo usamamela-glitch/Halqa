@@ -7,6 +7,7 @@ import { telHref, waHref, phonesOf, phoneDigits, downloadVCard } from '../lib/ph
 import { TAGS, daysSince, contactedLevel, contactedLabel, byName } from '../lib/domain'
 import { useLocalStorage } from '../lib/hooks'
 import { markInTouch } from '../lib/touch'
+import { tidyToday } from '../lib/daily'
 import { Card, Avatar, Sheet, ActionSheet, Field, cx, ui, useToast } from './ui'
 import { IconPhone, IconWhatsApp, IconPin, IconCheck, IconUserPlus, IconEdit, IconCamera } from './Icons'
 import s from '../styles/contacts.module.css'
@@ -127,6 +128,7 @@ function ContactDetail({ id, onEdit, onClose }) {
   async function toggleListHidden() {
     const hide = !contact.list_hidden
     await updateRow('contacts', contact.id, { list_hidden: hide })
+    if (hide) tidyToday()
     toast(hide ? `${contact.name} won't appear in the daily list` : `${contact.name} is back in the daily list`)
   }
 
@@ -139,6 +141,7 @@ function ContactDetail({ id, onEdit, onClose }) {
     const snapshot = { ...contact }
     onClose()
     await deleteRow('contacts', contact.id)
+    tidyToday()
     toast(`Deleted ${snapshot.name}`, { label: 'Undo', onClick: () => restoreRow('contacts', snapshot) })
   }
 

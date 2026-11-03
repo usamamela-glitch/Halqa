@@ -42,7 +42,7 @@ export default function TodayScreen() {
   const vById = useMemo(() => Object.fromEntries(villages.map(v => [v.id, v])), [villages])
   const qName = useMemo(() => Object.fromEntries(qanungos.map(q => [q.id, q.name])), [qanungos])
 
-  const rows = (daily?.items || []).filter(it => (it.state === 'open' || it.state === 'done') && byId.get(it.id))
+  const rows = (daily?.items || []).filter(it => it.state === 'done' || (it.state === 'open' && byId.get(it.id)))
   const done = rows.filter(it => it.state === 'done')
   const todo = rows.filter(it => it.state === 'open')
     .sort((a, b) => (a.kind === b.kind ? 0 : a.kind === 'pinned' ? -1 : 1))
@@ -156,7 +156,7 @@ export function TodayCard({ contacts }) {
   useEffect(() => { tidyToday() }, [contacts.length])
 
   const byId = useMemo(() => new Map(contacts.map(c => [c.id, c])), [contacts])
-  const rows = (daily?.items || []).filter(it => (it.state === 'open' || it.state === 'done') && byId.get(it.id))
+  const rows = (daily?.items || []).filter(it => it.state === 'done' || (it.state === 'open' && byId.get(it.id)))
   const done = rows.filter(it => it.state === 'done').length
   const total = rows.length
 

@@ -7,9 +7,25 @@ import Navigator from './Navigator'
 import { ToastProvider } from './ui'
 import s from '../styles/boot.module.css'
 
+// New versions install in the background. Once one has taken over, Halqa
+// reloads the next time it goes into the background, so coming back to it
+// always shows the latest version (iPhone often keeps the old one running
+// for days otherwise). It also checks for a new version each time it's reopened.
 function registerServiceWorker() {
   if (!('serviceWorker' in navigator) || process.env.NODE_ENV !== 'production') return
-  navigator.serviceWorker.register('/sw.js').catch(() => {})
+  const sw = navigator.serviceWorker
+  const hadVersion = !!sw.controller
+  sw.register('/sw.js').then(reg => {
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') reg.update().catch(() => {})
+    })
+  }).catch(() => {})
+  if (!hadVersion) return   // the very first install: nothing old to replace
+  sw.addEventListener('controllerchange', () => {
+    const reloadWhenHidden = () => { if (document.visibilityState === 'hidden') window.location.reload() }
+    if (document.visibilityState === 'hidden') window.location.reload()
+    else document.addEventListener('visibilitychange', reloadWhenHidden)
+  })
 }
 
 // First launch on a device: download everything before showing the app.

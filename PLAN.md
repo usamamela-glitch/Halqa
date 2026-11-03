@@ -17,7 +17,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **Rollback point** (the old v1 app): Vercel deployment `dpl_FS9AMxK6nZpz5mURyC9gnym93tLF` (commit 7e86dc3).
 - **Vercel settings:** Deployment Protection ("Vercel Authentication") is off, so test links open on his phone without a login. The env var `HALQA_CONTACTS_PASSWORD` is left over from the dropped CardDAV attempt and is unused.
 
-- **Crash recovery (2 Nov 2026):** if anything crashes, Halqa reopens itself once instead of showing a white "client-side exception" page; if it crashes again straight away it shows a "Reopen Halqa" button. The last problem is shown in small text at the bottom of Settings (`components/Recover.js`). The likely cause of the 2 Nov white screen: iOS cutting the phone's database connection after Halqa sat in the background. The service worker also keeps the previous version's files for a copy of Halqa still open from before an update.
+- **Crash recovery (2 Nov 2026):** if anything crashes, Halqa reopens itself once instead of showing a white "client-side exception" page; if it crashes again straight away it shows a "Reopen Halqa" button. The last problem is shown in small text at the bottom of Settings (`components/Recover.js`). The likely cause of the 2 Nov white screen: iOS cutting the phone's database connection after Halqa sat in the background. New versions now load by themselves: Halqa checks for one each time it's reopened, and reloads into it the next time it goes into the background (iPhone otherwise kept the old version running). The service worker also keeps the previous version's files for a copy of Halqa still open from before an update.
 
 ## Decided
 - **No login.** The app stays open to anyone with the URL. This includes saved AI reports, which colleagues can see (Usama chose this).
@@ -116,7 +116,7 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
 5. **WhatsApp or call, or opening the card:** marks them in touch, but **they stay in the list**, marked "✓ In touch today". Only the **✓ Done** button takes someone off the list (with Undo). Progress counts Done, e.g. "12 of 35 done".
 6. **Later:** removes them now, brings them back in about a week, and **a new random person of the same kind (pinned or unpinned) takes their place**.
 7. **Don't show again** (died, or any other reason): they stay in Halqa but leave the list for good. They can be brought back from their card, and Settings lists everyone hidden. A replacement is added the same way as Later.
-8. **Deleting** someone on today's list, or hiding them from their contact card, also brings in a replacement, so the list stays at 35 (fixed 3 Nov; before that the list dropped to 34).
+8. **Deleting** someone on today's list, or hiding them from their contact card, also brings in a replacement, so the list stays at 35. Someone already ticked Done and then deleted still counts as done. (Fixed 3 Nov; before that the list dropped to 34.)
 9. **Undo** for a few seconds after each action.
 10. **"Show me 35 more"** brings another batch.
 11. **New people** added to Halqa (Quick Add, the Shortcut, import) come up in the list about **a week after being added**.

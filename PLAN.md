@@ -156,7 +156,7 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
   2. Back Tap plus a Shortcut that opens Halqa on the copied number. (Back Tap is now used by "Save number to Halqa", so this would need Triple Tap.)
   3. Getting Halqa details into the iPhone contact name, either by adding tags to the saved vCard name or by retrying the automatic CardDAV sync on `halqa-apps.vercel.app/carddav/`. The code for that is in git history, commit b396b61.
 - **A copy of Halqa for a friend** (NA-78 Gujranwala-II, his own GitHub, Supabase and Vercel; set up 4 Nov 2026):
-  - A fresh clean copy of the 3 Nov app was sent to Usama as `halqa-na78.zip`: no data, no keys, no Sargodha details. On screen Qanungo → **Area**, Village → **Mohalla** (tables keep their names). AI prompt describes an urban constituency; map off; "Wasayba Leader" tag removed; first automatic briefing is November 2026.
+  - A fresh clean copy of the 3 Nov app was sent to Usama as `halqa-na78.zip`: no data, no keys, no Sargodha details. On screen Qanungo → **Area**, Village → **Mohalla** (tables keep their names). AI prompt describes an urban constituency; his own NA-78 map (union councils with roads, from his PDF) is on the map button; "Wasayba Leader" tag removed; first automatic briefing is November 2026.
   - Inside: `SETUP.md` (step-by-step for the friend's Claude), `CLAUDE.md` (rules for his later sessions), `supabase/setup.sql` (whole database, tested twice on Postgres; turns RLS off).
   - Usama's day-of checklist is the artifact "Halqa NA-78 Setup" (claude.ai/artifact/9ZHru6MothWU86faU6ZbB3).
 

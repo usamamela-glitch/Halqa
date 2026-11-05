@@ -158,6 +158,8 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
 - **A copy of Halqa for a friend** (NA-78 Gujranwala-II, his own GitHub, Supabase and Vercel; set up 4 Nov 2026):
   - A fresh clean copy of the 3 Nov app was sent to Usama as `halqa-na78.zip`: no data, no keys, no Sargodha details. On screen Qanungo → **Area**, Village → **Mohalla** (tables keep their names). AI prompt describes an urban constituency; his own NA-78 map (union councils with roads, from his PDF) is on the map button; "Wasayba Leader" tag removed; first automatic briefing is November 2026.
   - Inside: `SETUP.md` (step-by-step for the friend's Claude), `CLAUDE.md` (rules for his later sessions), `supabase/setup.sql` (whole database, tested twice on Postgres; turns RLS off).
+  - **Done 5 Nov 2026.** Live at halqa-pi.vercel.app (Vercel account mubeenjutt-7091, GitHub g8wzfd875d-cell/halqa). His own Claude maintains it from now on; Usama set up both Shortcuts on his iPhone.
+  - Lessons for next time: GitHub's web uploader fails on dragged folders, so upload the zip and let Claude unzip it. "Continue with Apple" gives GitHub a hidden Apple relay address that only GitHub can email, so a Vercel account made through that GitHub never gets its verification codes; use a Vercel account made with a real email instead.
   - Usama's day-of checklist is the artifact "Halqa NA-78 Setup" (claude.ai/artifact/9ZHru6MothWU86faU6ZbB3).
 
 ## Dropped

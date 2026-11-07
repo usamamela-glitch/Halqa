@@ -26,8 +26,19 @@ self.addEventListener('activate', event => {
   )
 })
 
+// Looks in this version's own cache first. Files kept from the previous
+// version are only a last resort (for a copy of Halqa still open from before
+// an update), and never for the page itself, or Halqa would keep opening the
+// old version.
+async function fromCache(key, cacheName, opts, anyVersion) {
+  let hit = await (await caches.open(APP_CACHE)).match(key, opts)
+  if (!hit && cacheName !== APP_CACHE) hit = await (await caches.open(cacheName)).match(key, opts)
+  if (!hit && anyVersion) hit = await caches.match(key, opts)
+  return hit
+}
+
 async function cacheFirst(request, cacheName, fallbackUrl) {
-  const cached = await caches.match(fallbackUrl || request, { ignoreSearch: !!fallbackUrl })
+  const cached = await fromCache(fallbackUrl || request, cacheName, { ignoreSearch: !!fallbackUrl }, !fallbackUrl)
   if (cached) return cached
   try {
     const res = await fetch(request)
@@ -37,7 +48,7 @@ async function cacheFirst(request, cacheName, fallbackUrl) {
     }
     return res
   } catch (e) {
-    const fallback = fallbackUrl && (await caches.match(fallbackUrl))
+    const fallback = fallbackUrl && (await fromCache(fallbackUrl, APP_CACHE, { ignoreSearch: true }, false))
     if (fallback) return fallback
     throw e
   }

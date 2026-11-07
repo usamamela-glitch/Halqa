@@ -6,21 +6,44 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - v2 is live on `main` (halqa-apps.vercel.app). Usama has no laptop: he works from the Claude app on his iPhone.
 - **How changes ship:** commit on `claude/review-requested-jvbtwm`, run `npm run build`, push the branch, then push the same commit to `main`. Vercel deploys `main` to production. After each deploy, check that `/` and `/sw.js` return 200.
 - **Access:** the cloud environment "Usama" stores network secrets for `api.supabase.com` and `api.vercel.com` (Name `Authorization`, Prefix `Bearer`). The Vercel token ("Claude Halqa") never expires. GitHub access comes from the Claude GitHub connector.
-- **Database updates** (all four have been run):
+- **Database updates** (all five have been run):
   - `supabase/migrations/20261016000000_halqa_v2.sql`
   - `supabase/migrations/20261017000000_analysis_reports.sql`
   - `supabase/migrations/20261029000000_daily_list.sql` (daily list: Later, Don't show, briefing stats)
   - `supabase/migrations/20261031000000_whatsapp_number.sql` (remembered WhatsApp number)
+  - `supabase/migrations/20261107000000_login_required.sql` (login required: RLS on, anon has no rights)
   
   The auto-mode safety check blocks Claude from running SQL that changes the live database, so Usama pastes the SQL into the Supabase SQL Editor himself. Give him the **contents**, not the file name. "Run without RLS" is the right choice.
-- **Weekly check-up:** a scheduled task, "Halqa weekly check-up", runs every Monday at 8:53 PKT. It is read-only and notifies him only if something needs attention.
+- **Weekly check-up:** a scheduled task, "Halqa weekly check-up", runs every Monday at 8:53 PKT. It is read-only, except for the monthly backup into `halqa-backups`. It notifies him only if something needs attention.
 - **Rollback point** (the old v1 app): Vercel deployment `dpl_FS9AMxK6nZpz5mURyC9gnym93tLF` (commit 7e86dc3).
 - **Vercel settings:** Deployment Protection ("Vercel Authentication") is off, so test links open on his phone without a login. The env var `HALQA_CONTACTS_PASSWORD` is left over from the dropped CardDAV attempt and is unused.
 
 - **Crash recovery (2 Nov 2026):** if anything crashes, Halqa reopens itself once instead of showing a white "client-side exception" page; if it crashes again straight away it shows a "Reopen Halqa" button. The last problem is shown in small text at the bottom of Settings (`components/Recover.js`). The likely cause of the 2 Nov white screen: iOS cutting the phone's database connection after Halqa sat in the background. New versions now load by themselves: Halqa checks for one each time it's reopened, and reloads into it the next time it goes into the background (iPhone otherwise kept the old version running). The service worker also keeps the previous version's files for a copy of Halqa still open from before an update.
 
 ## Decided
-- **No login.** The app stays open to anyone with the URL. This includes saved AI reports, which colleagues can see (Usama chose this).
+- **Login (7 Nov 2026, replaces "no login"):**
+  - **Sign-in:** email + password, via Supabase Auth.
+    - Each device signs in once and stays signed in, offline too (`lib/auth.js`; the session is kept under localStorage `halqa-auth`).
+    - The home-screen app and Safari count as separate devices.
+    - Settings → Account → **Sign out of this device** removes Halqa's data and API key from the device.
+  - **Accounts:** only Usama's for now. New accounts are made in Supabase → Authentication → Users → Add user, with Auto Confirm ticked. Sign-ups are switched off.
+  - **Locked database:**
+    - Row level security is on for all 7 tables, with one policy each: signed-in users can do everything.
+    - The public `anon` key has no rights (`supabase/migrations/20261107000000_login_required.sql`, run 7 Nov).
+    - **Any new table must get the same RLS policy**, or it will be either open or unusable.
+  - **Photos:**
+    - Only signed-in users can upload or list them.
+    - Each photo still opens from its own link (buckets stay public), and the links hold random IDs that are stored only in the locked database.
+  - **Sync safeguards (`lib/sync.js`):**
+    - It doesn't sync without a session.
+    - It keeps changes queued on 401/403/RLS errors.
+    - It refuses to replace the phone's copy if the server returns no contacts.
+- **Monthly backup (7 Nov 2026):**
+  - **Where:** the private repo `usamamela-glitch/halqa-backups`, with one folder per month: every table as JSON, plus every Storage file.
+  - **Retention:** only the newest 3 months, kept as a single commit, so older backups are really deleted.
+  - **How it runs:** the Monday check-up runs `python3 backup.py --push`, which does nothing if this month is already saved.
+  - **Restoring:** see that repo's README.
+
 - **Offline mode** is the top priority: the whole app and all data are on the phone, and changes queue and upload when signal returns.
 - **Election results:** keep the free-text 2018 and 2024 fields exactly as they are (e.g. "Usama 294, Mohsin 341, Aslam 66. Net: -47"). No structured vote fields.
 - **Not wanted:**

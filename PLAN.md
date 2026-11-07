@@ -2,7 +2,7 @@
 
 Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain language, and show him screenshots or test links before changes he hasn't seen.
 
-## Status (31 Oct 2026)
+## Status (7 Nov 2026)
 - v2 is live on `main` (halqa-apps.vercel.app). Usama has no laptop: he works from the Claude app on his iPhone.
 - **How changes ship:** commit on `claude/review-requested-jvbtwm`, run `npm run build`, push the branch, then push the same commit to `main`. Vercel deploys `main` to production. After each deploy, check that `/` and `/sw.js` return 200.
 - **Access:** the cloud environment "Usama" stores network secrets for `api.supabase.com` and `api.vercel.com` (Name `Authorization`, Prefix `Bearer`). The Vercel token ("Claude Halqa") never expires. GitHub access comes from the Claude GitHub connector.
@@ -18,7 +18,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **Rollback point** (the old v1 app): Vercel deployment `dpl_FS9AMxK6nZpz5mURyC9gnym93tLF` (commit 7e86dc3).
 - **Vercel settings:** Deployment Protection ("Vercel Authentication") is off, so test links open on his phone without a login. The env var `HALQA_CONTACTS_PASSWORD` is left over from the dropped CardDAV attempt and is unused.
 
-- **Crash recovery (2 Nov 2026):** if anything crashes, Halqa reopens itself once instead of showing a white "client-side exception" page; if it crashes again straight away it shows a "Reopen Halqa" button. The last problem is shown in small text at the bottom of Settings (`components/Recover.js`). The likely cause of the 2 Nov white screen: iOS cutting the phone's database connection after Halqa sat in the background. New versions now load by themselves: Halqa checks for one each time it's reopened, and reloads into it the next time it goes into the background (iPhone otherwise kept the old version running). The service worker also keeps the previous version's files for a copy of Halqa still open from before an update.
+- **Crash recovery (2 Nov 2026):** if anything crashes, Halqa reopens itself once instead of showing a white "client-side exception" page; if it crashes again straight away it shows a "Reopen Halqa" button. The last problem is shown in small text at the bottom of Settings (`components/Recover.js`). The likely cause of the 2 Nov white screen: iOS cutting the phone's database connection after Halqa sat in the background. New versions now load by themselves: Halqa checks for one each time it's reopened, and reloads into it the next time it goes into the background (iPhone otherwise kept the old version running). The service worker also keeps the previous version's files for a copy of Halqa still open from before an update. **Fixed 7 Nov:** that kept copy made phones open the *previous* version (one update behind; Safari got stuck). The worker now always serves its own version's page and files first (`fromCache` in `scripts/sw-template.js`).
 
 ## Decided
 - **Login (7 Nov 2026, replaces "no login"):**
@@ -181,7 +181,7 @@ Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", 
 - **A copy of Halqa for a friend** (NA-78 Gujranwala-II, his own GitHub, Supabase and Vercel; set up 4 Nov 2026):
   - A fresh clean copy of the 3 Nov app was sent to Usama as `halqa-na78.zip`: no data, no keys, no Sargodha details. On screen Qanungo → **Area**, Village → **Mohalla** (tables keep their names). AI prompt describes an urban constituency; his own NA-78 map (union councils with roads, from his PDF) is on the map button; "Wasayba Leader" tag removed; first automatic briefing is November 2026.
   - Inside: `SETUP.md` (step-by-step for the friend's Claude), `CLAUDE.md` (rules for his later sessions), `supabase/setup.sql` (whole database, tested twice on Postgres; turns RLS off).
-  - **Done 5 Nov 2026.** Live at halqa-pi.vercel.app (Vercel account mubeenjutt-7091, GitHub g8wzfd875d-cell/halqa). His own Claude maintains it from now on; Usama set up both Shortcuts on his iPhone.
+  - **Done 5 Nov 2026.** Live at halqa-pi.vercel.app (Vercel account mubeenjutt-7091, GitHub g8wzfd875d-cell/halqa). His own Claude maintains it from now on; Usama set up both Shortcuts on his iPhone. Usama's decision (7 Nov): the friend's copy is his own. He adds login, backups or anything else himself; we don't maintain it.
   - Lessons for next time: GitHub's web uploader fails on dragged folders, so upload the zip and let Claude unzip it. "Continue with Apple" gives GitHub a hidden Apple relay address that only GitHub can email, so a Vercel account made through that GitHub never gets its verification codes; use a Vercel account made with a real email instead.
   - Usama's day-of checklist is the artifact "Halqa NA-78 Setup" (claude.ai/artifact/9ZHru6MothWU86faU6ZbB3).
 

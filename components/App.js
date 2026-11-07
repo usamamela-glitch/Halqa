@@ -5,6 +5,7 @@ import { startSync, syncNow, subscribeSync, getSyncState } from '../lib/sync'
 import { NavProvider } from '../lib/nav'
 import Navigator from './Navigator'
 import { ToastProvider } from './ui'
+import { useSignedIn, signIn } from '../lib/auth'
 import s from '../styles/boot.module.css'
 
 // New versions install in the background. Once one has taken over, Halqa
@@ -57,13 +58,43 @@ function FirstLoad() {
   )
 }
 
-export default function App() {
+// Shown until this device has signed in once.
+function SignIn() {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [error, setError] = useState('')
+
+  async function submit(e) {
+    e.preventDefault()
+    setBusy(true)
+    setError('')
+    const problem = await signIn(email, password)
+    setBusy(false)
+    if (problem) setError(problem)
+  }
+
+  return (
+    <div className={s.boot}>
+      <div className={s.mark}>H</div>
+      <div className={s.name}>Halqa</div>
+      <form className={s.form} onSubmit={submit}>
+        <input className={s.field} type="email" placeholder="Email" value={email} onChange={e => setEmail(e.target.value)}
+          autoComplete="username" autoCapitalize="off" autoCorrect="off" spellCheck={false} inputMode="email" required />
+        <input className={s.field} type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}
+          autoComplete="current-password" required />
+        {error && <p className={s.error}>{error}</p>}
+        <button type="submit" className={s.retry} disabled={busy || !email.trim() || !password}>{busy ? 'Signing in…' : 'Sign in'}</button>
+      </form>
+      <p className={s.text}>Sign in once on each phone or computer. Halqa then stays signed in and works offline.</p>
+    </div>
+  )
+}
+
+function Main() {
   const initialized = useLiveQuery(async () => !!(await db.meta.get('initialized')), [], null)
 
-  useEffect(() => {
-    startSync()
-    registerServiceWorker()
-  }, [])
+  useEffect(() => { startSync() }, [])
 
   if (initialized === null) return <div className={s.boot} />
   if (!initialized) return <FirstLoad />
@@ -75,4 +106,11 @@ export default function App() {
       </NavProvider>
     </ToastProvider>
   )
+}
+
+export default function App() {
+  const signedIn = useSignedIn()
+  useEffect(() => { registerServiceWorker() }, [])
+  if (signedIn === null) return <div className={s.boot} />
+  return signedIn ? <Main /> : <SignIn />
 }

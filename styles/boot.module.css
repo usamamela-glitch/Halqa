@@ -15,6 +15,16 @@
 .text { margin-top: 18px; max-width: 300px; font-size: 15px; line-height: 1.5; color: rgba(255,255,255,0.75); }
 .bar { margin-top: 28px; width: 180px; height: 4px; border-radius: 2px; background: rgba(255,255,255,0.15); overflow: hidden; }
 .barFill { width: 40%; height: 100%; border-radius: 2px; background: #7fe0c9; animation: slide 1.2s ease-in-out infinite; }
+.form { margin-top: 26px; width: 100%; max-width: 320px; display: flex; flex-direction: column; gap: 10px; }
+.field {
+  height: 50px; padding: 0 16px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.1); color: #fff; font-size: 16px;
+}
+.field::placeholder { color: rgba(255,255,255,0.55); }
+.field:focus { outline: none; border-color: #7fe0c9; background: rgba(255,255,255,0.14); }
+.error { margin: 2px 0 0; color: #ffd5cc; font-size: 14px; }
+.form .retry { margin-top: 6px; width: 100%; }
+.retry:disabled { opacity: 0.6; }
 .retry {
   margin-top: 22px; height: 48px; padding: 0 26px; border-radius: 14px;
   background: #fff; color: var(--teal); font-weight: 700;

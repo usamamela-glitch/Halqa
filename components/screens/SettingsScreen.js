@@ -5,10 +5,11 @@ import { syncNow } from '../../lib/sync'
 import { updateRow } from '../../lib/store'
 import { getApiKey, setApiKey } from '../../lib/analysis'
 import { shortDate } from '../../lib/domain'
-import { Screen, Field, cx, ui, useSyncState, useToast } from '../ui'
+import { Screen, Field, ActionSheet, cx, ui, useSyncState, useToast } from '../ui'
 import { IconRefresh, IconDownload } from '../Icons'
 import { useNav } from '../../lib/nav'
 import { lastProblem } from '../Recover'
+import { useAccountEmail, signOutAndClear } from '../../lib/auth'
 import st from '../../styles/settings.module.css'
 
 const APP_VERSION = '2.0.0'
@@ -19,6 +20,8 @@ export default function SettingsScreen() {
   const hidden = useLiveQuery(() => db.contacts.filter(c => !!c.list_hidden).toArray(), [], [])
   const [showHidden, setShowHidden] = useState(false)
   const [problem] = useState(lastProblem)
+  const email = useAccountEmail()
+  const [confirmOut, setConfirmOut] = useState(false)
   const sync = useSyncState()
   const failed = useLiveQuery(() => db.failed.toArray(), [], [])
   const missing = useLiveQuery(async () => (await db.meta.get('missingColumns'))?.value || {}, [], {})
@@ -137,6 +140,22 @@ export default function SettingsScreen() {
           <p className={st.note}>Stored only on this phone, never in the shared database.</p>
         </div>
       </div>
+
+      <div className={ui.section}>
+        <div className={ui.sectionHead}><span>Account</span></div>
+        <div className={st.card}>
+          <div className={st.keyRow}>
+            <span>Signed in as <strong>{email || '…'}</strong></span>
+          </div>
+          <button className={cx(ui.btn, ui.btnBlock)} onClick={() => setConfirmOut(true)}>Sign out of this device</button>
+          <p className={st.note}>Signing out removes Halqa's data and your Claude API key from this device. Everything stays safe in the database; signing in again downloads it.</p>
+        </div>
+      </div>
+      <ActionSheet open={confirmOut} onClose={() => setConfirmOut(false)} title="Sign out of this device?"
+        text={sync.pending
+          ? `${sync.pending} change${sync.pending !== 1 ? 's haven\u2019t' : ' hasn\u2019t'} uploaded yet and would be lost. Connect to the internet and wait for “Synced” first.`
+          : 'Halqa\u2019s data will be removed from this device. You can sign in again at any time.'}
+        items={[!sync.pending && { label: 'Sign out', danger: true, onClick: signOutAndClear }]} />
 
       <p className={st.version}>Halqa {APP_VERSION}</p>
       {problem && <p className={st.problem}>Last problem ({shortDate(problem.at)}): {problem.message}</p>}

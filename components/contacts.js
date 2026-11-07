@@ -8,6 +8,7 @@ import { TAGS, daysSince, contactedLevel, contactedLabel, byName } from '../lib/
 import { useLocalStorage } from '../lib/hooks'
 import { markInTouch, recordAttempt, inTouchToday } from '../lib/touch'
 import { tidyToday, markDone, openInToday } from '../lib/daily'
+import { numberKey, nameKey } from '../lib/importContacts'
 import { Card, Avatar, Sheet, ActionSheet, Field, cx, ui, useToast } from './ui'
 import { IconPhone, IconWhatsApp, IconPin, IconCheck, IconUserPlus, IconEdit, IconCamera } from './Icons'
 import s from '../styles/contacts.module.css'
@@ -335,6 +336,10 @@ function ContactForm({ initial, onDone, onOpenExisting, quick }) {
         </div>
       )}
 
+      {quick && isNew && (initial.phone || '').trim() && (
+        <AddToExisting name={initial.name} numbers={[initial.phone, initial.phone2, initial.phone3].filter(Boolean)} onAdded={onOpenExisting} />
+      )}
+
       <Field label="Name">
         <input className={ui.input} value={f.name} onChange={e => set('name', e.target.value)} placeholder="e.g. Muhammad Akram" autoFocus={quick || isNew} autoCapitalize="words" autoComplete="off" />
       </Field>
@@ -390,6 +395,87 @@ function ContactForm({ initial, onDone, onOpenExisting, quick }) {
         {isNew ? 'Save contact' : 'Save changes'}
       </button>
     </form>
+  )
+}
+
+// ---------- Add a new number to someone already in Halqa ----------
+
+const PHONE_FIELDS = ['phone', 'phone2', 'phone3']
+
+// Shown in Quick Add when it was opened with a number (Shortcuts, Back Tap):
+// the number may belong to someone already saved under another number.
+function AddToExisting({ name, numbers, onAdded }) {
+  const toast = useToast()
+  const contacts = useLiveQuery(() => db.contacts.toArray(), [], [])
+  const villages = useLiveQuery(() => db.villages.toArray(), [], [])
+  const [open, setOpen] = useState(false)
+  const [q, setQ] = useState('')
+  const [full, setFull] = useState(null)      // contact with no free slot: ask which number to replace
+  const vName = useMemo(() => Object.fromEntries(villages.map(v => [v.id, v.name])), [villages])
+
+  // Same or very similar name to the shared one.
+  const suggested = useMemo(() => {
+    const k = nameKey(name || '')
+    if (k.length < 4) return []
+    return contacts.filter(c => {
+      const ck = nameKey(c.name)
+      return ck === k || (ck.length >= 5 && (ck.includes(k) || k.includes(ck)))
+    }).slice(0, 3)
+  }, [contacts, name])
+
+  const results = useMemo(() => {
+    const t = q.trim().toLowerCase()
+    if (t.length < 2) return []
+    return contacts.filter(c => c.name.toLowerCase().includes(t) || (vName[c.village_id] || '').toLowerCase().includes(t))
+      .sort(byName).slice(0, 12)
+  }, [contacts, q, vName])
+
+  async function add(c, replaceField) {
+    const have = new Set(phonesOf(c).map(numberKey))
+    const fresh = numbers.map(n => n.trim()).filter(n => n && !have.has(numberKey(n)))
+    if (!fresh.length) { toast(`${c.name} already has this number`); onAdded(c.id); return }
+    const patch = {}
+    const free = PHONE_FIELDS.filter(k => !(c[k] || '').trim())
+    if (replaceField) patch[replaceField] = fresh[0]
+    else if (!free.length) { setFull(c); return }
+    else fresh.slice(0, free.length).forEach((n, i) => { patch[free[i]] = n })
+    const before = Object.fromEntries(Object.keys(patch).map(k => [k, c[k] || '']))
+    await updateRow('contacts', c.id, patch)
+    toast(`Added ${Object.values(patch).join(', ')} to ${c.name}`, { label: 'Undo', onClick: () => updateRow('contacts', c.id, before) })
+    onAdded(c.id)
+  }
+
+  const row = c => (
+    <button type="button" key={c.id} className={s.attachItem} onClick={() => add(c)}>
+      <Avatar name={c.name} photo={c.photo_path} size={34} />
+      <span className={s.attachText}><strong>{c.name}</strong><span>{vName[c.village_id] || 'No village'} · {phonesOf(c)[0] || 'no number'}</span></span>
+      <span className={s.attachAdd}>Add here</span>
+    </button>
+  )
+
+  return (
+    <div className={s.attach}>
+      {suggested.length > 0 && (
+        <>
+          <div className={s.attachHead}>Already in Halqa with another number?</div>
+          {suggested.map(row)}
+        </>
+      )}
+      {!open ? (
+        <button type="button" className={s.addPhone} onClick={() => setOpen(true)}>
+          + Add this number to {suggested.length ? 'someone else' : 'someone already in Halqa'}
+        </button>
+      ) : (
+        <>
+          <input className={ui.input} style={{ marginTop: 8 }} value={q} onChange={e => setQ(e.target.value)} placeholder="Search name or village" autoFocus autoComplete="off" />
+          {results.map(row)}
+          {q.trim().length >= 2 && !results.length && <p className={s.attachNone}>Nobody found.</p>}
+        </>
+      )}
+      <ActionSheet open={!!full} onClose={() => setFull(null)} title={full ? `${full.name} already has 3 numbers` : ''}
+        text="Which one should the new number replace?"
+        items={full ? PHONE_FIELDS.filter(k => full[k]).map(k => ({ label: `Replace ${full[k]}`, icon: <IconPhone size={20} />, onClick: () => add(full, k) })) : []} />
+    </div>
   )
 }
 

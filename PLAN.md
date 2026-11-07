@@ -123,6 +123,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 
   **If the number is already in Halqa** (either Shortcut, matched on the last 10 digits of any of a contact's numbers), that person's **profile opens instead of Quick Add** (built 7 Nov). So copying a number and double-tapping the back also answers "who is this?".
 
+  **A new number for someone already in Halqa** (built 8 Nov): Quick Add opened by a Shortcut shows "+ Add this number to someone already in Halqa" (search by name or village), plus suggestions when the shared name matches someone. The number goes into their first empty slot (Phone 2 / Phone 3). If they already have 3, Halqa asks which to replace. A toast offers Undo, and their profile opens (`AddToExisting` in `components/contacts.js`).
+
   Halqa (`parseSharedText` in `lib/importContacts.js`) reads the first number, the name (from the same or the previous line) and a village mentioned anywhere in the message.
 
 ## Daily list + monthly AI briefing (built 29 Oct 2026)

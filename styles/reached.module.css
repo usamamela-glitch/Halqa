@@ -1,0 +1,16 @@
+.bar {
+  position: fixed; z-index: 1000; left: 12px; right: 12px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 14px);
+  display: flex; align-items: center; gap: 8px; padding: 10px 10px 12px 16px; overflow: hidden;
+  border-radius: 18px; background: #12302d; color: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+  animation: rise .2s ease-out;
+}
+.q { flex: 1; min-width: 0; font-size: 15px; line-height: 1.3; }
+.yes, .no { flex: none; height: 40px; padding: 0 14px; border-radius: 12px; font-size: 15px; font-weight: 700; }
+.yes { background: #7fe0c9; color: #0d2e2e; }
+.no { background: rgba(255,255,255,0.12); color: #fff; }
+.timer { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: #7fe0c9; transform-origin: left; animation: shrink linear forwards; }
+@keyframes rise { from { transform: translateY(20px); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes shrink { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+@media (prefers-reduced-motion: reduce) { .bar, .timer { animation: none; } }

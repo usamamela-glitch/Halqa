@@ -125,6 +125,13 @@
   background: var(--green-bg, #e7f6ee); color: var(--green, #1d8a4e);
   font-size: 14.5px; font-weight: 600;
 }
+.touchButton {
+  margin-top: 16px; width: 100%; padding: 11px 14px; border-radius: 14px;
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  background: var(--card, #fff); border: 1.5px solid var(--green, #1d8a4e); color: var(--green, #1d8a4e);
+  font-size: 15px; font-weight: 700;
+}
+.touchButton small { display: block; margin-top: 1px; font-size: 12.5px; font-weight: 550; color: var(--muted); }
 .listLink { display: block; margin: 18px auto 0; font-size: 14.5px; font-weight: 600; color: var(--muted); padding: 6px; }
 
 /* The number remembered as being on WhatsApp (contacts with several numbers) */

@@ -67,3 +67,5 @@
 }
 .done:active { transform: scale(0.94); background: #cdeedb; }
 .touchToday { color: var(--green); }
+
+.tried { font-size: 12.5px; font-weight: 600; color: var(--muted); background: var(--hair, #eef1f0); padding: 2px 8px; border-radius: 999px; margin-right: 2px; }

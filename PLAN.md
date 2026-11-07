@@ -127,18 +127,19 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 
 ## Daily list + monthly AI briefing (built 29 Oct 2026)
 
-**"In touch" replaces "Last contacted"** (the manual toggle goes). A person is in touch today when he:
-- taps **WhatsApp** or **call** on them, anywhere in Halqa, or
-- **opens their contact card**, anywhere.
+**"In touch" = confirmed reached** (changed 8 Nov 2026; before that, opening a card or tapping WhatsApp/Call counted too). Recorded only by:
+- **✓ Done** in the Today list (Undo puts back the previous date),
+- **✓ Yes** on the "Reached Rana Asif?" bar that appears when he comes back to Halqa after a WhatsApp or call made **outside** the Today list (✗ No, or no answer within 5 seconds = nothing recorded; `components/ReachedPrompt.js`),
+- **Mark as in touch today** on a contact card (met in person, they called). For someone open in today's list it counts as ✓ Done.
 
-Just scrolling past someone doesn't count. Cards show "In touch: 2 months ago", or "Not yet".
+Tapping WhatsApp/Call is only an attempt: in the Today list the card shows "Tried 4:12 PM" (kept on that phone for the day). Opening a card never counts. Cards show "In touch: 2 months ago", or "Not yet". The AI briefing is told about the 8 Nov change, so it treats older dates with caution.
 
 **Daily list:**
 1. A new day brings **35 people: 15 pinned + 20 unpinned**. They're picked at random from those not in touch for the longest.
 2. The list stays the same all day.
 3. **Leftovers carry forward:** anyone not ticked Done stays in the list the next day, and the list is topped up to 35 (keeping the 15/20 split).
 4. **Each card shows:** name, village, tags, description, "in touch" age, then buttons: **✓ Done**, WhatsApp, call, Later, Don't show.
-5. **WhatsApp or call, or opening the card:** marks them in touch, but **they stay in the list**, marked "✓ In touch today". Only the **✓ Done** button takes someone off the list (with Undo). Progress counts Done, e.g. "12 of 35 done".
+5. **WhatsApp or call:** they stay in the list, marked "Tried 4:12 PM". Only **✓ Done** records them as in touch and takes them off the list (with Undo). **Later** is for "couldn't reach them". Progress counts Done, e.g. "12 of 35 done".
 6. **Later:** removes them now, brings them back in about a week, and **a new random person of the same kind (pinned or unpinned) takes their place**.
 7. **Don't show again** (died, or any other reason): they stay in Halqa but leave the list for good. They can be brought back from their card, and Settings lists everyone hidden. A replacement is added the same way as Later.
 8. **Deleting** someone on today's list, or hiding them from their contact card, also brings in a replacement, so the list stays at 35. Someone already ticked Done and then deleted still counts as done. (Fixed 3 Nov; before that the list dropped to 34.)

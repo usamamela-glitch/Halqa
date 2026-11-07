@@ -6,8 +6,8 @@ import { savePhoto } from '../lib/images'
 import { telHref, waHref, phonesOf, phoneDigits, downloadVCard } from '../lib/phone'
 import { TAGS, daysSince, contactedLevel, contactedLabel, byName } from '../lib/domain'
 import { useLocalStorage } from '../lib/hooks'
-import { markInTouch } from '../lib/touch'
-import { tidyToday } from '../lib/daily'
+import { markInTouch, recordAttempt, inTouchToday } from '../lib/touch'
+import { tidyToday, markDone, openInToday } from '../lib/daily'
 import { Card, Avatar, Sheet, ActionSheet, Field, cx, ui, useToast } from './ui'
 import { IconPhone, IconWhatsApp, IconPin, IconCheck, IconUserPlus, IconEdit, IconCamera } from './Icons'
 import s from '../styles/contacts.module.css'
@@ -21,11 +21,11 @@ export function whatsappNumber(contact) {
   return phones.find(p => phoneDigits(p) === phoneDigits(contact.whatsapp_phone || '')) || null
 }
 
-// Opens WhatsApp on a number, records "in touch", and remembers the number when
+// Opens WhatsApp on a number, records the attempt, and remembers the number when
 // the contact has more than one (WhatsApp won't tell other apps which is on it).
 export function openWhatsApp(contact, phone) {
   window.open(waHref(phone), '_blank', 'noopener')
-  markInTouch(contact.id)
+  recordAttempt(contact)
   if (phonesOf(contact).length > 1 && phoneDigits(phone) !== phoneDigits(contact.whatsapp_phone || '')) {
     updateRow('contacts', contact.id, { whatsapp_phone: phone })
   }
@@ -39,9 +39,9 @@ export function CallButtons({ contact }) {
   const wa = whatsappNumber(contact)
   return (
     <>
-      <a className={ui.iconBtn} href={telHref(phone)} onClick={() => markInTouch(contact.id)} aria-label={`Call ${contact.name}`}><IconPhone size={19} /></a>
+      <a className={ui.iconBtn} href={telHref(phone)} onClick={() => recordAttempt(contact)} aria-label={`Call ${contact.name}`}><IconPhone size={19} /></a>
       {wa ? (
-        <a className={cx(ui.iconBtn, ui.iconBtnWa)} href={waHref(wa)} onClick={() => markInTouch(contact.id)} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${contact.name}`}><IconWhatsApp size={20} /></a>
+        <a className={cx(ui.iconBtn, ui.iconBtnWa)} href={waHref(wa)} onClick={() => recordAttempt(contact)} target="_blank" rel="noreferrer" aria-label={`WhatsApp ${contact.name}`}><IconWhatsApp size={20} /></a>
       ) : (
         <button className={cx(ui.iconBtn, ui.iconBtnWa)} onClick={() => setChoosing(true)} aria-label={`WhatsApp ${contact.name}`}><IconWhatsApp size={20} /></button>
       )}
@@ -114,16 +114,15 @@ function ContactDetail({ id, onEdit, onClose }) {
   const toast = useToast()
   const contact = useLiveQuery(() => (id ? db.contacts.get(id) : undefined), [id])
   const village = useLiveQuery(() => (contact?.village_id ? db.villages.get(contact.village_id) : undefined), [contact?.village_id])
-  // Opening the card counts as being in touch. Remember when it was before, to show it.
-  const [before, setBefore] = useState(undefined)
-  useEffect(() => {
-    let live = true
-    db.contacts.get(id).then(c => { if (live) setBefore(c ? c.last_contacted || null : null) }).then(() => markInTouch(id))
-    return () => { live = false }
-  }, [id])
   if (!contact) return null
   const phones = phonesOf(contact)
-  const prev = before === undefined ? undefined : daysSince(before)
+  const touchedToday = inTouchToday(contact)
+
+  // Met in person, or they called: record it. In the Today list this is the same as ✓ Done.
+  async function confirmTouch() {
+    const undo = (await openInToday(contact.id)) ? await markDone(contact.id) : await markInTouch(contact.id)
+    toast(`${contact.name}: in touch today`, { label: 'Undo', onClick: undo })
+  }
 
   async function toggleListHidden() {
     const hide = !contact.list_hidden
@@ -157,17 +156,21 @@ function ContactDetail({ id, onEdit, onClose }) {
         )}
       </div>
 
-      <div className={s.touchLine}>
-        <IconCheck size={16} />
-        <span>In touch today{prev !== undefined && prev !== 0 ? ` · before this: ${contactedLabel(prev).toLowerCase()}` : ''}</span>
-      </div>
+      {touchedToday ? (
+        <div className={s.touchLine}><IconCheck size={16} /><span>In touch today</span></div>
+      ) : (
+        <button className={s.touchButton} onClick={confirmTouch}>
+          <IconCheck size={18} />
+          <span>Mark as in touch today<small>Last in touch: {contactedLabel(daysSince(contact.last_contacted)).toLowerCase()}</small></span>
+        </button>
+      )}
 
       {phones.length > 0 && (
         <div className={s.phones}>
           {phones.map(p => (
             <div key={p} className={s.phoneRow}>
               <span className={s.phoneNum}>{p}</span>
-              <a className={ui.iconBtn} href={telHref(p)} onClick={() => markInTouch(contact.id)} aria-label="Call"><IconPhone size={19} /></a>
+              <a className={ui.iconBtn} href={telHref(p)} onClick={() => recordAttempt(contact)} aria-label="Call"><IconPhone size={19} /></a>
               <button className={cx(ui.iconBtn, ui.iconBtnWa, phones.length > 1 && whatsappNumber(contact) === p && s.waChosen)} onClick={() => openWhatsApp(contact, p)} aria-label="WhatsApp"><IconWhatsApp size={20} /></button>
             </div>
           ))}

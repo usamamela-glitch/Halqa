@@ -4,6 +4,7 @@ import { db } from '../lib/db'
 import { startSync, syncNow, subscribeSync, getSyncState } from '../lib/sync'
 import { NavProvider } from '../lib/nav'
 import Navigator from './Navigator'
+import ReachedPrompt from './ReachedPrompt'
 import { ToastProvider } from './ui'
 import { useSignedIn, signIn } from '../lib/auth'
 import s from '../styles/boot.module.css'
@@ -18,7 +19,7 @@ function registerServiceWorker() {
   const hadVersion = !!sw.controller
   sw.register('/sw.js').then(reg => {
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') reg.update().catch(() => {})
+      if (document.visibilityState === 'visible' && reg) reg.update().catch(() => {})
     })
   }).catch(() => {})
   if (!hadVersion) return   // the very first install: nothing old to replace
@@ -103,6 +104,7 @@ function Main() {
     <ToastProvider>
       <NavProvider>
         <Navigator />
+        <ReachedPrompt />
       </NavProvider>
     </ToastProvider>
   )

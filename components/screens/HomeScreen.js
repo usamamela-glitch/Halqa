@@ -12,7 +12,7 @@ import { ContactRow, useContactSheets } from '../contacts'
 import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers, IconDownload } from '../Icons'
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import { TodayCard } from './TodayScreen'
-import { parseSharedText } from '../../lib/importContacts'
+import { parseSharedText, numberKey } from '../../lib/importContacts'
 import h from '../../styles/home.module.css'
 
 const TABS = ['Qanungos', 'Notes', 'Search']
@@ -22,6 +22,7 @@ export default function HomeScreen() {
   const { key, params } = useScreen()
   const tab = params.tab || 'Qanungos'
   const sheets = useContactSheets()
+  const toast = useToast()
 
   const villages = useLiveQuery(() => db.villages.toArray(), [], [])
   const contacts = useLiveQuery(() => db.contacts.toArray(), [], [])
@@ -31,9 +32,11 @@ export default function HomeScreen() {
   const { lastSync } = useSyncState()
   useEffect(() => { if (lastSync) maybeAutoBriefing() }, [lastSync])
 
-  // The "Save to Halqa" Shortcuts (iPhone share menu) open Quick Add filled in:
+  // The "Save to Halqa" Shortcuts (iPhone share menu, or Back Tap with a copied
+  // number) open Quick Add filled in:
   //   /?add=1&name=…&phone=…  a shared contact card (numbers one per line)
   //   /?add=1&text=…          a shared message such as "03007100764 rana Shahbaz"
+  // If one of the numbers is already in Halqa, that person's profile opens instead.
   useEffect(() => {
     const p = new URLSearchParams(window.location.search)
     if (!p.has('add')) return
@@ -43,6 +46,15 @@ export default function HomeScreen() {
       let phones = (p.get('phone') || '').split(/[\n,;]+/).map(s => s.trim()).filter(Boolean)
       let villageId = null
       if (p.has('text')) ({ name, phones, villageId } = parseSharedText(p.get('text'), await db.villages.toArray()))
+      const keys = phones.map(numberKey).filter(k => k.length >= 10)
+      if (keys.length) {
+        const known = (await db.contacts.toArray()).filter(c => phonesOf(c).some(ph => keys.includes(numberKey(ph))))
+        if (known.length) {
+          sheets.open(known[0].id)
+          if (known.length > 1) toast(`${known.length} people in Halqa have this number`)
+          return
+        }
+      }
       sheets.quickAdd({ village_id: villageId, name, phone: phones[0] || '', phone2: phones[1] || '', phone3: phones[2] || '' })
     })()
   }, [])

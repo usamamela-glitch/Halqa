@@ -121,6 +121,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 
   Its "If there's no input" is set to **Get Clipboard**, and iPhone **Back Tap → Double Tap** runs it. So for an unsaved number (e.g. someone who messaged on WhatsApp): copy the number, then double-tap the back of the phone, and Quick Add opens with it filled in.
 
+  **If the number is already in Halqa** (either Shortcut, matched on the last 10 digits of any of a contact's numbers), that person's **profile opens instead of Quick Add** (built 7 Nov). So copying a number and double-tapping the back also answers "who is this?".
+
   Halqa (`parseSharedText` in `lib/importContacts.js`) reads the first number, the name (from the same or the previous line) and a village mentioned anywhere in the message.
 
 ## Daily list + monthly AI briefing (built 29 Oct 2026)

@@ -9,6 +9,7 @@ import { useLocalStorage } from '../lib/hooks'
 import { markInTouch, recordAttempt, inTouchToday } from '../lib/touch'
 import { tidyToday, markDone, openInToday } from '../lib/daily'
 import { numberKey, nameKey } from '../lib/importContacts'
+import { queryWords, matchesWords } from '../lib/search'
 import { Card, Avatar, Sheet, ActionSheet, Field, cx, ui, useToast } from './ui'
 import { IconPhone, IconWhatsApp, IconPin, IconCheck, IconUserPlus, IconEdit, IconCamera } from './Icons'
 import s from '../styles/contacts.module.css'
@@ -216,7 +217,7 @@ export function VillagePicker({ value, onChange, autoOpen }) {
   const selected = villages.find(v => v.id === value)
   const matches = useMemo(() => {
     const t = q.trim().toLowerCase()
-    const list = t ? villages.filter(v => (v.name || '').toLowerCase().includes(t)) : villages
+    const list = t ? villages.filter(v => matchesWords(queryWords(t), v.name)) : villages
     return [...list].sort((a, b) => {
       if (t) {
         const as = (a.name || '').toLowerCase().startsWith(t) ? 0 : 1
@@ -430,10 +431,11 @@ function AddToExisting({ name, numbers, onAdded }) {
   }, [contacts, name])
 
   const results = useMemo(() => {
-    const t = q.trim().toLowerCase()
-    if (t.length < 2) return []
-    return contacts.filter(c => c.name.toLowerCase().includes(t) || (vName[c.village_id] || '').toLowerCase().includes(t))
-      .sort(byName).slice(0, 12)
+    if (q.trim().length < 2) return []
+    const words = queryWords(q)
+    const find = loose => contacts.filter(c => matchesWords(words, [c.name, vName[c.village_id]], loose))
+    const exact = find(false)
+    return (exact.length ? exact : find(true)).sort(byName).slice(0, 12)
   }, [contacts, q, vName])
 
   async function add(c, replaceField) {

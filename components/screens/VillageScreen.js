@@ -1,4 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { queryWords, matchesWords } from '../../lib/search'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
 import { useNav, useScreen } from '../../lib/nav'
@@ -144,15 +145,16 @@ function ContactsTab({ village, highlight, scrollRef, clearHighlight }) {
 
   const tagsHere = useMemo(() => [...new Set(contacts.flatMap(c => c.tags || []))].sort(), [contacts])
   const list = useMemo(() => {
-    const t = q.trim().toLowerCase()
+    const words = queryWords(q)
     const d = phoneDigits(q)
-    return sortContacts(contacts.filter(c => {
+    const find = loose => contacts.filter(c => {
       if (tag && !(c.tags || []).includes(tag)) return false
-      if (!t) return true
-      return (c.name || '').toLowerCase().includes(t)
-        || (c.description || '').toLowerCase().includes(t)
+      if (!words.length) return true
+      return matchesWords(words, [c.name, c.description], loose)
         || (d.length >= 3 && phonesOf(c).some(p => phoneDigits(p).includes(d)))
-    }))
+    })
+    const exact = find(false)
+    return sortContacts(exact.length || !words.length ? exact : find(true))
   }, [contacts, q, tag])
 
   // Arriving from search: scroll to the contact and flash it.

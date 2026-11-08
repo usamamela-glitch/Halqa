@@ -13,6 +13,7 @@ import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevro
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import { TodayCard } from './TodayScreen'
 import { parseSharedText, numberKey } from '../../lib/importContacts'
+import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
 
 const TABS = ['Qanungos', 'Notes', 'Search']
@@ -299,26 +300,29 @@ function SearchTab({ villages, contacts, sheets }) {
   const digits = phoneDigits(q)
   const active = term.length > 0 || tag
 
-  const contactHits = useMemo(() => {
-    if (!active) return []
-    return contacts.filter(c => {
+  const words = useMemo(() => queryWords(q), [q])
+
+  // Every word must appear in the name, village or description, in any order.
+  // If nothing matches, try again allowing spelling variants.
+  const { contactHits, similar } = useMemo(() => {
+    if (!active) return { contactHits: [], similar: false }
+    const find = loose => contacts.filter(c => {
       if (tag && !(c.tags || []).includes(tag)) return false
-      if (!term) return true
-      if ((c.name || '').toLowerCase().includes(term)) return true
-      if ((c.description || '').toLowerCase().includes(term)) return true
-      if (digits.length >= 3 && phonesOf(c).some(p => phoneDigits(p).includes(digits))) return true
-      return false
-    }).sort((a, b) => {
-      const as = (a.name || '').toLowerCase().startsWith(term) ? 0 : 1
-      const bs = (b.name || '').toLowerCase().startsWith(term) ? 0 : 1
-      return as - bs || byName(a, b)
-    }).slice(0, 80)
-  }, [contacts, term, digits, tag, active])
+      if (!words.length) return true
+      if (digits.length >= 3 && digits.length === q.replace(/[\s+()-]/g, '').length && phonesOf(c).some(p => phoneDigits(p).includes(digits))) return true
+      return matchesWords(words, [c.name, vById[c.village_id]?.name, c.description], loose)
+    })
+    let hits = find(false)
+    const similar = !hits.length && words.length > 0
+    if (similar) hits = find(true)
+    hits.sort((a, b) => nameRank(words, a.name) - nameRank(words, b.name) || byName(a, b))
+    return { contactHits: hits.slice(0, 80), similar: similar && hits.length > 0 }
+  }, [contacts, words, digits, q, tag, active, vById])
 
   const villageHits = useMemo(() => {
-    if (!term || tag) return []
-    return villages.filter(v => (v.name || '').toLowerCase().includes(term)).sort(byName).slice(0, 30)
-  }, [villages, term, tag])
+    if (!words.length || tag) return []
+    return villages.filter(v => matchesWords(words, v.name)).sort(byName).slice(0, 30)
+  }, [villages, words, tag])
 
   return (
     <>
@@ -353,7 +357,7 @@ function SearchTab({ villages, contacts, sheets }) {
 
       {contactHits.length > 0 && (
         <div className={ui.section}>
-          <div className={ui.sectionHead}><span>Contacts</span><span className={h.resultCount}>{contactHits.length}</span></div>
+          <div className={ui.sectionHead}><span>{similar ? 'Similar spellings' : 'Contacts'}</span><span className={h.resultCount}>{contactHits.length}</span></div>
           <ul className={ui.list}>
             {contactHits.map(c => (
               <ContactRow key={c.id} contact={c} villageName={vById[c.village_id]?.name} subtitle={vById[c.village_id]?.name || 'Unknown village'}

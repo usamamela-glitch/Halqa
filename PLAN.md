@@ -74,6 +74,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - "Other" and "Influencer" were removed; no contacts used them.
   - Usama may add more.
   - Defined in `lib/domain.js` (`TAGS`).
+- **Search (improved 9 Nov 2026, `lib/search.js`):** every word typed must appear somewhere, in any order, in the name, village or description. So "aftab jah", "khanana aftab" and "aftab haider kot momin" all find Aftab Haider Jahankhanana. Spaces don't matter ("jahan khanana" = "Jahankhanana"). If nothing matches exactly, results show under **Similar spellings**, matched on consonants: Haider/Hyder, Muhammad/Mohammad, Waseem/Wasim. Used by the Search tab, village pages, the village picker and "add this number to someone already in Halqa".
 - **Recently added (built 8 Nov 2026):**
   - When the search box is empty, the Search tab lists the last 15 people added one by one, with village and "Today" / "Yesterday" / "Thu 5 Nov".
   - People without a description get an **Add description** link, which opens Edit with the cursor in the description box. Meant for quick adds in the field, finished at home.

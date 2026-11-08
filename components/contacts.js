@@ -4,7 +4,7 @@ import { db } from '../lib/db'
 import { insertRow, updateRow, deleteRow, restoreRow, newId } from '../lib/store'
 import { savePhoto } from '../lib/images'
 import { telHref, waHref, phonesOf, phoneDigits, downloadVCard } from '../lib/phone'
-import { TAGS, daysSince, contactedLevel, contactedLabel, byName } from '../lib/domain'
+import { TAGS, daysSince, contactedLevel, contactedLabel, byName, addedDate } from '../lib/domain'
 import { useLocalStorage } from '../lib/hooks'
 import { markInTouch, recordAttempt, inTouchToday } from '../lib/touch'
 import { tidyToday, markDone, openInToday } from '../lib/daily'
@@ -115,6 +115,11 @@ function ContactDetail({ id, onEdit, onClose }) {
   const toast = useToast()
   const contact = useLiveQuery(() => (id ? db.contacts.get(id) : undefined), [id])
   const village = useLiveQuery(() => (contact?.village_id ? db.villages.get(contact.village_id) : undefined), [contact?.village_id])
+  // Added one by one (not in an import batch, which shares one time)?
+  const oneByOne = useLiveQuery(async () => {
+    if (!contact?.created_at) return false
+    return (await db.contacts.filter(x => x.created_at === contact.created_at).count()) <= 3
+  }, [contact?.created_at], false)
   if (!contact) return null
   const phones = phonesOf(contact)
   const touchedToday = inTouchToday(contact)
@@ -151,6 +156,7 @@ function ContactDetail({ id, onEdit, onClose }) {
         <Avatar name={contact.name} photo={contact.photo_path} size={92} />
         <div className={s.bigName}>{contact.name}</div>
         {village && <div className={s.village}>{village.name}</div>}
+        {oneByOne && <div className={s.added}>Added {addedDate(contact.created_at)}</div>}
         {contact.description && <div className={s.detailDesc}>{contact.description}</div>}
         {(contact.tags || []).length > 0 && (
           <div className={cx(ui.chips, s.detailTags)}>{contact.tags.map(t => <span key={t} className={ui.chip}>{t}</span>)}</div>
@@ -273,7 +279,7 @@ function useDuplicate(phones, selfId) {
 
 const EMPTY = { name: '', phone: '', phone2: '', phone3: '', description: '', tags: [], photo_path: null, village_id: null, pinned: false }
 
-function ContactForm({ initial, onDone, onOpenExisting, quick }) {
+function ContactForm({ initial, onDone, onOpenExisting, quick, focus }) {
   const toast = useToast()
   const [, setLastVillage] = useLocalStorage('halqa.lastVillage', null)
   const isNew = !initial.id
@@ -375,7 +381,7 @@ function ContactForm({ initial, onDone, onOpenExisting, quick }) {
       )}
 
       <Field label="Description">
-        <textarea className={ui.textarea} style={{ minHeight: 76 }} rows={2} value={f.description} onChange={e => set('description', e.target.value)} placeholder="e.g. Village elder, numberdar" />
+        <textarea className={ui.textarea} style={{ minHeight: 76 }} rows={2} value={f.description} onChange={e => set('description', e.target.value)} placeholder="e.g. Village elder, numberdar" autoFocus={focus === 'description'} />
       </Field>
 
       <div className={ui.field}>
@@ -491,6 +497,8 @@ export function useContactSheets() {
     open: id => { setForm(null); setView(id) },
     add: villageId => { setView(null); setFormKey(k => k + 1); setForm({ initial: { village_id: villageId }, quick: false }) },
     quickAdd: (prefill = {}) => { setView(null); setFormKey(k => k + 1); setForm({ initial: { village_id: lastVillage, ...prefill }, quick: true }) },
+    // Edit an existing contact; focus: 'description' puts the cursor straight in the description.
+    edit: (contact, focus) => { setView(null); setFormKey(k => k + 1); setForm({ initial: contact, quick: false, focus }) },
   }
 
   const element = (
@@ -500,7 +508,7 @@ export function useContactSheets() {
       </Sheet>
       <Sheet open={!!form} onClose={() => setForm(null)} title={form?.quick ? 'Quick add' : form?.initial?.id ? 'Edit contact' : 'New contact'}>
         {form && (
-          <ContactForm key={formKey} initial={form.initial} quick={form.quick}
+          <ContactForm key={formKey} initial={form.initial} quick={form.quick} focus={form.focus}
             onDone={() => setForm(null)}
             onOpenExisting={id => { setForm(null); setView(id) }} />
         )}

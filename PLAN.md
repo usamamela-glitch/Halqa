@@ -74,6 +74,11 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - "Other" and "Influencer" were removed; no contacts used them.
   - Usama may add more.
   - Defined in `lib/domain.js` (`TAGS`).
+- **Recently added (built 8 Nov 2026):**
+  - When the search box is empty, the Search tab lists the last 15 people added one by one, with village and "Today" / "Yesterday" / "Thu 5 Nov".
+  - People without a description get an **Add description** link, which opens Edit with the cursor in the description box. Meant for quick adds in the field, finished at home.
+  - The iPhone import (batches sharing one `created_at`, see `bulkAddTimes` in `lib/domain.js`) is left out.
+- **Date added:** each profile shows "Added 5 Nov 2026" under the village (from `contacts.created_at`), for everyone added one by one, back to June. Hidden for the iPhone import, whose date is only the import day.
 - **Main Groups:**
   - pinned contacts grouped by Qanungo, under large headings
   - a sticky strip of Qanungo buttons at the top jumps to each section

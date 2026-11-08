@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
 import { useNav, useScreen } from '../../lib/nav'
 import { insertRow, updateRow, deleteRow } from '../../lib/store'
-import { villageCompletion, byName, shortDate, TAGS } from '../../lib/domain'
+import { villageCompletion, byName, shortDate, TAGS, bulkAddTimes, addedLabel } from '../../lib/domain'
 import { plainText } from '../../lib/images'
 import { phoneDigits, phonesOf } from '../../lib/phone'
 import { Screen, BarButton, Tabs, Card, Sheet, ActionSheet, Empty, Field, SearchBox, SyncPill, cx, ui, useToast, useSyncState } from '../ui'
@@ -90,7 +90,7 @@ export default function HomeScreen() {
     >
       {tab === 'Qanungos' && <QanungosTab villages={villages} contacts={contacts} pinnedCount={pinnedCount} onQuickAdd={() => sheets.quickAdd()} />}
       {tab === 'Notes' && <NotesTab />}
-      {tab === 'Search' && <SearchTab villages={villages} contacts={contacts} />}
+      {tab === 'Search' && <SearchTab villages={villages} contacts={contacts} sheets={sheets} />}
       {sheets.element}
     </Screen>
   )
@@ -287,7 +287,7 @@ function NotesTab() {
 
 // ---------- Global search ----------
 
-function SearchTab({ villages, contacts }) {
+function SearchTab({ villages, contacts, sheets }) {
   const { push } = useNav()
   const [q, setQ] = useState('')
   const [tag, setTag] = useState(null)
@@ -329,7 +329,7 @@ function SearchTab({ villages, contacts }) {
         ))}
       </div>
 
-      {!active && <Empty icon={<IconSearch size={28} />} title="Search everything" text="Contacts, phone numbers and villages — works offline." />}
+      {!active && <RecentlyAdded contacts={contacts} vById={vById} sheets={sheets} />}
       {active && contactHits.length === 0 && villageHits.length === 0 && <Empty title="No results" text="Try a different name or number." />}
 
       {villageHits.length > 0 && (
@@ -363,5 +363,38 @@ function SearchTab({ villages, contacts }) {
         </div>
       )}
     </>
+  )
+}
+
+// The last 15 people added one by one (not the iPhone import), so a quick add
+// in the field can get its description later at home.
+function RecentlyAdded({ contacts, vById, sheets }) {
+  const recent = useMemo(() => {
+    const bulk = bulkAddTimes(contacts)
+    return contacts.filter(c => c.created_at && !bulk.has(c.created_at))
+      .sort((a, b) => (a.created_at < b.created_at ? 1 : -1))
+      .slice(0, 15)
+  }, [contacts])
+  if (!recent.length) return <Empty icon={<IconSearch size={28} />} title="Search everything" text="Contacts, phone numbers and villages — works offline." />
+  return (
+    <div className={ui.section}>
+      <div className={ui.sectionHead}><span>Recently added</span></div>
+      <ul className={h.recentList}>
+        {recent.map(c => (
+          <li key={c.id} className={h.recentRow}>
+            <button className={h.recentMain} onClick={() => sheets.open(c.id)}>
+              <span className={h.recentName}>{c.name}</span>
+              <span className={h.recentSub}>{vById[c.village_id]?.name || 'No village'} · {addedLabel(c.created_at)}</span>
+              {c.description
+                ? <span className={h.recentDesc}>{c.description}</span>
+                : null}
+            </button>
+            {!c.description && (
+              <button className={h.recentAdd} onClick={() => sheets.edit(c, 'description')}>Add description</button>
+            )}
+          </li>
+        ))}
+      </ul>
+    </div>
   )
 }

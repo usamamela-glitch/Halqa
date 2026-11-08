@@ -136,6 +136,7 @@
   background: var(--green-bg, #e7f6ee); color: var(--green, #1d8a4e);
   font-size: 14.5px; font-weight: 600;
 }
+.added { margin-top: 3px; font-size: 13px; font-weight: 550; color: var(--faint, #8a9a97); }
 .touchButton {
   margin-top: 16px; width: 100%; padding: 11px 14px; border-radius: 14px;
   display: flex; align-items: center; gap: 10px; text-align: left;

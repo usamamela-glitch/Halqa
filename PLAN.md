@@ -2,7 +2,7 @@
 
 Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain language, and show him screenshots or test links before changes he hasn't seen.
 
-## Status (7 Nov 2026)
+## Status (8 Nov 2026)
 - v2 is live on `main` (halqa-apps.vercel.app). Usama has no laptop: he works from the Claude app on his iPhone.
 - **How changes ship:** commit on `claude/review-requested-jvbtwm`, run `npm run build`, push the branch, then push the same commit to `main`. Vercel deploys `main` to production. After each deploy, check that `/` and `/sw.js` return 200.
 - **Access:** the cloud environment "Usama" stores network secrets for `api.supabase.com` and `api.vercel.com` (Name `Authorization`, Prefix `Bearer`). The Vercel token ("Claude Halqa") never expires. GitHub access comes from the Claude GitHub connector.
@@ -184,6 +184,14 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows "Trie
 - a one-line note after contact
 
 ## Ideas Usama is considering (not started)
+- **Briefing picks in the Today list** (discussed 8 Nov; Usama is thinking about it):
+  - The monthly briefing would also hand Halqa its ~15 "people to see" as contact IDs, with a one-line reason and talking point each, saved in `analysis_reports.meta`.
+  - They would come into the Today list a few a day (e.g. 3), within the 35, with a ✨ Briefing badge, "Why now" and "Talk about" on the card.
+  - Later and carry-forward work as normal, and a new briefing replaces unreached picks.
+  - Open choices: how many a day, and whether inside the 35 or extra.
+- **Other ideas offered 8 Nov, not chosen yet:**
+  - "Plan visit" on a village page: its people in order, pinned and longest out of touch first, with the 2024 result and notes on one screen.
+  - A one-card-at-a-time "go through" mode for the Today list.
 - **Seeing a caller's Halqa profile when they call or WhatsApp.** A full profile on the call screen is impossible on iOS. Options offered:
   1. A "Paste number" button in Search that opens the matching profile.
   2. Back Tap plus a Shortcut that opens Halqa on the copied number. (Back Tap is now used by "Save number to Halqa", so this would need Triple Tap.)

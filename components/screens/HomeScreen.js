@@ -13,6 +13,7 @@ import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevro
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import { TodayCard } from './TodayScreen'
 import { ComingUp } from './PlannerScreen'
+import { TellBar } from '../TellHalqa'
 import { parseSharedText, numberKey } from '../../lib/importContacts'
 import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
@@ -151,6 +152,7 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
 
   return (
     <>
+      <TellBar />
       <TodayCard contacts={contacts} />
       <ComingUp />
       {toSort > 0 && (

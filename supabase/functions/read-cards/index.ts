@@ -89,7 +89,10 @@ Deno.serve(async req => {
   // Images arrive as base64, separated by commas or line breaks (or as JSON {"images": [...]}).
   let raw = await req.text()
   try { const j = JSON.parse(raw); if (Array.isArray(j.images)) raw = j.images.join(',') } catch { /* plain text */ }
-  const parts = raw.split(/[\s,]+/).map(s => s.replace(/^data:[^;]+;base64,/, '')).filter(s => s.length > 200)
+  // Images are separated by commas; line breaks inside an image's text are ignored. Without commas,
+  // split where a new image starts (JPEG /9j/, PNG iVBOR, WebP UklGR, GIF R0lGOD).
+  const chunks = raw.includes(',') ? raw.split(',') : raw.split(/\s+(?=\/9j\/|iVBOR|UklGR|R0lGOD)/)
+  const parts = chunks.map(c => c.replace(/^\s*data:[^;]+;base64/, '').replace(/\s+/g, '')).filter(c => c.length > 200)
   if (!parts.length) return reply(400, 'No pictures received. Share the card images, not a link.')
 
   const images: { bytes: Uint8Array; type: string; b64: string }[] = []

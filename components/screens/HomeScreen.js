@@ -12,6 +12,7 @@ import { ContactRow, useContactSheets } from '../contacts'
 import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers, IconDownload } from '../Icons'
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import { TodayCard } from './TodayScreen'
+import { ComingUp } from './PlannerScreen'
 import { parseSharedText, numberKey } from '../../lib/importContacts'
 import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
@@ -103,7 +104,13 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
   const { push } = useNav()
   const toast = useToast()
   const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
-  const dayNote = useLiveQuery(() => db.day_note.get(1), [])
+  const plannerSub = useLiveQuery(async () => {
+    const all = await db.events.toArray()
+    const review = all.filter(e => e.status === 'review').length
+    const today = new Date().toLocaleDateString('en-CA')
+    const ahead = all.filter(e => e.status !== 'review' && e.day && e.day >= today).length
+    return review ? `${review} to review` : ahead ? `${ahead} upcoming` : 'Weddings & events'
+  }, [], 'Weddings & events')
   const toSort = useLiveQuery(() => db.import_queue.count(), [], 0)
   const [menu, setMenu] = useState(null)
   const [nameSheet, setNameSheet] = useState(null) // { id?, name }
@@ -126,7 +133,6 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
   const qIds = new Set(qanungos.map(q => q.id))
   const orphanCount = villages.filter(v => !v.qanungo_id || !qIds.has(v.qanungo_id)).length
   const sorted = [...qanungos].sort(byName)
-  const dayPreview = (dayNote?.body || '').split('\n').find(l => l.trim())
 
   async function saveName() {
     const name = (nameSheet.name || '').trim()
@@ -146,6 +152,7 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
   return (
     <>
       <TodayCard contacts={contacts} />
+      <ComingUp />
       {toSort > 0 && (
         <Card className={h.importCard} onClick={() => push('import')}>
           <span className={cx(ui.featureIcon, h.importIcon)}><IconDownload size={21} /></span>
@@ -164,11 +171,11 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
             <span className={h.featureSub}>{pinnedCount} pinned</span>
           </span>
         </Card>
-        <Card className={h.feature} onClick={() => push('dayNote')}>
+        <Card className={h.feature} onClick={() => push('planner')}>
           <span className={cx(ui.featureIcon, h.featureDay)}><IconCalendar size={22} /></span>
           <span className={h.featureText}>
-            <span className={h.featureTitle}>Day to Day</span>
-            <span className={h.featureSub}>{dayPreview || 'Empty'}</span>
+            <span className={h.featureTitle}>Planner</span>
+            <span className={h.featureSub}>{plannerSub}</span>
           </span>
         </Card>
       </div>

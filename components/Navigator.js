@@ -11,6 +11,7 @@ import SettingsScreen from './screens/SettingsScreen'
 import AnalysisScreen from './screens/AnalysisScreen'
 import ImportScreen from './screens/ImportScreen'
 import TodayScreen from './screens/TodayScreen'
+import PlannerScreen from './screens/PlannerScreen'
 
 const SCREENS = {
   home: HomeScreen,
@@ -24,6 +25,7 @@ const SCREENS = {
   analysis: AnalysisScreen,
   import: ImportScreen,
   today: TodayScreen,
+  planner: PlannerScreen,
 }
 
 // iOS-like push: 300ms, decelerating.

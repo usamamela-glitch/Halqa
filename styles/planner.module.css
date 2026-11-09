@@ -1,0 +1,61 @@
+.stack { display: flex; flex-direction: column; gap: 12px; }
+
+/* One event line */
+.line { width: 100%; display: flex; flex-direction: column; gap: 3px; padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--hair); }
+.line:last-child { border-bottom: 0; }
+.lineUnsure { background: var(--amber-bg); }
+.lineTop { display: flex; align-items: center; gap: 8px; }
+.tag { font-size: 12px; font-weight: 750; color: var(--teal-700); background: var(--teal-50); padding: 2px 8px; border-radius: 999px; }
+.tagOther { color: #6b4fa8; background: #f0ebfa; }
+.lineDay { font-size: 12.5px; font-weight: 650; color: var(--ink-2); }
+.part { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--muted); }
+.part_night { color: #4a5bb5; }
+.part_afternoon { color: var(--amber); }
+.title { font-size: 16px; font-weight: 700; letter-spacing: -0.2px; }
+.where { font-size: 13.5px; color: var(--muted); }
+.check { font-size: 12.5px; font-weight: 700; color: var(--amber); }
+
+/* Days */
+.day { margin-top: 12px; }
+.day:first-of-type { margin-top: 0; }
+.dayHead { display: flex; justify-content: space-between; padding: 0 4px 6px; font-size: 13.5px; font-weight: 750; color: var(--ink-2); }
+.dayToday { color: var(--teal-700); }
+.dayCard { padding: 0; overflow: hidden; display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+
+/* Review batches */
+.batch { padding: 0; overflow: hidden; border: 1.5px solid var(--amber); display: flex; flex-direction: column; align-items: stretch; gap: 0; }
+.batchTop { display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--amber-bg); }
+.thumb { width: 56px; height: 56px; object-fit: cover; border-radius: 10px; flex: none; }
+.thumbEmpty { width: 56px; height: 56px; border-radius: 10px; flex: none; display: flex; align-items: center; justify-content: center; background: #fff; color: var(--amber); }
+.batchText { display: flex; flex-direction: column; gap: 2px; font-size: 13.5px; color: var(--ink-2); }
+.batchText strong { font-size: 15.5px; color: var(--ink); }
+.batchLines { border-top: 1px solid var(--hair); }
+.batchActions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 12px 14px; border-top: 1px solid var(--hair); }
+.full { width: 100%; border-radius: 12px; }
+.preview { display: block; width: 100%; margin-top: 14px; border-radius: 12px; }
+
+/* Form */
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; padding: 4px; border-radius: 14px; background: var(--bg-deep); }
+.segBtn { height: 40px; border-radius: 10px; font-size: 14.5px; font-weight: 650; color: var(--ink-2); }
+.segOn { background: var(--card); color: var(--teal-700); box-shadow: var(--shadow); }
+.delete { display: block; margin: 16px auto 0; color: var(--red); font-weight: 650; padding: 6px; }
+
+/* Day to Day link and past */
+.noteCard { display: flex; align-items: center; gap: 12px; margin-top: 18px; }
+.noteIcon { background: var(--teal-50); color: var(--teal-500); }
+.noteText { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.noteText strong { font-size: 15.5px; }
+.noteText span { font-size: 13.5px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pastToggle { display: block; width: 100%; padding: 10px; font-weight: 650; color: var(--teal-700); }
+
+/* Home: coming up */
+.strip { display: flex; gap: 8px; overflow-x: auto; margin: 10px -16px 0; padding: 2px 16px 4px; scrollbar-width: none; }
+.strip::-webkit-scrollbar { display: none; }
+.stripCard { flex: none; min-width: 132px; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow); text-align: left; }
+.stripToday { background: var(--teal-50); }
+.stripReview { background: var(--amber-bg); }
+.stripDay { font-size: 12.5px; font-weight: 750; color: var(--teal-700); }
+.stripReview .stripDay { color: var(--amber); }
+.stripMain { font-size: 14.5px; font-weight: 700; }
+.stripSub { font-size: 12.5px; color: var(--muted); }

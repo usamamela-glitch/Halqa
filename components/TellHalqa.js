@@ -28,7 +28,7 @@ const asItem = (a, lists) => {
 function ActionCard({ a, lists, villages, onOpen, onDrop }) {
   let icon, head, dest, title, sub
   if (a.type === 'event') {
-    icon = <IconCalendar size={16} />; head = 'Calendar'; dest = a.date ? dayLabel(a.date) : 'No date'
+    icon = <IconCalendar size={16} />; head = 'Events'; dest = a.date ? dayLabel(a.date) : 'No date'
     title = a.title || 'Untitled'; sub = [a.village, a.venue].filter(Boolean).join(' · ')
   } else if (a.type === 'list_item') {
     const known = lists.some(l => l.name.toLowerCase() === (a.list || '').trim().toLowerCase())

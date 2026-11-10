@@ -252,7 +252,7 @@ export function ItemForm({ initial, onDone }) {
       <Field label="Date (optional)">
         <input className={ui.input} type="date" value={f.day || ''} onChange={e => set('day', e.target.value)} />
       </Field>
-      <p className={p.hint}>With a date, it also shows in the Calendar.</p>
+      <p className={p.hint}>With a date, it also shows under Events.</p>
       <button type="submit" className={cx(ui.btn, ui.btnPrimary, ui.btnBlock)} style={{ marginTop: 18 }} disabled={!f.title.trim() || (!listId && !f.newList.trim())}>
         {isNew ? 'Add' : 'Save'}
       </button>
@@ -340,7 +340,7 @@ export default function PlannerScreen() {
   const confirmed = events.filter(e => e.status !== 'review')
   const upcoming = sortEvents(confirmed.filter(e => !e.day || e.day >= today))
   const past = sortEvents(confirmed.filter(e => e.day && e.day < today)).reverse()
-  // List items with a date also show in the Calendar (until done).
+  // List items with a date also show under Events (until done).
   const datedItems = items.filter(i => i.day && !i.done_at && i.day >= today)
 
   // Group by day: Today, Tomorrow, Sat 14 Nov…
@@ -383,7 +383,7 @@ export default function PlannerScreen() {
       <TellBar />
 
       <div className={p.tabs}>
-        <button className={cx(p.tabPill, tab === 'calendar' && p.tabOn)} onClick={() => setTab('calendar')}>Calendar</button>
+        <button className={cx(p.tabPill, tab === 'calendar' && p.tabOn)} onClick={() => setTab('calendar')}>Events</button>
         {lists.map(l => (
           <button key={l.id} className={cx(p.tabPill, tab === l.id && p.tabOn)} onClick={() => setTab(l.id)}>
             {l.name}{openCount(l.id) > 0 && <b>{openCount(l.id)}</b>}

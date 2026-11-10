@@ -81,8 +81,9 @@ const reply = (status: number, text: string) =>
 
 Deno.serve(async req => {
   if (req.method !== 'POST') return reply(405, 'Send cards with the Add to Halqa Shortcut.')
-  const key = Deno.env.get('HALQA_SHARE_KEY')
-  if (!key || req.headers.get('x-halqa-key') !== key) return reply(401, 'Wrong Halqa code in the Shortcut.')
+  // Spaces or a line break around the code (easy to add when pasting) don't count.
+  const key = (Deno.env.get('HALQA_SHARE_KEY') || '').trim()
+  if (!key || (req.headers.get('x-halqa-key') || '').trim() !== key) return reply(401, 'Wrong Halqa code in the Shortcut.')
   const apiKey = Deno.env.get('ANTHROPIC_API_KEY')
   if (!apiKey) return reply(500, 'Halqa has no Claude API key yet (Supabase secret ANTHROPIC_API_KEY).')
 

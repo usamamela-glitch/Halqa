@@ -54,3 +54,16 @@
 /* Small counts under the constituency name (they were three big boxes until 11 Nov) */
 .miniStats { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 13px; font-weight: 550; color: rgba(255,255,255,0.62); }
 .miniStats b { font-weight: 750; color: rgba(255,255,255,0.92); }
+
+/* Today hub (11 Nov): Today on top, then the next two days and three teal buttons on pale mint */
+.hub { margin-bottom: 14px; border-radius: var(--radius); overflow: hidden; box-shadow: 0 4px 16px rgba(13,46,46,.15); }
+.hubToday { margin-bottom: 0 !important; border-radius: 0 !important; }
+.hubLower { background: var(--teal-50); padding: 10px 12px 12px; }
+.hubNext { margin-bottom: 8px; }
+.hubBtns { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hubBtn { display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 12px 4px 10px; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #1f5252, var(--teal-900)); }
+.hubBtn:active { opacity: .85; }
+.hubBtnLabel { font-size: 13px; font-weight: 700; white-space: nowrap; }
+.hubBtnSub { font-size: 11.5px; opacity: .78; white-space: nowrap; }
+.hubStar { color: #ffd27a; }
+.hubCal { color: #7fe0c9; }

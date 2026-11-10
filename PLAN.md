@@ -64,6 +64,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - A card "N iPhone contacts to sort" appears while an import is unfinished.
 
 - **11 Nov:** the three big count boxes (villages, contacts, pinned) became one small line under the constituency name, and the Today card now sits above Tell Halqa.
+- **11 Nov, Today hub:** one card. Dark green top = Today (tap for the Today list). Pale mint lower part = the next two days that have something on, one line each ("Fri 13 · Mehndi · Halalpur · Night"; a busy day lists "3 weddings afternoon · Jalsa 4:30 PM · 3 weddings night"), plus a "Review" line when WhatsApp cards are waiting; tapping a line opens the Planner scrolled to that day. Under that, three dark teal buttons: Tell Halqa, Main Groups, Planner. This replaced the separate Tell Halqa bar, the Coming-up boxes and the two big tiles. (Tell Halqa's bar is still at the top of the Planner.)
 
 ## Contacts
 - **Contact cards:** pin, call, WhatsApp and save-to-iPhone buttons on their own row under the details, so names keep the full width on small iPhones.

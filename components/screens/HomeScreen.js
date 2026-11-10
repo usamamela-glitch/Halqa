@@ -12,8 +12,8 @@ import { ContactRow, useContactSheets } from '../contacts'
 import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers, IconDownload } from '../Icons'
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import { TodayCard } from './TodayScreen'
-import { ComingUp } from './PlannerScreen'
-import { TellBar } from '../TellHalqa'
+import { NextLines } from './PlannerScreen'
+import { TellButton } from '../TellHalqa'
 import { parseSharedText, numberKey } from '../../lib/importContacts'
 import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
@@ -83,8 +83,8 @@ export default function HomeScreen() {
             <SyncPill />
           </div>
           <div className={h.miniStats}>
-            <span><b>{villages.length.toLocaleString()}</b> villages</span>
-            <span><b>{contacts.length.toLocaleString()}</b> contacts</span>
+            <span><b>{villages.length.toLocaleString()}</b> village{villages.length === 1 ? '' : 's'}</span>
+            <span><b>{contacts.length.toLocaleString()}</b> contact{contacts.length === 1 ? '' : 's'}</span>
             <span><b>{pinnedCount.toLocaleString()}</b> pinned</span>
           </div>
         </>
@@ -152,9 +152,23 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
 
   return (
     <>
-      <TodayCard contacts={contacts} />
-      <TellBar />
-      <ComingUp />
+      <div className={h.hub}>
+        <TodayCard contacts={contacts} className={h.hubToday} />
+        <div className={h.hubLower}>
+          <NextLines className={h.hubNext} />
+          <div className={h.hubBtns}>
+            <TellButton className={h.hubBtn}>
+              <IconSparkles size={20} /><span className={h.hubBtnLabel}>Tell Halqa</span><span className={h.hubBtnSub}>&nbsp;</span>
+            </TellButton>
+            <button className={h.hubBtn} onClick={() => push('mainGroups')}>
+              <IconStar size={20} filled className={h.hubStar} /><span className={h.hubBtnLabel}>Main Groups</span><span className={h.hubBtnSub}>{pinnedCount}</span>
+            </button>
+            <button className={h.hubBtn} onClick={() => push('planner')}>
+              <IconCalendar size={20} className={h.hubCal} /><span className={h.hubBtnLabel}>Planner</span><span className={h.hubBtnSub}>{plannerSub || '\u00a0'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
       {toSort > 0 && (
         <Card className={h.importCard} onClick={() => push('import')}>
           <span className={cx(ui.featureIcon, h.importIcon)}><IconDownload size={21} /></span>
@@ -165,22 +179,6 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
           <IconChevron size={18} />
         </Card>
       )}
-      <div className={h.featureRow}>
-        <Card className={h.feature} onClick={() => push('mainGroups')}>
-          <span className={cx(ui.featureIcon, h.featureStar)}><IconStar size={22} filled /></span>
-          <span className={h.featureText}>
-            <span className={h.featureTitle}>Main Groups</span>
-            <span className={h.featureSub}>{pinnedCount} pinned</span>
-          </span>
-        </Card>
-        <Card className={h.feature} onClick={() => push('planner')}>
-          <span className={cx(ui.featureIcon, h.featureDay)}><IconCalendar size={22} /></span>
-          <span className={h.featureText}>
-            <span className={h.featureTitle}>Planner</span>
-            {plannerSub && <span className={h.featureSub}>{plannerSub}</span>}
-          </span>
-        </Card>
-      </div>
 
       <div className={ui.section}>
         <div className={ui.sectionHead}><span>Qanungos</span><span>{qanungos.length}</span></div>

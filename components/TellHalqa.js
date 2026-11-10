@@ -160,7 +160,20 @@ function TellSheet({ open, onClose, onContact }) {
   )
 }
 
-// The "Tell Halqa" bar (home screen and Planner).
+// Opens Tell Halqa from any button (the home screen's teal button).
+export function TellButton({ className, children }) {
+  const [open, setOpen] = useState(false)
+  const sheets = useContactSheets()
+  return (
+    <>
+      <button className={className} onClick={() => setOpen(true)}>{children}</button>
+      <TellSheet open={open} onClose={() => setOpen(false)} onContact={prefill => sheets.quickAdd(prefill)} />
+      {sheets.element}
+    </>
+  )
+}
+
+// The "Tell Halqa" bar (top of the Planner).
 export function TellBar() {
   const [open, setOpen] = useState(false)
   const sheets = useContactSheets()

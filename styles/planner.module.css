@@ -99,3 +99,14 @@
 .timeRow { display: flex; gap: 8px; align-items: center; }
 .timeRow input { flex: 1; min-width: 0; }
 .timeClear { flex: none; font-weight: 650; color: var(--teal-700); padding: 8px 4px; }
+
+.day { scroll-margin-top: calc(var(--safe-top, 0px) + 64px); }
+
+/* Home: the next two days, one line each */
+.nextLine { width: 100%; display: flex; align-items: center; gap: 10px; padding: 5px 2px; text-align: left; font-size: 14px; white-space: nowrap; border-radius: 8px; }
+.nextLine:active { background: rgba(26,74,74,.06); }
+.nextDay { flex: none; width: 52px; font-weight: 800; color: var(--teal); }
+.nextReview { color: var(--amber); }
+.nextWhat { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 650; color: var(--ink); }
+.nextWhat span { font-weight: 500; color: var(--muted); }
+.nextWhen { flex: none; font-size: 12.5px; font-weight: 700; color: var(--teal-700); }

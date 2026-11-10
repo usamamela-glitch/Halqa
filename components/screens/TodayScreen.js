@@ -148,7 +148,7 @@ export default function TodayScreen() {
 
 // Teal card at the top of the home page: today's progress, and a note when a
 // new monthly briefing is ready. Tapping it opens the daily list.
-export function TodayCard({ contacts }) {
+export function TodayCard({ contacts, className }) {
   const { push } = useNav()
   const daily = useLiveQuery(async () => (await db.meta.get('daily'))?.value || null, [], null)
   const briefingReady = useLiveQuery(async () => {
@@ -166,7 +166,7 @@ export function TodayCard({ contacts }) {
   const total = rows.length
 
   return (
-    <button className={t.homeCard} onClick={() => push('today')}>
+    <button className={className ? `${t.homeCard} ${className}` : t.homeCard} onClick={() => push('today')}>
       <span className={t.homeTop}>
         <span className={t.homeTitle}>Today</span>
         <span className={t.homeCount}><strong>{done}</strong> of {total || SPLIT.pinned + SPLIT.unpinned} done</span>

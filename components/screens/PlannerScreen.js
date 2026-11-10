@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
 import { insertRow, updateRow } from '../../lib/store'
@@ -343,6 +343,17 @@ export default function PlannerScreen() {
   const setTab = t => setParams(key, { tab: t })
   const current = lists.find(l => l.id === tab)
 
+  // Opened from a home-screen line: scroll to that day once the events have loaded.
+  const scrolledTo = useRef(null)
+  useEffect(() => {
+    const day = params.day
+    if (!day || scrolledTo.current === day || tab !== 'calendar') return
+    const el = document.getElementById(`planner-day-${day}`)
+    if (!el) return
+    scrolledTo.current = day
+    el.scrollIntoView({ block: 'start' })
+  })
+
   const review = useMemo(() => {
     const byBatch = {}
     events.filter(e => e.status === 'review').forEach(e => { (byBatch[e.batch_id || e.id] ||= []).push(e) })
@@ -421,7 +432,7 @@ export default function PlannerScreen() {
               <Empty icon={<IconCalendar size={28} />} title="Nothing planned yet"
                 text="Share wedding cards from WhatsApp with “Add to Halqa”, or tap + to add an event." />
             ) : groups.map(g => (
-              <div key={g.key} className={p.day}>
+              <div key={g.key} className={p.day} id={`planner-day-${g.key}`}>
                 <div className={cx(p.dayHead, g.key === today && p.dayToday)}>
                   <span>{g.label}</span><span>{g.items.length}</span>
                 </div>
@@ -479,41 +490,66 @@ export default function PlannerScreen() {
   )
 }
 
-// Home screen: small cards for anything in the next 5 days, plus what's waiting for review.
-export function ComingUp() {
+// Home screen: the next two days that have something on, one short line each.
+// "Fri 13 · Mehndi · Halalpur · Night", or for a busy day
+// "Fri 13 · 7 events · 3 afternoon · Jalsa 4:30 PM · 3 night". Tapping opens that day in the Planner.
+const place = e => e.village || (e.venue || '').split(',').map(x => x.trim()).filter(Boolean).pop() || ''
+const shortDay = day => new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }).replace(',', '')
+
+function daySummary(entries) {
+  // In time order: weddings grouped by part ("3 afternoon"), others one by one ("Jalsa 4:30 PM").
+  const parts = []
+  for (const x of entries) {
+    if (x.item) { parts.push({ key: 'todo', label: 'to do' }); continue }
+    const e = x.ev
+    if (e.kind === 'wedding') {
+      const last = parts[parts.length - 1]
+      if (last && last.part === e.part) last.n++
+      else parts.push({ part: e.part, n: 1 })
+    } else parts.push({ label: `${tagFor(e)} ${whenLabel(e)}`.trim() })
+  }
+  const todo = parts.filter(x => x.key === 'todo').length
+  return [...parts.filter(x => x.key !== 'todo').map(x => x.label || `${x.n} wedding${x.n > 1 ? 's' : ''} ${(partLabel(x.part) || 'afternoon').toLowerCase()}`),
+    todo ? `${todo} to do` : ''].filter(Boolean).join(' · ')
+}
+
+export function NextLines({ className }) {
   const { push } = useNav()
   const events = useLiveQuery(() => db.events.toArray(), [], [])
   const items = useLiveQuery(() => db.list_items.toArray(), [], [])
   const today = localDay()
-  const days = Array.from({ length: 5 }, (_, i) => addDays(today, i))
   const toReview = events.filter(e => e.status === 'review').length
-  const cards = days.map(d => {
-    const list = events.filter(e => e.status !== 'review' && e.day === d)
-    const todo = items.filter(i => i.day === d && !i.done_at).length
-    return { d, list, todo }
-  }).filter(c => c.list.length || c.todo)
-  if (!cards.length && !toReview) return null
+  const entries = [
+    ...sortEvents(events.filter(e => e.status !== 'review' && e.day && e.day >= today)).map(e => ({ day: e.day, ev: e })),
+    ...items.filter(i => i.day && !i.done_at && i.day >= today).map(i => ({ day: i.day, item: i })),
+  ]
+  const days = [...new Set(entries.map(x => x.day))].sort().slice(0, 2)
+  if (!days.length && !toReview) return null
+  const open = day => push('planner', { tab: 'calendar', day })
   return (
-    <div className={p.strip}>
+    <div className={className}>
       {toReview > 0 && (
-        <button className={cx(p.stripCard, p.stripReview)} onClick={() => push('planner')}>
-          <span className={p.stripDay}>To review</span>
-          <span className={p.stripMain}>{toReview} from WhatsApp</span>
+        <button className={p.nextLine} onClick={() => push('planner', { tab: 'calendar' })}>
+          <span className={cx(p.nextDay, p.nextReview)}>Review</span>
+          <span className={p.nextWhat}>{toReview} from WhatsApp <span>· tap to check</span></span>
         </button>
       )}
-      {cards.map(({ d, list, todo }) => {
-        const weddings = list.filter(e => e.kind === 'wedding').length
-        const others = list.length - weddings
-        const morning = list.filter(e => e.part === 'morning').length
-        const night = list.filter(e => e.part === 'night').length
-        const aft = list.length - morning - night  // events only; to-dos have no time
+      {days.map(day => {
+        const list = entries.filter(x => x.day === day)
+        const single = list.length === 1 ? list[0] : null
         return (
-          <button key={d} className={cx(p.stripCard, d === today && p.stripToday)} onClick={() => push('planner')}>
-            <span className={p.stripDay}>{dayLabel(d)}</span>
-            <span className={p.stripMain}>
-              {[weddings && `${weddings} wedding${weddings > 1 ? 's' : ''}`, others && `${others} event${others > 1 ? 's' : ''}`, todo && `${todo} to do`].filter(Boolean).join(' · ')}
-            </span>
-            <span className={p.stripSub}>{[morning && `${morning} morning`, aft && `${aft} afternoon`, night && `${night} night`].filter(Boolean).join(' · ')}</span>
+          <button key={day} className={p.nextLine} onClick={() => open(day)}>
+            <span className={p.nextDay}>{day === today ? 'Today' : day === addDays(today, 1) ? 'Tmrw' : shortDay(day)}</span>
+            {single?.ev ? (
+              <>
+                <span className={p.nextWhat}>{tagFor(single.ev)}{place(single.ev) && <span> · {place(single.ev)}</span>}</span>
+                <span className={cx(p.nextWhen, p[`part_${single.ev.part}`])}>{whenLabel(single.ev)}</span>
+              </>
+            ) : single?.item ? (
+              <span className={p.nextWhat}>{single.item.title} <span>· to do</span></span>
+            ) : (
+              <span className={p.nextWhat}>{daySummary(list)}</span>
+            )}
           </button>
         )
       })}

@@ -4,7 +4,7 @@ import { db } from '../../lib/db'
 import { insertRow, updateRow } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { localDay } from '../../lib/touch'
-import { KINDS, WEDDING_FUNCTIONS, PARTS, tagFor, partLabel, sortEvents, dayLabel, addDays, confirmEvent, removeEvent,
+import { KINDS, WEDDING_FUNCTIONS, PARTS, tagFor, partLabel, whenLabel, partFromTime, sortEvents, dayLabel, addDays, confirmEvent, removeEvent,
   sortLists, listIdByName, toggleDone, removeListItem, DONE_KEEP_DAYS } from '../../lib/events'
 import { deleteRow } from '../../lib/store'
 import { Screen, BarButton, Card, Sheet, ActionSheet, Empty, Field, cx, ui, useToast } from '../ui'
@@ -35,7 +35,7 @@ export function EventLine({ ev, onPress, showDay }) {
       <span className={p.lineTop}>
         <span className={cx(p.tag, ev.kind !== 'wedding' && p.tagOther)}>{tagFor(ev)}</span>
         {showDay && <span className={p.lineDay}>{dayLabel(ev.day)}</span>}
-        <span className={cx(p.part, p[`part_${ev.part}`])}>{partLabel(ev.part) || '—'}</span>
+        <span className={cx(p.part, p[`part_${ev.part}`])}>{whenLabel(ev) || '—'}</span>
       </span>
       <span className={p.title}>{ev.title || 'Untitled'}</span>
       {where && <span className={p.where}>{where}</span>}
@@ -89,7 +89,7 @@ function ReviewBatch({ events, onEdit }) {
   )
 }
 
-const EMPTY = { kind: 'wedding', function: 'Baraat', title: '', village: '', venue: '', day: '', part: 'afternoon', notes: '' }
+const EMPTY = { kind: 'wedding', function: 'Baraat', title: '', village: '', venue: '', day: '', part: 'afternoon', time: '', notes: '' }
 
 export function EventForm({ initial, onDone }) {
   const toast = useToast()
@@ -105,7 +105,9 @@ export function EventForm({ initial, onDone }) {
     const data = {
       kind: f.kind, function: (f.function || '').trim() || null, title: f.title.trim(),
       village: f.village.trim() || null, venue: f.venue.trim() || null,
-      day: f.day || null, part: f.part, notes: (f.notes || '').trim() || null,
+      day: f.day || null, notes: (f.notes || '').trim() || null,
+      time: !wedding && f.time ? f.time.slice(0, 5) : null,
+      part: !wedding && f.time ? partFromTime(f.time) : f.part,
     }
     if (isNew) await insertRow('events', { ...data, status: 'confirmed', source: 'manual', unsure: false })
     else await updateRow('events', initial.id, { ...data, status: 'confirmed', unsure: false })
@@ -147,14 +149,24 @@ export function EventForm({ initial, onDone }) {
       <Field label="Date">
         <input className={ui.input} type="date" value={f.day || ''} onChange={e => set('day', e.target.value)} />
       </Field>
+      {!wedding && (
+        <Field label="Time">
+          <div className={p.timeRow}>
+            <input className={ui.input} type="time" value={f.time || ''} onChange={e => set('time', e.target.value)} />
+            {f.time && <button type="button" className={p.timeClear} onClick={() => set('time', '')}>Clear</button>}
+          </div>
+        </Field>
+      )}
+      {(wedding || !f.time) && (
       <div className={ui.field}>
-        <span className={ui.label}>Time</span>
+        <span className={ui.label}>{wedding ? 'Time' : 'Or roughly'}</span>
         <div className={p.seg}>
           {PARTS.map(pt => (
             <button type="button" key={pt.id} className={cx(p.segBtn, f.part === pt.id && p.segOn)} onClick={() => set('part', pt.id)}>{pt.label}</button>
           ))}
         </div>
       </div>
+      )}
       <Field label="Village">
         <input className={ui.input} value={f.village} onChange={e => set('village', e.target.value)} placeholder="Optional" autoCapitalize="words" />
       </Field>

@@ -34,10 +34,11 @@ const SCHEMA = {
           venue: { type: 'string' },
           date: { type: 'string' },
           part: { type: 'string', enum: ['morning', 'afternoon', 'night'] },
+          time: { type: 'string' },
           unsure: { type: 'boolean' },
           image_index: { type: 'integer' },
         },
-        required: ['kind', 'function', 'title', 'village', 'venue', 'date', 'part', 'unsure', 'image_index'],
+        required: ['kind', 'function', 'title', 'village', 'venue', 'date', 'part', 'time', 'unsure', 'image_index'],
         additionalProperties: false,
       },
     },
@@ -57,6 +58,7 @@ Return one entry for every function the images invite him to, one per function p
 - venue: the hall or place and its town, short, in English letters (e.g. "Victoria Palace, Kanda Mor, Bhagtanwala"). Empty string if none.
 - date: YYYY-MM-DD. If the year is missing, the next such date from today. If unreadable, an empty string.
 - part: "afternoon" if the main time (baraat, lunch, reception) is before 5 PM, "night" if 5 PM or later, "morning" before noon only for non-wedding events. With no time printed, Mehndi is night, others afternoon.
+- time: for kinds other than wedding, the main time printed on the card as HH:MM in 24 hours (e.g. 16:30). Empty for weddings, or if no time is printed.
 - unsure: true if any field is a guess, unreadable, or a date was corrected by hand.
 - image_index: the 0-based number of the image or PDF (in the order given) the function was read from.
 If an image or PDF is not an invitation at all, return nothing for it.`
@@ -152,6 +154,7 @@ Deno.serve(async req => {
     village: ev.village || null,
     venue: ev.venue || null,
     day: /^\d{4}-\d{2}-\d{2}$/.test(ev.date) ? ev.date : null,
+    time: ev.kind !== 'wedding' && /^\d{2}:\d{2}$/.test(ev.time || '') ? ev.time : null,
     part: ev.part,
     unsure: !!ev.unsure || !/^\d{4}-\d{2}-\d{2}$/.test(ev.date),
     status: 'review',

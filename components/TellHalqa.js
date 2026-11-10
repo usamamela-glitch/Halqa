@@ -4,7 +4,7 @@ import { db } from '../lib/db'
 import { insertRow } from '../lib/store'
 import { tellHalqa } from '../lib/tell'
 import { describeError } from '../lib/analysis'
-import { listIdByName, dayLabel, partLabel, tagFor } from '../lib/events'
+import { listIdByName, dayLabel, whenLabel, partFromTime, tagFor } from '../lib/events'
 import { Sheet, cx, ui, useToast } from './ui'
 import { IconSparkles, IconCalendar, IconCheck, IconUserPlus, IconNote, IconX } from './Icons'
 import { useContactSheets } from './contacts'
@@ -19,7 +19,7 @@ const findVillage = (villages, name) => {
 const escape = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
 // What Claude returned, in the shape the Planner forms take.
-const asEvent = a => ({ kind: a.kind || 'other', function: a.function, title: a.title, village: a.village, venue: a.venue, day: a.date, part: a.part || 'afternoon', notes: a.details })
+const asEvent = a => ({ kind: a.kind || 'other', function: a.function, title: a.title, village: a.village, venue: a.venue, day: a.date, part: a.time ? partFromTime(a.time) : a.part || 'afternoon', time: a.time || '', notes: a.details })
 const asItem = (a, lists) => {
   const hit = lists.find(l => l.name.toLowerCase() === (a.list || '').trim().toLowerCase())
   return { title: a.title, details: a.details, day: a.date, ...(hit ? { list_id: hit.id } : { newList: (a.list || '').trim() }) }
@@ -51,7 +51,7 @@ function ActionCard({ a, lists, villages, onOpen, onDrop }) {
       </div>
       <button className={t.body} onClick={onOpen}>
         {a.type === 'event' && (
-          <span className={t.tags}><span className={t.tag}>{tagFor(a)}</span>{a.part && <span className={t.part}>{partLabel(a.part)}</span>}</span>
+          <span className={t.tags}><span className={t.tag}>{tagFor(a)}</span>{whenLabel(asEvent(a)) && <span className={t.part}>{whenLabel(asEvent(a))}</span>}</span>
         )}
         {title && <span className={t.title}>{title}</span>}
         {sub && <span className={t.sub}>{sub}</span>}
@@ -87,7 +87,7 @@ function TellSheet({ open, onClose, onContact }) {
       const e = asEvent(a)
       await insertRow('events', {
         kind: e.kind, function: e.function || null, title: e.title || '', village: e.village || null, venue: e.venue || null,
-        day: e.day || null, part: e.part, notes: e.notes || null, status: 'confirmed', source: 'tell', unsure: false,
+        day: e.day || null, part: e.part, time: e.time || null, notes: e.notes || null, status: 'confirmed', source: 'tell', unsure: false,
       })
     } else if (a.type === 'list_item') {
       await insertRow('list_items', { list_id: await listIdByName(a.list), title: a.title || a.details, details: a.title ? a.details || null : null, day: a.date || null })

@@ -26,6 +26,8 @@ function useCardImage(path) {
   return url
 }
 
+const isPdf = path => /\.pdf$/i.test(path || '')
+
 export function EventLine({ ev, onPress, showDay }) {
   const where = [...new Set([ev.village, ev.venue].filter(Boolean))].join(' · ')
   return (
@@ -45,7 +47,9 @@ export function EventLine({ ev, onPress, showDay }) {
 function ReviewBatch({ events, onEdit }) {
   const toast = useToast()
   const [confirmDrop, setConfirmDrop] = useState(false)
-  const img = useCardImage(events.find(e => e.image_path)?.image_path)
+  const path = events.find(e => e.image_path)?.image_path
+  const img = useCardImage(path)
+  const pdf = isPdf(path)
   const [big, setBig] = useState(false)
 
   async function addAll() {
@@ -60,10 +64,13 @@ function ReviewBatch({ events, onEdit }) {
   return (
     <div className={cx(ui.card, p.batch)}>
       <div className={p.batchTop}>
-        {img ? <img src={img} alt="Card" className={p.thumb} onClick={() => setBig(true)} /> : <span className={p.thumbEmpty}><IconCalendar size={22} /></span>}
+        {img && pdf ? <a href={img} target="_blank" rel="noreferrer" className={cx(p.thumbEmpty, p.thumbPdf)}>PDF</a>
+          : img ? <img src={img} alt="Card" className={p.thumb} onClick={() => setBig(true)} />
+          : <span className={p.thumbEmpty}><IconCalendar size={22} /></span>}
         <span className={p.batchText}>
           <strong>From WhatsApp</strong>
           <span>{events.length} function{events.length !== 1 ? 's' : ''} read · tap one to fix it</span>
+          {pdf && img && <a href={img} target="_blank" rel="noreferrer" className={p.openPdf}>Open the PDF</a>}
         </span>
       </div>
       <div className={p.batchLines}>
@@ -170,7 +177,9 @@ export function EventForm({ initial, onDone }) {
 
 function CardPreview({ path }) {
   const url = useCardImage(path)
-  return url ? <img src={url} alt="Card" className={p.preview} /> : null
+  if (!url) return null
+  return isPdf(path) ? <a href={url} target="_blank" rel="noreferrer" className={p.openPdf} style={{ display: 'block', marginTop: 14 }}>Open the card (PDF)</a>
+    : <img src={url} alt="Card" className={p.preview} />
 }
 
 // ---------- Lists (Islamabad, Lahore…) ----------

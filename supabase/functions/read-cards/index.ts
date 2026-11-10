@@ -1,6 +1,6 @@
 // Halqa: read wedding cards and invitations shared from WhatsApp.
 //
-// The "Add to Halqa" iPhone Shortcut POSTs the shared images here (base64,
+// The "Add to Halqa" iPhone Shortcut POSTs the shared images or PDFs here (base64,
 // separated by commas or newlines), with the header x-halqa-key. Claude reads
 // every function on the cards; each one is saved in public.events with
 // status 'review', and the card photo in the private event-cards bucket.
@@ -16,7 +16,8 @@ import { createClient } from 'npm:@supabase/supabase-js@2.118.0'
 
 const MODEL = 'claude-opus-5-5'
 const MAX_IMAGES = 10
-const MAX_BYTES = 8 * 1024 * 1024
+const MAX_BYTES = 8 * 1024 * 1024      // per picture
+const MAX_PDF_BYTES = 30 * 1024 * 1024 // per PDF
 
 const SCHEMA = {
   type: 'object',
@@ -46,7 +47,7 @@ const SCHEMA = {
 }
 
 function instructions(today: string) {
-  return `You read invitation cards sent to a Pakistani politician: mostly wedding cards (Urdu or English, printed; sometimes handwritten notes), sometimes invitations to dinners, jalsas, meetings or meet-ups. Several images may be pages of the same card. Today is ${today} (Pakistan).
+  return `You read invitation cards sent to a Pakistani politician: mostly wedding cards (Urdu or English, printed; sometimes handwritten notes), sometimes invitations to dinners, jalsas, meetings or meet-ups. Cards come as images or PDFs; several images (or a PDF's pages) may be pages of the same card. Today is ${today} (Pakistan).
 
 Return one entry for every function the images invite him to, one per function per day.
 - kind: wedding, dinner, jalsa, meeting, meetup or other.
@@ -57,11 +58,12 @@ Return one entry for every function the images invite him to, one per function p
 - date: YYYY-MM-DD. If the year is missing, the next such date from today. If unreadable, an empty string.
 - part: "afternoon" if the main time (baraat, lunch, reception) is before 5 PM, "night" if 5 PM or later, "morning" before noon only for non-wedding events. With no time printed, Mehndi is night, others afternoon.
 - unsure: true if any field is a guess, unreadable, or a date was corrected by hand.
-- image_index: the 0-based number of the image the function was read from.
-If an image is not an invitation at all, return nothing for it.`
+- image_index: the 0-based number of the image or PDF (in the order given) the function was read from.
+If an image or PDF is not an invitation at all, return nothing for it.`
 }
 
-function mediaType(b: Uint8Array): 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' | null {
+function mediaType(b: Uint8Array): 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif' | 'application/pdf' | null {
+  if (b[0] === 0x25 && b[1] === 0x50 && b[2] === 0x44 && b[3] === 0x46) return 'application/pdf'
   if (b[0] === 0xff && b[1] === 0xd8) return 'image/jpeg'
   if (b[0] === 0x89 && b[1] === 0x50) return 'image/png'
   if (b[0] === 0x47 && b[1] === 0x49) return 'image/gif'
@@ -91,25 +93,25 @@ Deno.serve(async req => {
   let raw = await req.text()
   try { const j = JSON.parse(raw); if (Array.isArray(j.images)) raw = j.images.join(',') } catch { /* plain text */ }
   // Images are separated by commas; line breaks inside an image's text are ignored. Without commas,
-  // split where a new image starts (JPEG /9j/, PNG iVBOR, WebP UklGR, GIF R0lGOD).
-  const chunks = raw.includes(',') ? raw.split(',') : raw.split(/\s+(?=\/9j\/|iVBOR|UklGR|R0lGOD)/)
+  // split where a new file starts (JPEG /9j/, PNG iVBOR, WebP UklGR, GIF R0lGOD, PDF JVBERi).
+  const chunks = raw.includes(',') ? raw.split(',') : raw.split(/\s+(?=\/9j\/|iVBOR|UklGR|R0lGOD|JVBERi)/)
   const parts = chunks.map(c => c.replace(/^\s*data:[^;]+;base64/, '').replace(/\s+/g, '')).filter(c => c.length > 200)
-  if (!parts.length) return reply(400, 'No pictures received. Share the card images, not a link.')
+  if (!parts.length) return reply(400, 'No pictures received. Share the card images or PDF, not a link.')
 
   const images: { bytes: Uint8Array; type: string; b64: string }[] = []
   for (const b64 of parts.slice(0, MAX_IMAGES)) {
     let bytes: Uint8Array
     try { bytes = decode(b64) } catch { continue }
     const type = mediaType(bytes)
-    if (!type || bytes.length > MAX_BYTES) continue
+    if (!type || bytes.length > (type === 'application/pdf' ? MAX_PDF_BYTES : MAX_BYTES)) continue
     images.push({ bytes, type, b64 })
   }
-  if (!images.length) return reply(400, 'The pictures could not be opened. Try sharing them again.')
+  if (!images.length) return reply(400, 'The pictures could not be opened. Share pictures (JPG, PNG) or a PDF.')
 
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
   const batchId = crypto.randomUUID()
   const paths = await Promise.all(images.map(async (img, i) => {
-    const ext = img.type.split('/')[1].replace('jpeg', 'jpg')
+    const ext = img.type.split('/')[1].replace('jpeg', 'jpg')  // jpg, png, webp, gif, pdf
     const path = `${batchId}/${i + 1}.${ext}`
     const { error } = await supabase.storage.from('event-cards').upload(path, img.bytes, { contentType: img.type })
     return error ? null : path
@@ -128,7 +130,9 @@ Deno.serve(async req => {
       messages: [{
         role: 'user',
         content: [
-          ...images.map(img => ({ type: 'image', source: { type: 'base64', media_type: img.type, data: img.b64 } })),
+          ...images.map(img => img.type === 'application/pdf'
+            ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: img.b64 } }
+            : { type: 'image', source: { type: 'base64', media_type: img.type, data: img.b64 } }),
           { type: 'text', text: instructions(today) },
         ],
       }],

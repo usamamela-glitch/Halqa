@@ -82,10 +82,10 @@ export default function HomeScreen() {
             </div>
             <SyncPill />
           </div>
-          <div className={ui.stats}>
-            <div className={ui.stat}><div className={ui.statVal}>{villages.length.toLocaleString()}</div><div className={ui.statLabel}>Villages</div></div>
-            <div className={ui.stat}><div className={ui.statVal}>{contacts.length.toLocaleString()}</div><div className={ui.statLabel}>Contacts</div></div>
-            <div className={ui.stat}><div className={ui.statVal}>{pinnedCount}</div><div className={ui.statLabel}>Pinned</div></div>
+          <div className={h.miniStats}>
+            <span><b>{villages.length.toLocaleString()}</b> villages</span>
+            <span><b>{contacts.length.toLocaleString()}</b> contacts</span>
+            <span><b>{pinnedCount.toLocaleString()}</b> pinned</span>
           </div>
         </>
       }
@@ -152,8 +152,8 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
 
   return (
     <>
-      <TellBar />
       <TodayCard contacts={contacts} />
+      <TellBar />
       <ComingUp />
       {toSort > 0 && (
         <Card className={h.importCard} onClick={() => push('import')}>

@@ -63,6 +63,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - ⚡ Quick Add, bottom right.
 - A card "N iPhone contacts to sort" appears while an import is unfinished.
 
+- **11 Nov:** the three big count boxes (villages, contacts, pinned) became one small line under the constituency name, and the Today card now sits above Tell Halqa.
+
 ## Contacts
 - **Contact cards:** pin, call, WhatsApp and save-to-iPhone buttons on their own row under the details, so names keep the full width on small iPhones.
 - **Save to iPhone:** downloads a vCard named "Name - Village" (e.g. "Rana Asif - Lilliani"). It's offered on each card, and as "Save to iPhone" in the confirmation after adding a contact.

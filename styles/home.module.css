@@ -50,3 +50,7 @@
 .recentSub { font-size: 13px; color: var(--muted); }
 .recentDesc { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .recentAdd { flex: none; font-size: 13px; font-weight: 700; color: var(--amber, #b7791f); padding: 6px 2px; }
+
+/* Small counts under the constituency name (they were three big boxes until 11 Nov) */
+.miniStats { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 10px; font-size: 13px; font-weight: 550; color: rgba(255,255,255,0.62); }
+.miniStats b { font-weight: 750; color: rgba(255,255,255,0.92); }

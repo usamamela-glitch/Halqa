@@ -110,8 +110,8 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
     const review = all.filter(e => e.status === 'review').length
     const today = new Date().toLocaleDateString('en-CA')
     const ahead = all.filter(e => e.status !== 'review' && e.day && e.day >= today).length
-    return review ? `${review} to review` : ahead ? `${ahead} upcoming` : 'Weddings & events'
-  }, [], 'Weddings & events')
+    return review ? `${review} to review` : ahead ? `${ahead} upcoming` : ''
+  }, [], '')
   const toSort = useLiveQuery(() => db.import_queue.count(), [], 0)
   const [menu, setMenu] = useState(null)
   const [nameSheet, setNameSheet] = useState(null) // { id?, name }
@@ -177,7 +177,7 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
           <span className={cx(ui.featureIcon, h.featureDay)}><IconCalendar size={22} /></span>
           <span className={h.featureText}>
             <span className={h.featureTitle}>Planner</span>
-            <span className={h.featureSub}>{plannerSub}</span>
+            {plannerSub && <span className={h.featureSub}>{plannerSub}</span>}
           </span>
         </Card>
       </div>

@@ -19,6 +19,7 @@ export const IconPhone = p => <Svg {...p}><path d="M22 16.9v3a2 2 0 01-2.2 2 19.
 export const IconPin = ({ filled, ...p }) => <Svg {...p} fill={filled ? 'currentColor' : 'none'}><path d="M12 17v5" /><path d="M9 3h6l-1 6 4 4v2H6v-2l4-4-1-6z" /></Svg>
 export const IconTrash = p => <Svg {...p}><path d="M3 6h18M8 6V4h8v2M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6" /><path d="M10 11v6M14 11v6" /></Svg>
 export const IconEdit = p => <Svg {...p}><path d="M12 20h9" /><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z" /></Svg>
+export const IconShare = p => <Svg {...p}><path d="M12 3v12M7 8l5-5 5 5" /><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7" /></Svg>
 export const IconMove = p => <Svg {...p}><path d="M7 17L17 7M8 7h9v9" /></Svg>
 export const IconStar = ({ filled, ...p }) => <Svg {...p} fill={filled ? 'currentColor' : 'none'}><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9L12 2.5z" /></Svg>
 export const IconCalendar = p => <Svg {...p}><rect x="3" y="4.5" width="18" height="17" rx="2.5" /><path d="M16 2.5v4M8 2.5v4M3 10h18" /></Svg>

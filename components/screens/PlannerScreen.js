@@ -8,7 +8,8 @@ import { KINDS, WEDDING_FUNCTIONS, PARTS, tagFor, partLabel, whenLabel, partFrom
   sortLists, listIdByName, toggleDone, removeListItem, DONE_KEEP_DAYS } from '../../lib/events'
 import { deleteRow } from '../../lib/store'
 import { Screen, BarButton, Card, Sheet, ActionSheet, Empty, Field, cx, ui, useToast } from '../ui'
-import { IconPlus, IconCalendar, IconChevron, IconNote, IconCheck, IconMore, IconEdit, IconTrash } from '../Icons'
+import { IconPlus, IconCalendar, IconChevron, IconNote, IconCheck, IconMore, IconEdit, IconTrash, IconShare, IconMove } from '../Icons'
+import { motion, animate, useMotionValue } from 'framer-motion'
 import { useNav, useScreen } from '../../lib/nav'
 import { TellBar } from '../TellHalqa'
 import p from '../../styles/planner.module.css'
@@ -195,6 +196,100 @@ function CardPreview({ path }) {
     : <img src={url} alt="Card" className={p.preview} />
 }
 
+// ---------- Swipe left for actions (like the iPhone Notes app) ----------
+
+const SNAP = { type: 'spring', stiffness: 500, damping: 40 }
+let closeOpenRow = null   // only one row open at a time
+
+function SwipeRow({ actions, children }) {
+  const x = useMotionValue(0)
+  const width = actions.length * 74
+  const close = () => animate(x, 0, SNAP)
+  const open = () => {
+    if (closeOpenRow && closeOpenRow !== close) closeOpenRow()
+    closeOpenRow = close
+    animate(x, -width, SNAP)
+  }
+  return (
+    <div className={p.swipe}>
+      <div className={p.swipeActions} style={{ width }}>
+        {actions.map(a => (
+          <button key={a.label} className={cx(p.swipeBtn, p[`swipe_${a.tone}`])} onClick={() => { close(); a.onClick() }}>
+            {a.icon}<span>{a.label}</span>
+          </button>
+        ))}
+      </div>
+      <motion.div className={p.swipeFront} style={{ x }} drag="x" dragDirectionLock dragMomentum={false}
+        dragConstraints={{ left: -width, right: 0 }} dragElastic={{ left: 0.12, right: 0.04 }}
+        onDragEnd={(_, info) => (info.velocity.x < -350 || (x.get() < -width / 2 && info.velocity.x < 350) ? open() : close())}
+        onClickCapture={e => { if (x.get() < -4) { e.stopPropagation(); e.preventDefault(); close() } }}>
+        {children}
+      </motion.div>
+    </div>
+  )
+}
+
+const longDay = day => (day ? new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '') : '')
+
+async function shareText(text, toast) {
+  try {
+    if (navigator.share) { await navigator.share({ text }); return }
+  } catch (e) { if (e?.name === 'AbortError') return }
+  try { await navigator.clipboard.writeText(text); toast('Copied, ready to paste') } catch { toast('Could not share') }
+}
+
+function SwipeEvent({ ev, onPress, showDay }) {
+  const toast = useToast()
+  const share = () => shareText([
+    `${tagFor(ev)}: ${ev.title || ''}`.trim(),
+    [ev.village, ev.venue].filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', '),
+    [longDay(ev.day), whenLabel(ev)].filter(Boolean).join(', '),
+  ].filter(Boolean).join('\n'), toast)
+  async function del() {
+    await removeEvent(ev.id)
+    toast('Event deleted', { label: 'Undo', onClick: () => insertRow('events', ev) })
+  }
+  return (
+    <SwipeRow actions={[
+      { label: 'Share', tone: 'share', icon: <IconShare size={19} />, onClick: share },
+      { label: 'Delete', tone: 'delete', icon: <IconTrash size={19} />, onClick: del },
+    ]}>
+      <EventLine ev={ev} onPress={onPress} showDay={showDay} />
+    </SwipeRow>
+  )
+}
+
+function SwipeItem({ item, onPress, listName, showDay, onMove }) {
+  const toast = useToast()
+  const share = () => shareText([item.title, item.details, item.day ? longDay(item.day) : ''].filter(Boolean).join('\n'), toast)
+  async function del() {
+    await removeListItem(item.id)
+    toast('Deleted', { label: 'Undo', onClick: () => insertRow('list_items', item) })
+  }
+  return (
+    <SwipeRow actions={[
+      { label: 'Share', tone: 'share', icon: <IconShare size={19} />, onClick: share },
+      { label: 'Move', tone: 'move', icon: <IconMove size={19} />, onClick: () => onMove(item) },
+      { label: 'Delete', tone: 'delete', icon: <IconTrash size={19} />, onClick: del },
+    ]}>
+      <ItemLine item={item} onPress={onPress} listName={listName} showDay={showDay} />
+    </SwipeRow>
+  )
+}
+
+// "Move to…" sheet for a list item.
+function MoveSheet({ item, onClose }) {
+  const toast = useToast()
+  const lists = sortLists(useLiveQuery(() => db.planner_lists.toArray(), [], []))
+  return (
+    <ActionSheet open={!!item} onClose={onClose} title="Move to…"
+      items={lists.filter(l => l.id !== item?.list_id).map(l => ({
+        label: l.name,
+        onClick: async () => { await updateRow('list_items', item.id, { list_id: l.id }); toast(`Moved to ${l.name}`) },
+      }))} />
+  )
+}
+
 // ---------- Lists (Islamabad, Lahore…) ----------
 
 const recentDone = i => i.done_at && Date.now() - new Date(i.done_at).getTime() < DONE_KEEP_DAYS * 864e5
@@ -280,6 +375,7 @@ function ListView({ list, items, onEdit, onMenu }) {
   const toast = useToast()
   const [text, setText] = useState('')
   const [showOld, setShowOld] = useState(false)
+  const [moving, setMoving] = useState(null)
   const open = [...items.filter(i => !i.done_at)].sort((a, b) =>
     (a.day || '9999').localeCompare(b.day || '9999') || (a.created_at || '').localeCompare(b.created_at || ''))
   const done = items.filter(i => i.done_at).sort((a, b) => b.done_at.localeCompare(a.done_at))
@@ -305,7 +401,7 @@ function ListView({ list, items, onEdit, onMenu }) {
         <Empty icon={<IconCheck size={28} />} title="Nothing here" text={`Add people to meet and things to do in ${list.name}.`} />
       ) : (
         <div className={cx(ui.card, p.dayCard)}>
-          {[...open, ...recent].map(i => <ItemLine key={i.id} item={i} onPress={() => onEdit(i)} />)}
+          {[...open, ...recent].map(i => <SwipeItem key={i.id} item={i} onPress={() => onEdit(i)} onMove={setMoving} />)}
         </div>
       )}
       <form className={p.addRow} onSubmit={add}>
@@ -316,9 +412,10 @@ function ListView({ list, items, onEdit, onMenu }) {
       {old.length > 0 && (
         <>
           <button className={p.pastToggle} onClick={() => setShowOld(v => !v)}>{showOld ? 'Hide done' : `Show done (${old.length})`}</button>
-          {showOld && <div className={cx(ui.card, p.dayCard)}>{old.map(i => <ItemLine key={i.id} item={i} onPress={() => onEdit(i)} />)}</div>}
+          {showOld && <div className={cx(ui.card, p.dayCard)}>{old.map(i => <SwipeItem key={i.id} item={i} onPress={() => onEdit(i)} onMove={setMoving} />)}</div>}
         </>
       )}
+      <MoveSheet item={moving} onClose={() => setMoving(null)} />
     </div>
   )
 }
@@ -337,6 +434,7 @@ export default function PlannerScreen() {
   const [listMenu, setListMenu] = useState(false)
   const [confirmDropList, setConfirmDropList] = useState(false)
   const [showPast, setShowPast] = useState(false)
+  const [moving, setMoving] = useState(null)
   const today = localDay()
   const lists = sortLists(rawLists)
   const listName = Object.fromEntries(lists.map(l => [l.id, l.name]))
@@ -439,8 +537,8 @@ export default function PlannerScreen() {
                 </div>
                 <div className={cx(ui.card, p.dayCard)}>
                   {g.items.map(x => x.ev
-                    ? <EventLine key={x.ev.id} ev={x.ev} onPress={() => setForm(x.ev)} />
-                    : <ItemLine key={x.item.id} item={x.item} listName={listName[x.item.list_id]} showDay={false} onPress={() => setItemForm(x.item)} />)}
+                    ? <SwipeEvent key={x.ev.id} ev={x.ev} onPress={() => setForm(x.ev)} />
+                    : <SwipeItem key={x.item.id} item={x.item} listName={listName[x.item.list_id]} showDay={false} onPress={() => setItemForm(x.item)} onMove={setMoving} />)}
                 </div>
               </div>
             ))}
@@ -457,7 +555,7 @@ export default function PlannerScreen() {
               <button className={p.pastToggle} onClick={() => setShowPast(v => !v)}>
                 {showPast ? 'Hide past events' : `Past events (${past.length})`}
               </button>
-              {showPast && <div className={cx(ui.card, p.dayCard)}>{past.slice(0, 60).map(e => <EventLine key={e.id} ev={e} showDay onPress={() => setForm(e)} />)}</div>}
+              {showPast && <div className={cx(ui.card, p.dayCard)}>{past.slice(0, 60).map(e => <SwipeEvent key={e.id} ev={e} showDay onPress={() => setForm(e)} />)}</div>}
             </div>
           )}
         </>
@@ -479,6 +577,7 @@ export default function PlannerScreen() {
           </form>
         )}
       </Sheet>
+      <MoveSheet item={moving} onClose={() => setMoving(null)} />
       <ActionSheet open={listMenu} onClose={() => setListMenu(false)} title={current?.name}
         items={[
           { label: 'Rename list', icon: <IconEdit size={20} />, onClick: () => setListSheet({ id: current.id, name: current.name }) },

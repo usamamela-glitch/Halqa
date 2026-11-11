@@ -39,7 +39,7 @@ Agreed with Usama, 11 Nov 2026. This is the build list for when Apple approves t
    - **List items:** Share · Move (to another list) · Delete.
    - **Events:** Share · Delete. Share sends the details as text, e.g. "Baraat · Daughter of Umer Farooq · The Signature Club, G.T Road, Gujranwala · Thu 12 Nov, night".
    - Deleting shows an Undo for a few seconds, so an accidental swipe can be reversed.
-   - *This can also be built in the web app now, before the native app.*
+   - **Built in the web app on 12 Nov**, so it carries over as it is.
 
 ## Phase 2
 8. **Location** (with permission "Always"):

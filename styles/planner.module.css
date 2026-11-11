@@ -113,3 +113,14 @@
 
 /* An event's note (who invited), bold navy on the top row (12 Nov) */
 .lineNote { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: #1f3a8a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Swipe left for actions (12 Nov) */
+.swipe { position: relative; overflow: hidden; border-bottom: 1px solid var(--hair); }
+.swipe:last-child { border-bottom: 0; }
+.swipe .line, .swipe .item { border-bottom: 0; }
+.swipeFront { position: relative; z-index: 1; background: var(--card); touch-action: pan-y; }
+.swipeActions { position: absolute; top: 0; right: 0; bottom: 0; display: flex; }
+.swipeBtn { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; color: #fff; font-size: 12px; font-weight: 700; }
+.swipe_share { background: #3b82f6; }
+.swipe_move { background: #7c6cf0; }
+.swipe_delete { background: #e5484d; }

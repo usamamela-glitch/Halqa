@@ -15,8 +15,13 @@ Agreed with Usama, 11 Nov 2026. This is the build list for when Apple approves t
    - **Event:** a wedding card picture, a PDF, or an invitation sent as a text message. Claude reads it, and it goes to *To review* in the Planner.
    - **Contact:** a contact card, or a message with a number in it. Quick Add opens already filled in.
 2. **Back Tap stays.** A ready-made one-block Shortcut, "Quick Add copied number": copy a number, Back Tap, and Quick Add opens with it filled in, never in Safari. Numbers split over two lines are joined.
-3. **Saving to iPhone contacts is automatic.** Adding someone in Halqa saves them to the iPhone contacts too, with the village in the name, e.g. "Rana Asif (Bhabra)". No more "Save to iPhone" step. Because WhatsApp uses those names, chats and calls show the village too.
-   - *To decide:* whether to also add the village to the names of people already saved on the iPhone. Nothing is changed in bulk without asking first.
+3. **iPhone contacts stay in step with Halqa, automatically.** Halqa is the master copy.
+   - **New contact in Halqa:** saved to the iPhone contacts too. No more "Save to iPhone" step.
+   - **Edited in Halqa** (name, a number added or changed): the matching iPhone contact is updated by itself, so it's always the **exact same name** as in Halqa. Example: "Afzal Naseerpur" became "Afzal Maachi Naseerpur" (11 Nov).
+   - **Matching:** each Halqa person is linked to their iPhone contact. Existing ones are linked once by phone number. If two iPhone contacts share a number, Halqa asks which.
+   - **No village added to names:** Usama already writes the place into names, so no "(village)" suffix, to avoid doubling.
+   - **Deleting** someone in Halqa never deletes them from the iPhone; Halqa asks instead.
+   - **Edits made on the iPhone** don't flow back into Halqa (one direction only, keeps it simple). Could be added later.
 4. **Caller ID.** An incoming call from any Halqa number shows "Name · Village · Pinned", even if the number isn't saved on the iPhone.
 5. **Native polish:**
    - no Safari and no web address bar

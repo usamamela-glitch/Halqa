@@ -33,6 +33,7 @@ Agreed with Usama, 11 Nov 2026. This is the build list for when Apple approves t
    - links always open the app
 
 6. **Share a contact card from Halqa.** On anyone's profile, a **Share contact** button opens the iPhone share menu with a proper contact card: name, all numbers, and the village in the card. Pick **WhatsApp**, then the person or group, and it arrives as a normal contact card they can save with one tap. It works for Messages, email and AirDrop too. (Asked 12 Nov.)
+   - **Several at once:** in any list (a village's Contacts tab, Main Groups, the Today list, Search results, Recently added), a **Select** button lets you tick people (or **Select all**), then **Share**. They go as one bundle of contact cards: WhatsApp shows them in one message, each with its own Save button. (Asked 12 Nov.)
 
 ## Phase 2
 7. **Location** (with permission "Always"):

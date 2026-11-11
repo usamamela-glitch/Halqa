@@ -32,22 +32,29 @@ Agreed with Usama, 11 Nov 2026. This is the build list for when Apple approves t
    - offline data kept permanently
    - links always open the app
 
+6. **Share a contact card from Halqa.** On anyone's profile, a **Share contact** button opens the iPhone share menu with a proper contact card: name, all numbers, and the village in the card. Pick **WhatsApp**, then the person or group, and it arrives as a normal contact card they can save with one tap. It works for Messages, email and AirDrop too. (Asked 12 Nov.)
+
 ## Phase 2
-6. **Location** (with permission "Always"):
+7. **Location** (with permission "Always"):
    - Halqa records which villages you visit, and when.
    - Visits go into the AI reports and the monthly briefing.
    - Arriving in a village: "You're in Hujjan · 8 numbers · 2 pinned · last visit 4 months ago".
-7. **Reminders:**
+8. **Reminders:**
    - events, e.g. "Mehndi tonight · Halalpur"
    - the Today list, e.g. "26 people left today" in the evening
    - areas you've been away from, e.g. "Nobody in Bhabra contacted for 30 days"
-8. **Widgets:** Today (9 of 35) and the next two events. They can be removed any time.
-9. **iPhone Calendar:** Planner events go into the iPhone Calendar automatically, with the venue, so the Watch and CarPlay show them and one tap starts directions.
-10. **After a call** started from Halqa, the "did you reach them?" question appears reliably.
+9. **Widgets:** Today (9 of 35) and the next two events. They can be removed any time.
+10. **iPhone Calendar:** Planner events go into the iPhone Calendar automatically, with the venue, so the Watch and CarPlay show them and one tap starts directions.
+11. **After a call** started from Halqa, the "did you reach them?" question appears reliably.
 
 ## Phase 3
-11. **Siri and the Action button:** "Tell Halqa…" and Quick Add.
-12. **A better microphone for Tell Halqa:** record inside the app and use a proper speech-to-text service. This needs one extra API key (OpenAI or ElevenLabs), costing about Rs 2 per minute.
+12. **Siri and the Action button:** "Tell Halqa…" and Quick Add.
+13. **A better microphone for Tell Halqa:** record inside the app and use a proper speech-to-text service. This needs one extra API key (OpenAI or ElevenLabs), costing about Rs 2 per minute.
+
+## Already in the app (carries over, nothing to do)
+Everything in the web app comes across unchanged, including recent additions:
+- **Event notes in bold navy blue** on the card's top row, usually who invited him (12 Nov).
+- The Today hub on the home screen, event times, and the "Reached …? Yes / No" bar.
 
 ## Your friend (NA-78), later
 A separate TestFlight app pointed at his own website and database, covered by Usama's developer account. The native features need his copy updated first, and that's his decision.

@@ -201,6 +201,14 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows "Trie
 - **Tell Halqa dictation:** the 🎙 is the iPhone keyboard's (Apple's speech recognition), not Claude's, so names and mixed Urdu/English come out worse than in the Claude app. Options offered (Usama is leaving it for now, 10 Nov): (1) switch to an English (India) keyboard for dictation; (2) have Claude correct misheard names against contact and village names; (3) record inside Halqa and use a dedicated speech-to-text service (OpenAI or ElevenLabs, extra key, about Rs 2 per minute).
 - **Next:** Usama is trying out what he says in Tell Halqa against where things land in the Planner, and will come back with changes.
 
+## Native iPhone app (decided 11 Nov 2026; Usama is signing up with Apple)
+- Plan: wrap the existing web app with Capacitor, so screens and most changes still go live instantly from Vercel; only native features need a new TestFlight build (built on cloud macOS machines, no Mac needed). Same look, plus native touches (no Safari, splash screen and icon, haptics, better keyboard handling).
+- First version: Halqa in the share menu (Event / Contact: replaces both long Shortcuts), save new contacts to iPhone contacts automatically, caller ID labels for numbers in Halqa. Then widgets (Today, next two days), reminders, iPhone Calendar, Siri / Action button, in-app voice recording.
+- Back Tap stays: a ready-made one-block Shortcut "Quick Add copied number" (copy → Back Tap → Quick Add filled in, never Safari).
+- Distribution: TestFlight with an automatic rebuild about every 60 days so builds never expire (90-day limit). A permanent fallback is an unlisted App Store app. Apple Developer Program: $99 a year, Individual, in Usama's name.
+- Usama's steps (written out in chat 11 Nov): enrol at developer.apple.com/programs/enroll → after approval, send Team ID, register App ID `com.usamamela.halqa`, create app "Halqa NA-83" in App Store Connect (SKU halqa1), create an API key "Halqa builds" (Admin) and save `APP_STORE_KEY_ID`, `APP_STORE_ISSUER_ID`, `APP_STORE_KEY` (.p8 contents) as GitHub Actions secrets in usamamela-glitch/halqa; install TestFlight.
+- Friend (NA-78): later, as a separate TestFlight app pointed at his own site and database; native features need his copy updated (his copy is his own since 7 Nov, so that's his call).
+
 ## Ideas Usama is considering (not started)
 - **Briefing picks in the Today list** (discussed 8 Nov; Usama is thinking about it):
   - The monthly briefing would also hand Halqa its ~15 "people to see" as contact IDs, with a one-line reason and talking point each, saved in `analysis_reports.meta`.

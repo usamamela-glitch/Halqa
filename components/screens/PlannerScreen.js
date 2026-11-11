@@ -35,6 +35,7 @@ export function EventLine({ ev, onPress, showDay }) {
       <span className={p.lineTop}>
         <span className={cx(p.tag, ev.kind !== 'wedding' && p.tagOther)}>{tagFor(ev)}</span>
         {showDay && <span className={p.lineDay}>{dayLabel(ev.day)}</span>}
+        {ev.notes && <span className={p.lineNote}>{ev.notes.split('\n')[0]}</span>}
         <span className={cx(p.part, p[`part_${ev.part}`])}>{whenLabel(ev) || '—'}</span>
       </span>
       <span className={p.title}>{ev.title || 'Untitled'}</span>

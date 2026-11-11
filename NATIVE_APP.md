@@ -35,22 +35,28 @@ Agreed with Usama, 11 Nov 2026. This is the build list for when Apple approves t
 6. **Share a contact card from Halqa.** On anyone's profile, a **Share contact** button opens the iPhone share menu with a proper contact card: name, all numbers, and the village in the card. Pick **WhatsApp**, then the person or group, and it arrives as a normal contact card they can save with one tap. It works for Messages, email and AirDrop too. (Asked 12 Nov.)
    - **Several at once:** in any list (a village's Contacts tab, Main Groups, the Today list, Search results, Recently added), a **Select** button lets you tick people (or **Select all**), then **Share**. They go as one bundle of contact cards: WhatsApp shows them in one message, each with its own Save button. (Asked 12 Nov.)
 
+7. **Swipe left in the Planner** (every tab: Events and all lists), like the iPhone Notes app. (Asked 12 Nov.)
+   - **List items:** Share · Move (to another list) · Delete.
+   - **Events:** Share · Delete. Share sends the details as text, e.g. "Baraat · Daughter of Umer Farooq · The Signature Club, G.T Road, Gujranwala · Thu 12 Nov, night".
+   - Deleting shows an Undo for a few seconds, so an accidental swipe can be reversed.
+   - *This can also be built in the web app now, before the native app.*
+
 ## Phase 2
-7. **Location** (with permission "Always"):
+8. **Location** (with permission "Always"):
    - Halqa records which villages you visit, and when.
    - Visits go into the AI reports and the monthly briefing.
    - Arriving in a village: "You're in Hujjan · 8 numbers · 2 pinned · last visit 4 months ago".
-8. **Reminders:**
+9. **Reminders:**
    - events, e.g. "Mehndi tonight · Halalpur"
    - the Today list, e.g. "26 people left today" in the evening
    - areas you've been away from, e.g. "Nobody in Bhabra contacted for 30 days"
-9. **Widgets:** Today (9 of 35) and the next two events. They can be removed any time.
-10. **iPhone Calendar:** Planner events go into the iPhone Calendar automatically, with the venue, so the Watch and CarPlay show them and one tap starts directions.
-11. **After a call** started from Halqa, the "did you reach them?" question appears reliably.
+10. **Widgets:** Today (9 of 35) and the next two events. They can be removed any time.
+11. **iPhone Calendar:** Planner events go into the iPhone Calendar automatically, with the venue, so the Watch and CarPlay show them and one tap starts directions.
+12. **After a call** started from Halqa, the "did you reach them?" question appears reliably.
 
 ## Phase 3
-12. **Siri and the Action button:** "Tell Halqa…" and Quick Add.
-13. **A better microphone for Tell Halqa:** record inside the app and use a proper speech-to-text service. This needs one extra API key (OpenAI or ElevenLabs), costing about Rs 2 per minute.
+13. **Siri and the Action button:** "Tell Halqa…" and Quick Add.
+14. **A better microphone for Tell Halqa:** record inside the app and use a proper speech-to-text service. This needs one extra API key (OpenAI or ElevenLabs), costing about Rs 2 per minute.
 
 ## Already in the app (carries over, nothing to do)
 Everything in the web app comes across unchanged, including recent additions:

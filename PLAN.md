@@ -210,6 +210,7 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows "Trie
 - Friend (NA-78): later, as a separate TestFlight app pointed at his own site and database; native features need his copy updated (his copy is his own since 7 Nov, so that's his call).
 
 ## Ideas Usama is considering (not started)
+- **Selling Halqa some day** (discussed 11 Nov, not now): would need an Urdu version. Usama doesn't want to run it himself: options are a licence or revenue share with a Pakistani software house, a one-time sale (worth much more once there are paying users), or VC/accelerator routes. First step if he decides: 10–20 paying politicians through his own network.
 - **Briefing picks in the Today list** (discussed 8 Nov; Usama is thinking about it):
   - The monthly briefing would also hand Halqa its ~15 "people to see" as contact IDs, with a one-line reason and talking point each, saved in `analysis_reports.meta`.
   - They would come into the Today list a few a day (e.g. 3), within the 35, with a ✨ Briefing badge, "Why now" and "Talk about" on the card.

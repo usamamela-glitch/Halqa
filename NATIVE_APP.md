@@ -61,6 +61,8 @@ Agreed with Usama, 11 Nov 2026. This is the build list for when Apple approves t
 ## Already in the app (carries over, nothing to do)
 Everything in the web app comes across unchanged, including recent additions:
 - **Event notes in bold navy blue** on the card's top row, usually who invited him (12 Nov).
+- **Note box on cards waiting for review**: type who invited, then Add (12 Nov).
+- **Forms no longer open half-way up the screen** after the keyboard closes (fixed 12 Nov). In the native app the keyboard is handled natively, which should end this for good.
 - The Today hub on the home screen, event times, and the "Reached …? Yes / No" bar.
 
 ## Your friend (NA-78), later
@@ -75,6 +77,9 @@ A separate TestFlight app pointed at his own website and database, covered by Us
 - **Voter lists:** Usama isn't sure how these would work yet.
 - **Election mode:** polling stations, booth agents, transport, turnout on the day, and results against relationships afterwards. To be picked up nearer the election.
 - **Selling Halqa:** decided against on 11 Nov; it's a competitive edge.
+
+## Apple account
+- **Parts 1–2 done 11 Nov:** enrolled as Individual and paid US$99 (enrollment ID MC56U7MJV6). Waiting for Apple's "Welcome to the Apple Developer Program" email (up to 2 business days).
 
 ## Waiting on Usama (after Apple's "Welcome" email)
 - **Part 3:** send the Team ID; register the App ID `com.usamamela.halqa`.

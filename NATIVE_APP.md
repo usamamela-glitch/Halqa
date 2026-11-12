@@ -62,6 +62,7 @@ Agreed with Usama, 11 Nov 2026. This is the build list for when Apple approves t
 Everything in the web app comes across unchanged, including recent additions:
 - **Event notes in bold navy blue** on the card's top row, usually who invited him (12 Nov).
 - **Note box on cards waiting for review**: type who invited, then Add (12 Nov).
+- **The last try stays on Today-list cards** ("Tried yesterday 9:30 PM", "Tried Tue 10 Nov, 4:12 PM") until a newer try, up to 90 days (12 Nov). It's kept on the phone; the native app keeps it the same way.
 - **Forms no longer open half-way up the screen** after the keyboard closes (fixed 12 Nov). In the native app the keyboard is handled natively, which should end this for good.
 - The Today hub on the home screen, event times, and the "Reached …? Yes / No" bar.
 

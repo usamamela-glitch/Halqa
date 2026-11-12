@@ -66,8 +66,10 @@ Everything in the web app comes across unchanged, including recent additions:
 - **Forms no longer open half-way up the screen** after the keyboard closes (fixed 12 Nov). In the native app the keyboard is handled natively, which should end this for good.
 - The Today hub on the home screen, event times, and the "Reached …? Yes / No" bar.
 
-## Your friend (NA-78), later
-A separate TestFlight app pointed at his own website and database, covered by Usama's developer account. The native features need his copy updated first, and that's his decision.
+## Friends, later (decided 12 Nov: Usama's own native app first, friends after more discussion)
+- **Idea discussed:** one Apple account (Usama's) with a separate app per friend ("Halqa NA-78", "Halqa NA-xx"). Each native shell opens **that friend's own website**, so the friend's own Claude keeps changing the inside, with no Apple access. Usama and Claude own the shell: the iPhone features, TestFlight, and the rebuild every ~60 days. Usama keeps control (he can update the app or remove a friend) but pays for and maintains the shells; he can't see friends' data.
+- **Catch:** some native features need matching code in the friend's website (e.g. the card reader for share-menu "Event"; "Contact" already works with the 28 Oct Quick Add link).
+- **Friend 2** would first get a fresh, empty web copy with all current features (own GitHub, Supabase, Vercel, Claude API key). Needs: constituency, rural or urban wording, map.
 
 ## Discussed and parked (not building now)
 - **A message queue:** AI-written personal WhatsApp messages; tap to send, then the next. About 20 people in 10 minutes.

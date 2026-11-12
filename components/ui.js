@@ -116,16 +116,36 @@ export function Avatar({ name, photo, size = 48 }) {
 
 // ---------- Keyboard-aware bottom sheet ----------
 
+// How far the on-screen keyboard covers the page, so sheets sit above it.
+// iPhone sometimes doesn't report that the keyboard has closed, which left
+// sheets floating half-way up the screen. So the space only counts while
+// something is actually being typed in, and it's re-checked a few times after
+// focus changes (iPhone reports the keyboard's size late).
+const isTyping = el => !!el && (el.isContentEditable || (el.tagName === 'TEXTAREA') ||
+  (el.tagName === 'INPUT' && !['button', 'checkbox', 'radio', 'submit', 'date', 'time', 'file', 'range', 'color'].includes(el.type)))
+
 function useKeyboardInset() {
   const [inset, setInset] = useState(0)
   useEffect(() => {
     const vv = typeof window !== 'undefined' && window.visualViewport
     if (!vv) return
-    const update = () => setInset(Math.max(0, window.innerHeight - vv.height - vv.offsetTop))
+    const update = () => {
+      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop)
+      setInset(isTyping(document.activeElement) && kb > 80 ? kb : 0)
+    }
+    const timers = []
+    const later = () => { timers.forEach(clearTimeout); timers.length = 0; [0, 150, 400, 800].forEach(ms => timers.push(setTimeout(update, ms))) }
     vv.addEventListener('resize', update)
     vv.addEventListener('scroll', update)
+    window.addEventListener('focusin', later)
+    window.addEventListener('focusout', later)
+    window.addEventListener('resize', later)
     update()
-    return () => { vv.removeEventListener('resize', update); vv.removeEventListener('scroll', update) }
+    return () => {
+      timers.forEach(clearTimeout)
+      vv.removeEventListener('resize', update); vv.removeEventListener('scroll', update)
+      window.removeEventListener('focusin', later); window.removeEventListener('focusout', later); window.removeEventListener('resize', later)
+    }
   }, [])
   return inset
 }

@@ -2,16 +2,19 @@
 
 Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain language, and show him screenshots or test links before changes he hasn't seen.
 
-## Status (8 Nov 2026)
+## Status (12 Nov 2026)
 - v2 is live on `main` (halqa-apps.vercel.app). Usama has no laptop: he works from the Claude app on his iPhone.
 - **How changes ship:** commit on `claude/review-requested-jvbtwm`, run `npm run build`, push the branch, then push the same commit to `main`. Vercel deploys `main` to production. After each deploy, check that `/` and `/sw.js` return 200.
 - **Access:** the cloud environment "Usama" stores network secrets for `api.supabase.com` and `api.vercel.com` (Name `Authorization`, Prefix `Bearer`). The Vercel token ("Claude Halqa") never expires. GitHub access comes from the Claude GitHub connector.
-- **Database updates** (all five have been run):
+- **Database updates** (all eight have been run):
   - `supabase/migrations/20261016000000_halqa_v2.sql`
   - `supabase/migrations/20261017000000_analysis_reports.sql`
   - `supabase/migrations/20261029000000_daily_list.sql` (daily list: Later, Don't show, briefing stats)
   - `supabase/migrations/20261031000000_whatsapp_number.sql` (remembered WhatsApp number)
   - `supabase/migrations/20261107000000_login_required.sql` (login required: RLS on, anon has no rights)
+  - `supabase/migrations/20261109000000_planner.sql` (Planner events, private `event-cards` bucket)
+  - `supabase/migrations/20261110000000_planner_lists.sql` (Planner lists and list items)
+  - `supabase/migrations/20261111000000_event_time.sql` (exact time for non-wedding events)
   
   The auto-mode safety check blocks Claude from running SQL that changes the live database, so Usama pastes the SQL into the Supabase SQL Editor himself. Give him the **contents**, not the file name. "Run without RLS" is the right choice.
 - **Weekly check-up:** a scheduled task, "Halqa weekly check-up", runs every Monday at 8:53 PKT. It is read-only, except for the monthly backup into `halqa-backups`. It notifies him only if something needs attention.
@@ -111,6 +114,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - older reports can be continued later
 
 ## "Save to Halqa" Shortcut (built 28 Oct 2026, working)
+- **Fix (11 Nov):** a number WhatsApp breaks over two lines ("+92 349" / "8605989") is joined back together, so the whole number lands in Phone (`parseSharedText` in `lib/importContacts.js`).
 - In WhatsApp: hold a shared contact → Forward → share button → **Save to Halqa**. Halqa opens in Safari on Quick Add with the name and number(s) filled in. The village is always left for him to choose.
 - Link format: `/?add=1&name=<encoded>&phone=<encoded numbers, one per line>`, handled in `HomeScreen.js`.
 - The Shortcut on his iPhone, in order:
@@ -194,20 +198,23 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows "Trie
 - **Note box on cards waiting for review** (12 Nov): type who invited before tapping Add, and the note goes on every function from that card.
 - **Swipe left** on anything in the Planner (12 Nov), like iPhone Notes: list items get Share · Move (to another list) · Delete; events get Share · Delete. Share uses the iPhone share menu (copies the text if sharing isn't available); Delete shows Undo.
 - **Tell Halqa** (home screen and top of the Planner): he types or dictates (keyboard mic, English or Urdu). Claude (Opus 5.5, his own API key, `lib/tell.js`) turns it into events, list items, village notes, a new contact (opens Quick Add filled in) or an answer to a question. Each thing is shown as a card; ✕ leaves it out, tapping opens the full form, and nothing is saved until he taps Add.
-- **Home tile** just says "Planner", with a count under it only when something is waiting ("3 to review" / "5 upcoming") (10 Nov).
+- **Planner button** (in the home Today hub since 11 Nov) shows a count only when something is waiting ("3 to review" / "5 upcoming").
 - **WhatsApp cards (working since 10 Nov):** share a card picture or PDF from WhatsApp → "Add to Halqa" Shortcut → the `read-cards` server function (Claude reads it) → "To review" at the top of Events, with the card saved in the private `event-cards` bucket. PDFs show as a red "PDF" box with "Open the PDF". Condolence cards are dropped for now (handwriting reading wasn't good enough).
   - Supabase secrets set by Usama: `ANTHROPIC_API_KEY` (a separate key named "Halqa cards") and `HALQA_SHARE_KEY` (his private code; spaces around it are ignored).
   - The Shortcut: Receive Images and PDFs from Share Sheet → Base64 Encode (Line Breaks: None) → Combine Text with Custom "," → Get Contents of URL (POST `https://zietsuiuzkfjjgbdybdd.supabase.co/functions/v1/read-cards`, header `x-halqa-key` = his code, Request Body File = Combined Text) → Show Notification (Contents of URL). On new iOS the Details ⓘ is at the bottom of the editor and stays grey until the Shortcut has one action.
   - A notification "Wrong Halqa code in the Shortcut." means the code in the header doesn't match the secret (watch for the iPhone capitalising the first letter).
 - **Meeting notes moved into the lists (10 Nov):** the four general notes "Meetings Islamabad / Lahore / Halka / Sargodha City" became 35 list items, one per line with the exact text, in the same order. The original notes are still in Notes for Usama to delete.
 - **Tell Halqa dictation:** the 🎙 is the iPhone keyboard's (Apple's speech recognition), not Claude's, so names and mixed Urdu/English come out worse than in the Claude app. Options offered (Usama is leaving it for now, 10 Nov): (1) switch to an English (India) keyboard for dictation; (2) have Claude correct misheard names against contact and village names; (3) record inside Halqa and use a dedicated speech-to-text service (OpenAI or ElevenLabs, extra key, about Rs 2 per minute).
+- **Fix (12 Nov):** forms (Edit event, Quick Add…) sometimes opened half-way up the screen, because iPhone didn't report that the keyboard had closed. Sheets now only make room for the keyboard while a text box is being typed in, and re-check after focus changes (`useKeyboardInset` in `components/ui.js`). Usama to confirm on his phone.
 - **Next:** Usama is trying out what he says in Tell Halqa against where things land in the Planner, and will come back with changes.
 
 ## Native iPhone app (decided 11 Nov 2026; Apple account paid, waiting for approval)
 - The full agreed build list, phases and Usama's remaining Apple steps are in **NATIVE_APP.md**.
+- Paid on 11 Nov (Individual, enrollment ID MC56U7MJV6); waiting for Apple's "Welcome" email (up to 2 business days), then Parts 3–6.
+- Added 12 Nov: iPhone contacts follow Halqa edits automatically (exact same name, no village suffix; Halqa is the master, deleting never deletes on the iPhone); Share contact card(s) from Halqa, one or many at once via Select; swipe actions (already built in the web app).
 
 ## Ideas Usama is considering (not started)
-- **Selling Halqa some day** (discussed 11 Nov, not now): would need an Urdu version. Usama doesn't want to run it himself: options are a licence or revenue share with a Pakistani software house, a one-time sale (worth much more once there are paying users), or VC/accelerator routes. First step if he decides: 10–20 paying politicians through his own network.
+- **Selling Halqa: decided against (11 Nov)** — it's his competitive edge; he doesn't want opponents to have it. Earlier notes kept for reference: would need an Urdu version. Usama doesn't want to run it himself: options are a licence or revenue share with a Pakistani software house, a one-time sale (worth much more once there are paying users), or VC/accelerator routes. First step if he decides: 10–20 paying politicians through his own network.
 - **Briefing picks in the Today list** (discussed 8 Nov; Usama is thinking about it):
   - The monthly briefing would also hand Halqa its ~15 "people to see" as contact IDs, with a one-line reason and talking point each, saved in `analysis_reports.meta`.
   - They would come into the Today list a few a day (e.g. 3), within the 35, with a ✨ Briefing badge, "Why now" and "Talk about" on the card.

@@ -54,8 +54,12 @@ function ReviewBatch({ events, onEdit }) {
   const pdf = isPdf(path)
   const [big, setBig] = useState(false)
 
+  const [note, setNote] = useState('')
   async function addAll() {
-    for (const e of events) await confirmEvent(e.id)
+    const n = note.trim()
+    for (const e of events) {
+      await updateRow('events', e.id, { status: 'confirmed', unsure: false, ...(n ? { notes: e.notes ? `${n}\n${e.notes}` : n } : {}) })
+    }
     toast(`Added ${events.length} to the Planner`)
   }
   async function discard() {
@@ -78,6 +82,10 @@ function ReviewBatch({ events, onEdit }) {
       <div className={p.batchLines}>
         {sortEvents(events).map(e => <EventLine key={e.id} ev={e} showDay onPress={() => onEdit(e)} />)}
       </div>
+      <form className={p.batchNote} onSubmit={e => { e.preventDefault(); addAll() }}>
+        <input className={ui.input} value={note} onChange={e => setNote(e.target.value)}
+          placeholder="Note, e.g. who invited (optional)" autoCapitalize="words" enterKeyHint="done" />
+      </form>
       <div className={p.batchActions}>
         <button className={cx(ui.btn, ui.btnPrimary)} onClick={addAll}><IconCheck size={18} />Add {events.length > 1 ? 'all' : ''}</button>
         <button className={cx(ui.btn, ui.btnSecondary)} onClick={() => setConfirmDrop(true)}>Discard</button>

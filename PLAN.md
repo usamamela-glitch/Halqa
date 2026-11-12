@@ -147,7 +147,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **✓ Yes** on the "Reached Rana Asif?" bar that appears when he comes back to Halqa after a WhatsApp or call made **outside** the Today list (✗ No, or no answer within 5 seconds = nothing recorded; `components/ReachedPrompt.js`),
 - **Mark as in touch today** on a contact card (met in person, they called). For someone open in today's list it counts as ✓ Done.
 
-Tapping WhatsApp/Call is only an attempt: in the Today list the card shows "Tried 4:12 PM" (kept on that phone for the day). Opening a card never counts. Cards show "In touch: 2 months ago", or "Not yet". The AI briefing is told about the 8 Nov change, so it treats older dates with caution.
+Tapping WhatsApp/Call is only an attempt: in the Today list the card shows the last try, "Tried 4:12 PM", "Tried yesterday 9:30 PM" or "Tried Tue 10 Nov, 4:12 PM" (since 12 Nov it stays until a newer try, up to 90 days; kept on that phone only, meta `lastTries`). Opening a card never counts. Cards show "In touch: 2 months ago", or "Not yet". The AI briefing is told about the 8 Nov change, so it treats older dates with caution.
 
 **Daily list:**
 1. A new day brings **35 people: 15 pinned + 20 unpinned**. They're picked at random from those not in touch for the longest.

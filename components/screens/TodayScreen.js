@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
 import { tidyToday, showMore, setAside, markDone, SPLIT } from '../../lib/daily'
-import { inTouchToday, attemptsToday } from '../../lib/touch'
+import { inTouchToday, lastAttempts, localDay } from '../../lib/touch'
 import { daysSince, contactedLabel } from '../../lib/domain'
 import { Screen, Avatar, Empty, cx, ui, useToast } from '../ui'
 import { CallButtons, useContactSheets } from '../contacts'
@@ -12,6 +12,16 @@ import t from '../../styles/today.module.css'
 
 // The daily list: today's 35 people (15 pinned + 20 unpinned). Opened from the
 // teal card at the top of the home page.
+function triedLabel(iso) {
+  const d = new Date(iso)
+  const time = d.toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })
+  const day = localDay(d)
+  if (day === localDay()) return time
+  const y = new Date(); y.setDate(y.getDate() - 1)
+  if (day === localDay(y)) return `yesterday ${time}`
+  return `${d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '')}, ${time}`
+}
+
 export default function TodayScreen() {
   const toast = useToast()
   const sheets = useContactSheets()
@@ -19,8 +29,9 @@ export default function TodayScreen() {
   const villages = useLiveQuery(() => db.villages.toArray(), [], [])
   const daily = useLiveQuery(async () => (await db.meta.get('daily'))?.value || null, [], null)
   const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
-  // WhatsApp / Call taps today on this phone: shown as "Tried 4:12 PM". Only ✓ Done counts as in touch.
-  const tried = useLiveQuery(() => attemptsToday(), [], {})
+  // The last WhatsApp / Call tap on this phone, shown as "Tried 4:12 PM" (today),
+  // "Tried yesterday 9:30 PM" or "Tried Tue 10 Nov, 4:12 PM". Only ✓ Done counts as in touch.
+  const tried = useLiveQuery(() => lastAttempts(), [], {})
   const [busy, setBusy] = useState(false)
   const { push } = useNav()
   // Newest briefing, shown as a card until it has been opened.
@@ -114,7 +125,7 @@ export default function TodayScreen() {
                         ? <span className={cx(t.touch, t.touchToday)}>✓ In touch today</span>
                         : <span className={cx(t.touch, d === null && t.touchNone)}>In touch: {contactedLabel(d).toLowerCase()}</span>}
                       {tried[c.id] && !inTouchToday(c) && (
-                        <span className={t.tried}>Tried {new Date(tried[c.id]).toLocaleTimeString('en-PK', { hour: 'numeric', minute: '2-digit' })}</span>
+                        <span className={t.tried}>Tried {triedLabel(tried[c.id])}</span>
                       )}
                       {(c.tags || []).map(tag => <span key={tag} className={ui.chip}>{tag}</span>)}
                     </span>

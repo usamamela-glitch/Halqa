@@ -87,7 +87,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **Village Development tab (13 Nov):** under the village's own development notes, a live "From Works" list of everything tagged with that village, grouped by category with numbers, ○/✓ and who asked; tap to open, and "+ Add to Works for <village>" pre-fills the village (`VillageWorks` in `components/Works.js`).
 
 - **14 Nov: renamed "Targets" on screen** (the home tab, "From Targets" on village pages, "New target"). The code and table keep the name `works`.
-- **Pinning (14 Nov):** swipe left → Pin (amber), or "Pin to the top" in the item. Pinned open items go first in their own category (and on village and contact lists), with a 📌. Column `works.pinned` (migration 20261114000000, Usama runs it).
+- **Pinning (14 Nov):** a small pin button under each item's number (grey off, amber on), or "Pin to the top" in the item. Not in the swipe (Usama found four swipe buttons too crowded). Pinned open items go first in their own category (and on village and contact lists), with a 📌. Column `works.pinned` (migration 20261114000000, Usama runs it).
 - **On a contact card (14 Nov):** an "Asked for" list of every target the person is tagged in, open first, with numbers; tap to open (`ContactTargets` in `components/Works.js`). The optional "2 open asks" note on Today-list cards was offered but not built.
 
 ## Contacts

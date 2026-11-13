@@ -78,3 +78,10 @@
 .pinMark { flex: none; align-self: flex-start; margin: 14px 6px 0 0; color: #c98208; }
 .vLine .pinMark { margin: 2px 6px 0 0; }
 .contactTargets { margin-top: 18px; }
+
+/* Small pin button on each row, under the number (14 Nov) */
+.rowSide { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; margin: 11px 8px 0 0; }
+.rowSide .serial { margin: 2px 0 0; }
+.pinBtn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #b4bec8; }
+.pinBtn:active { background: var(--hair); }
+.pinBtnOn { color: #c98208; }

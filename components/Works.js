@@ -67,12 +67,11 @@ export function WorksTab({ category, onCategory, sheets }) {
 
   const row = work => (
     <SwipeRow key={work.id} actions={[
-      { label: work.pinned ? 'Unpin' : 'Pin', tone: 'pin', icon: <IconPin size={19} filled={!work.pinned} />, onClick: () => pin(work) },
       { label: 'Share', tone: 'share', icon: <IconShare size={19} />, onClick: () => share(work) },
       { label: 'Move', tone: 'move', icon: <IconMove size={19} />, onClick: () => setMoving(work) },
       { label: 'Delete', tone: 'delete', icon: <IconTrash size={19} />, onClick: () => del(work) },
     ]}>
-      <WorkLine work={work} names={names} onToggle={() => toggle(work)} onPress={() => setView(work.id)} />
+      <WorkLine work={work} names={names} onToggle={() => toggle(work)} onPress={() => setView(work.id)} onPin={() => pin(work)} />
     </SwipeRow>
   )
 
@@ -152,7 +151,7 @@ function Tags({ work, names }) {
   )
 }
 
-function WorkLine({ work, names, onToggle, onPress }) {
+function WorkLine({ work, names, onToggle, onPress, onPin }) {
   const done = !!work.done_at
   const first = (work.images || [])[0]
   return (
@@ -165,8 +164,14 @@ function WorkLine({ work, names, onToggle, onPress }) {
         <Tags work={work} names={names} />
         {done && <span className={p.where}>Done {new Date(work.done_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
       </button>
-      {work.pinned && !done ? <span className={w.pinMark} aria-label="Pinned"><IconPin size={13} filled /></span> : null}
-      {work.serial ? <span className={w.serial}>{serialLabel(work)}</span> : null}
+      <span className={w.rowSide}>
+        {work.serial ? <span className={w.serial}>{serialLabel(work)}</span> : null}
+        {!done && onPin && (
+          <button className={cx(w.pinBtn, work.pinned && w.pinBtnOn)} onClick={onPin} aria-label={work.pinned ? 'Unpin' : 'Pin to the top'}>
+            <IconPin size={16} filled={!!work.pinned} />
+          </button>
+        )}
+      </span>
       {first && (
         <button className={w.thumbBtn} onClick={onPress} aria-label="Open">
           <Thumb path={first} />

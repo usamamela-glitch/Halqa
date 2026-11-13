@@ -2,11 +2,11 @@
 
 Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain language, and show him screenshots or test links before changes he hasn't seen.
 
-## Status (13 Nov 2026)
+## Status (14 Nov 2026)
 - v2 is live on `main` (halqa-apps.vercel.app). Usama has no laptop: he works from the Claude app on his iPhone.
 - **How changes ship:** commit on the session's `claude/…` branch, run `npm run build`, push the branch, then push the same commit to `main`. Vercel deploys `main` to production. After each deploy, check that `/` and `/sw.js` return 200.
 - **Access:** the cloud environment "Usama" stores network secrets for `api.supabase.com` and `api.vercel.com` (Name `Authorization`, Prefix `Bearer`). The Vercel token ("Claude Halqa") never expires. GitHub access comes from the Claude GitHub connector.
-- **Database updates** (all nine are in the live database):
+- **Database updates** (all eleven are in the live database):
   - `supabase/migrations/20261016000000_halqa_v2.sql`
   - `supabase/migrations/20261017000000_analysis_reports.sql`
   - `supabase/migrations/20261029000000_daily_list.sql` (daily list: Later, Don't show, briefing stats)
@@ -16,6 +16,9 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - `supabase/migrations/20261110000000_planner_lists.sql` (Planner lists and list items)
   - `supabase/migrations/20261111000000_event_time.sql` (exact time for non-wedding events)
   - `supabase/migrations/20261113000000_works.sql` (Works; the table was already created on 13 Nov with 53 items, the file is the record)
+  - `supabase/migrations/20261113100000_works_serial.sql` (serial numbers R-1, J-1…, with a trigger for new or moved items)
+  - `supabase/migrations/20261114000000_works_pinned.sql` (pinned targets)
+- **Never put Usama's personal data in the repo.** On 13 Nov the safety check blocked a migration containing his notes (a CNIC, phone numbers), and then blocked pushes from that session. Data imports go in a paste for him to run; the code holds only table definitions.
   
   The auto-mode safety check blocks Claude from running SQL that changes the live database, so Usama pastes the SQL into the Supabase SQL Editor himself. Give him the **contents**, not the file name. "Run without RLS" is the right choice.
 - **Weekly check-up:** a scheduled task, "Halqa weekly check-up", runs every Monday at 8:53 PKT. It is read-only, except for the monthly backup into `halqa-backups`. It notifies him only if something needs attention.
@@ -60,7 +63,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - Header: "Halqa" + "NA-83 Sargodha-II", with three number boxes: Villages · Contacts · Pinned.
 - Sync badge (Synced / Offline · N waiting).
 - Header icons: map, AI analysis, settings.
-- Tabs: Qanungos · Works · Search (Notes was the middle tab until 13 Nov). **Qanungos stays the home page.**
+- Tabs: Qanungos · Targets · Search (Notes was the middle tab until 13 Nov; the tab was called Works on 13 Nov, then renamed Targets on 14 Nov). **Qanungos stays the home page.**
 - A teal **"Today" card** under the tabs ("Today · 12 of 35 done", a progress bar, and "October 2026 briefing is ready" when one is waiting). Tapping it opens the daily list.
 - Main Groups and Day to Day side by side, under the Today card.
 - Qanungo cards: "…" menu (Rename / Remove), contact count, thin completion bar.
@@ -97,7 +100,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - fields: name, phone, village (searchable; picking one closes the list), Pin to Main Groups switch, description, tags
   - remembers the last village used
   - warns about duplicate numbers
-- **Tags (categories)**, in this order: Key Voter · Opposition · Neutral · Government Officer · Religious Leader · Youth · Lawyer · Ours · Journalist · Wasayba Leader.
+- **Tags (categories)**, in this order: Key Voter · Opposition · Neutral · Government Officer · Religious Leader · Youth · Lawyer · Ours · Journalist · Wasayba Leader · Target. **Target** (added 14 Nov) is an opponent he's working to win over; it's not the same thing as the Targets tab.
   - "Other" and "Influencer" were removed; no contacts used them.
   - Usama may add more.
   - Defined in `lib/domain.js` (`TAGS`).
@@ -231,7 +234,8 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows the l
 
 ## Native iPhone app (decided 11 Nov 2026; Apple account paid, waiting for approval)
 - The full agreed build list, phases and Usama's remaining Apple steps are in **NATIVE_APP.md**.
-- Paid on 11 Nov (Individual, enrollment ID MC56U7MJV6); waiting for Apple's "Welcome" email (up to 2 business days), then Parts 3–6.
+- Ordered on 11 Nov (Individual, enrollment ID MC56U7MJV6), but **the card was never charged**: the account still shows Pending and "Complete your purchase", and nothing appeared in his bank. Usama emailed Apple Developer Support on 14 Nov. Don't pay again unless Apple asks. Fallbacks are the Apple Developer app (App Store billing) or another card. After approval: Parts 3–6.
+- **How updates work once native:** screens, features, AI and data changes still go live straight away (the shell loads Halqa from Vercel). Only iPhone-level features (caller ID, widgets, share menu, permissions) need a new TestFlight build. Explained to Usama on 14 Nov; in the last two weeks only one idea (auto-save to iPhone contacts) would have needed one.
 - Added 12 Nov: iPhone contacts follow Halqa edits automatically (exact same name, no village suffix; Halqa is the master, deleting never deletes on the iPhone); Share contact card(s) from Halqa, one or many at once via Select; swipe actions (already built in the web app).
 
 ## Ideas Usama is considering (not started)

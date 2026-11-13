@@ -83,6 +83,9 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **Code:** `components/Works.js`, `lib/works.js`, `styles/works.module.css`. Swipe rows are shared with the Planner (`SwipeRow` in `PlannerScreen.js`).
 - Not done yet (not asked): Works in Search, Tell Halqa or the AI analysis.
 
+- **Serial numbers (13 Nov):** each item has a short number per category, oldest first: R (roads), J (jobs), E (electricity), G (gas), H (health), Ed (education), O (other), e.g. R-17. Column `works.serial` (migration 20261113100000, run by Usama); the app gives new or moved items the next number, and a database trigger fills any that are missing. Shown on each row, in the item's title and in shared text.
+- **Village Development tab (13 Nov):** under the village's own development notes, a live "From Works" list of everything tagged with that village, grouped by category with numbers, ○/✓ and who asked; tap to open, and "+ Add to Works for <village>" pre-fills the village (`VillageWorks` in `components/Works.js`).
+
 ## Contacts
 - **Contact cards:** pin, call, WhatsApp and save-to-iPhone buttons on their own row under the details, so names keep the full width on small iPhones.
 - **Save to iPhone:** downloads a vCard named "Name - Village" (e.g. "Rana Asif - Lilliani"). It's offered on each card, and as "Save to iPhone" in the confirmation after adding a contact.

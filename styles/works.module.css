@@ -73,3 +73,8 @@
 .tagPics { background: #eceff3; color: #56636e; }
 .villageAdd { width: 100%; display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 11px 14px; border-radius: 14px; background: var(--card); box-shadow: var(--shadow); font-size: 15px; font-weight: 700; color: var(--teal-700); text-align: left; }
 .villageAddPlus { width: 24px; height: 24px; border-radius: 7px; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; }
+
+/* Pinned targets (14 Nov) and targets on a contact card */
+.pinMark { flex: none; align-self: flex-start; margin: 14px 6px 0 0; color: #c98208; }
+.vLine .pinMark { margin: 2px 6px 0 0; }
+.contactTargets { margin-top: 18px; }

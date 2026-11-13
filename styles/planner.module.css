@@ -128,3 +128,4 @@
 /* Note box on a card waiting for review (12 Nov) */
 .batchNote { padding: 12px 14px 0; border-top: 1px solid var(--hair); }
 .batchNote + .batchActions { border-top: 0; }
+.swipe_pin { background: #c98208; }

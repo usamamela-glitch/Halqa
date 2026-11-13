@@ -5,11 +5,11 @@ import { useNav } from '../lib/nav'
 import { savePhoto } from '../lib/images'
 import { queryWords, matchesWords, nameRank } from '../lib/search'
 import { byName } from '../lib/domain'
-import { WORK_CATEGORIES, categoryOf, categoryLabel, categoryIcon, serialLabel, splitWorks, saveWork, setWorkDone, removeWork, workShareText } from '../lib/works'
+import { WORK_CATEGORIES, categoryOf, categoryLabel, categoryIcon, serialLabel, splitWorks, saveWork, setWorkDone, setWorkPinned, removeWork, workShareText } from '../lib/works'
 import { useContactSheets } from './contacts'
 import { Sheet, ActionSheet, Empty, Field, cx, ui, useToast, useImageUrl } from './ui'
 import { SwipeRow, shareText } from './screens/PlannerScreen'
-import { IconCheck, IconPlus, IconShare, IconMove, IconTrash, IconX, IconCamera, IconLayers, IconChevron } from './Icons'
+import { IconCheck, IconPlus, IconShare, IconMove, IconTrash, IconX, IconCamera, IconLayers, IconChevron, IconPin } from './Icons'
 import p from '../styles/planner.module.css'
 import w from '../styles/works.module.css'
 
@@ -59,10 +59,15 @@ export function WorksTab({ category, onCategory, sheets }) {
     const undo = await removeWork(work)
     toast('Deleted', { label: 'Undo', onClick: undo })
   }
+  async function pin(work) {
+    const undo = await setWorkPinned(work, !work.pinned)
+    toast(work.pinned ? 'Unpinned' : 'Pinned to the top', { label: 'Undo', onClick: undo })
+  }
   const share = work => shareText(workShareText(work, namesOf(work.village_ids, names.village), namesOf(work.contact_ids, names.contact)), toast)
 
   const row = work => (
     <SwipeRow key={work.id} actions={[
+      { label: work.pinned ? 'Unpin' : 'Pin', tone: 'pin', icon: <IconPin size={19} filled={!work.pinned} />, onClick: () => pin(work) },
       { label: 'Share', tone: 'share', icon: <IconShare size={19} />, onClick: () => share(work) },
       { label: 'Move', tone: 'move', icon: <IconMove size={19} />, onClick: () => setMoving(work) },
       { label: 'Delete', tone: 'delete', icon: <IconTrash size={19} />, onClick: () => del(work) },
@@ -83,7 +88,7 @@ export function WorksTab({ category, onCategory, sheets }) {
 
       <div className={ui.section} style={{ marginTop: 14 }}>
         {open.length + recent.length === 0 ? (
-          <Empty icon={<IconLayers size={28} />} title={`No ${categoryLabel(cat).toLowerCase()} works`} text="Tap + to add one." />
+          <Empty icon={<IconLayers size={28} />} title={`No ${categoryLabel(cat).toLowerCase()} targets`} text="Tap + to add one." />
         ) : (
           <div className={cx(ui.card, p.dayCard)}>{[...open, ...recent].map(row)}</div>
         )}
@@ -95,7 +100,7 @@ export function WorksTab({ category, onCategory, sheets }) {
         )}
       </div>
 
-      <button className={ui.fab} onClick={() => openForm({ category: cat })} aria-label="Add work"><IconPlus size={28} /></button>
+      <button className={ui.fab} onClick={() => openForm({ category: cat })} aria-label="Add target"><IconPlus size={28} /></button>
 
       <Sheet open={!!viewing} onClose={() => setView(null)} title={viewing ? `${categoryLabel(categoryOf(viewing))}${viewing.serial ? ` · ${serialLabel(viewing)}` : ''}` : ''}
         headerRight={viewing && <button className={w.editBtn} onClick={() => openForm(viewing)}>Edit</button>}>
@@ -103,11 +108,12 @@ export function WorksTab({ category, onCategory, sheets }) {
           <WorkDetail work={viewing} names={names}
             onVillage={() => setView(null)}
             onPerson={id => { setView(null); sheets.open(id) }}
-            onToggle={async () => { await toggle(viewing); if (!viewing.done_at) setView(null) }} />
+            onToggle={async () => { await toggle(viewing); if (!viewing.done_at) setView(null) }}
+            onPin={() => setWorkPinned(viewing, !viewing.pinned)} />
         )}
       </Sheet>
 
-      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit work' : 'New work'}>
+      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit target' : 'New target'}>
         {form && <WorkForm key={formKey} initial={form} names={names} onDone={() => setForm(null)} />}
       </Sheet>
 
@@ -159,6 +165,7 @@ function WorkLine({ work, names, onToggle, onPress }) {
         <Tags work={work} names={names} />
         {done && <span className={p.where}>Done {new Date(work.done_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
       </button>
+      {work.pinned && !done ? <span className={w.pinMark} aria-label="Pinned"><IconPin size={13} filled /></span> : null}
       {work.serial ? <span className={w.serial}>{serialLabel(work)}</span> : null}
       {first && (
         <button className={w.thumbBtn} onClick={onPress} aria-label="Open">
@@ -178,7 +185,7 @@ function BigPicture({ path }) {
   return <a href={url} target="_blank" rel="noreferrer"><img src={url} alt="" className={w.big} /></a>
 }
 
-function WorkDetail({ work, names, onVillage, onPerson, onToggle }) {
+function WorkDetail({ work, names, onVillage, onPerson, onToggle, onPin }) {
   const { push } = useNav()
   const villages = (work.village_ids || []).map(id => names.village[id]).filter(Boolean)
   const people = (work.contact_ids || []).map(id => names.contact[id]).filter(Boolean)
@@ -219,7 +226,12 @@ function WorkDetail({ work, names, onVillage, onPerson, onToggle }) {
         </div>
       )}
 
-      <button className={cx(ui.btn, ui.btnBlock, done ? ui.btnSecondary : ui.btnPrimary)} style={{ marginTop: 20 }} onClick={onToggle}>
+      {!done && onPin && (
+        <button className={cx(ui.btn, ui.btnBlock, ui.btnSecondary)} style={{ marginTop: 20 }} onClick={onPin}>
+          <IconPin size={17} filled={!work.pinned} /> {work.pinned ? 'Unpin' : 'Pin to the top'}
+        </button>
+      )}
+      <button className={cx(ui.btn, ui.btnBlock, done ? ui.btnSecondary : ui.btnPrimary)} style={{ marginTop: onPin && !done ? 10 : 20 }} onClick={onToggle}>
         {done ? 'Mark as not done' : <><IconCheck size={18} /> Mark as done</>}
       </button>
       {done && <p className={w.doneNote}>Done {new Date(work.done_at).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}</p>}
@@ -363,7 +375,7 @@ export function WorkForm({ initial, names, onDone }) {
         {isNew ? 'Add' : 'Save'}
       </button>
       {!isNew && <button type="button" className={p.delete} onClick={() => setConfirmDel(true)}>Delete</button>}
-      <ActionSheet open={confirmDel} onClose={() => setConfirmDel(false)} title="Delete this work?"
+      <ActionSheet open={confirmDel} onClose={() => setConfirmDel(false)} title="Delete this target?"
         items={[{ label: 'Delete', danger: true, onClick: remove }]} />
     </form>
   )
@@ -396,7 +408,7 @@ export function VillageWorks({ village }) {
   return (
     <div className={w.village}>
       <div className={w.villageHead}>
-        <span>From Works</span>
+        <span>From Targets</span>
         {mine.length > 0 && <span>{openCount} open{doneCount ? ` · ${doneCount} done` : ''}</span>}
       </div>
       {mine.length > 0 && (
@@ -427,6 +439,7 @@ export function VillageWorks({ village }) {
                             </span>
                           )}
                       </span>
+                      {x.pinned && !done ? <span className={w.pinMark}><IconPin size={12} filled /></span> : null}
                       {x.serial ? <span className={w.serial}>{serialLabel(x)}</span> : null}
                     </button>
                   )
@@ -437,7 +450,7 @@ export function VillageWorks({ village }) {
         </div>
       )}
       <button className={w.villageAdd} onClick={() => openForm({ category: 'roads', village_ids: [village.id] })}>
-        <span className={w.villageAddPlus}><IconPlus size={16} /></span>Add to Works for {village.name}
+        <span className={w.villageAddPlus}><IconPlus size={16} /></span>Add to Targets for {village.name}
       </button>
 
       <Sheet open={!!viewing} onClose={() => setView(null)} title={viewing ? `${categoryLabel(categoryOf(viewing))}${viewing.serial ? ` · ${serialLabel(viewing)}` : ''}` : ''}
@@ -446,13 +459,73 @@ export function VillageWorks({ village }) {
           <WorkDetail work={viewing} names={names}
             onVillage={() => setView(null)}
             onPerson={id => { setView(null); sheets.open(id) }}
-            onToggle={async () => { await toggle(viewing); if (!viewing.done_at) setView(null) }} />
+            onToggle={async () => { await toggle(viewing); if (!viewing.done_at) setView(null) }}
+            onPin={() => setWorkPinned(viewing, !viewing.pinned)} />
         )}
       </Sheet>
-      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit work' : 'New work'}>
+      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit target' : 'New target'}>
         {form && <WorkForm key={formKey} initial={form} names={names} onDone={() => setForm(null)} />}
       </Sheet>
       {sheets.element}
+    </div>
+  )
+}
+
+// ---------- On a person's contact card ----------
+
+// Every target this person has asked for (they're tagged in it), open first.
+export function ContactTargets({ contactId }) {
+  const toast = useToast()
+  const works = useLiveQuery(() => db.works.toArray(), [], [])
+  const names = useNames()
+  const [view, setView] = useState(null)
+  const [form, setForm] = useState(null)
+  const [formKey, setFormKey] = useState(0)
+  const mine = useMemo(() => works.filter(x => (x.contact_ids || []).includes(contactId)), [works, contactId])
+  const viewing = view && works.find(x => x.id === view)
+  if (!mine.length) return null
+  const { open, recent, old } = splitWorks(mine)
+  const list = [...open, ...recent, ...old]
+  const openForm = initial => { setView(null); setFormKey(k => k + 1); setForm(initial) }
+
+  async function toggle(work) {
+    const done = !work.done_at
+    const undo = await setWorkDone(work, done)
+    toast(done ? 'Marked as done' : 'Marked as not done', { label: 'Undo', onClick: undo })
+  }
+
+  return (
+    <div className={w.contactTargets}>
+      <div className={w.villageHead}><span>Asked for</span><span>{open.length} open{list.length > open.length ? ` · ${list.length - open.length} done` : ''}</span></div>
+      <div className={cx(ui.card, p.dayCard)}>
+        {list.map(x => {
+          const done = !!x.done_at
+          return (
+            <button key={x.id} className={cx(w.vLine, done && w.vLineDone)} onClick={() => setView(x.id)}>
+              <span className={cx(w.vDot, done && w.vDotDone)}>{done && <IconCheck size={11} />}</span>
+              <span className={w.vText}>
+                <span className={w.vTitle}>{categoryIcon(categoryOf(x))} {((x.body || '').trim().split('\n')[0]) || 'No text'}</span>
+                {done && <span className={w.vSub}>Done {new Date(x.done_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
+              </span>
+              {x.pinned && !done ? <span className={w.pinMark}><IconPin size={12} filled /></span> : null}
+              {x.serial ? <span className={w.serial}>{serialLabel(x)}</span> : null}
+            </button>
+          )
+        })}
+      </div>
+      <Sheet open={!!viewing} onClose={() => setView(null)} title={viewing ? `${categoryLabel(categoryOf(viewing))}${viewing.serial ? ` · ${serialLabel(viewing)}` : ''}` : ''}
+        headerRight={viewing && <button className={w.editBtn} onClick={() => openForm(viewing)}>Edit</button>}>
+        {viewing && (
+          <WorkDetail work={viewing} names={names}
+            onVillage={() => setView(null)}
+            onPerson={() => setView(null)}
+            onToggle={async () => { await toggle(viewing); if (!viewing.done_at) setView(null) }}
+            onPin={() => setWorkPinned(viewing, !viewing.pinned)} />
+        )}
+      </Sheet>
+      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit target' : 'New target'}>
+        {form && <WorkForm key={formKey} initial={form} names={names} onDone={() => setForm(null)} />}
+      </Sheet>
     </div>
   )
 }

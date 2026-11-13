@@ -86,6 +86,10 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **Serial numbers (13 Nov):** each item has a short number per category, oldest first: R (roads), J (jobs), E (electricity), G (gas), H (health), Ed (education), O (other), e.g. R-17. Column `works.serial` (migration 20261113100000, run by Usama); the app gives new or moved items the next number, and a database trigger fills any that are missing. Shown on each row, in the item's title and in shared text.
 - **Village Development tab (13 Nov):** under the village's own development notes, a live "From Works" list of everything tagged with that village, grouped by category with numbers, ○/✓ and who asked; tap to open, and "+ Add to Works for <village>" pre-fills the village (`VillageWorks` in `components/Works.js`).
 
+- **14 Nov: renamed "Targets" on screen** (the home tab, "From Targets" on village pages, "New target"). The code and table keep the name `works`.
+- **Pinning (14 Nov):** swipe left → Pin (amber), or "Pin to the top" in the item. Pinned open items go first in their own category (and on village and contact lists), with a 📌. Column `works.pinned` (migration 20261114000000, Usama runs it).
+- **On a contact card (14 Nov):** an "Asked for" list of every target the person is tagged in, open first, with numbers; tap to open (`ContactTargets` in `components/Works.js`). The optional "2 open asks" note on Today-list cards was offered but not built.
+
 ## Contacts
 - **Contact cards:** pin, call, WhatsApp and save-to-iPhone buttons on their own row under the details, so names keep the full width on small iPhones.
 - **Save to iPhone:** downloads a vCard named "Name - Village" (e.g. "Rana Asif - Lilliani"). It's offered on each card, and as "Save to iPhone" in the confirmation after adding a contact.

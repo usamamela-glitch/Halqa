@@ -1,3 +1,4 @@
+import { ContactTargets } from './Works'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
@@ -196,6 +197,8 @@ function ContactDetail({ id, onEdit, onClose }) {
           <IconEdit size={20} />Edit
         </button>
       </div>
+
+      <ContactTargets contactId={contact.id} />
 
       <button className={s.listLink} onClick={toggleListHidden}>
         {contact.list_hidden ? 'Hidden from the daily list · Show again' : "Don't show in the daily list"}

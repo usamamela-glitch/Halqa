@@ -14,6 +14,8 @@ Agreed with Usama, 11 Nov 2026. This is the build list for when Apple approves t
 1. **Halqa in the share menu**, replacing both long Shortcuts:
    - **Event:** a wedding card picture, a PDF, or an invitation sent as a text message. Claude reads it, and it goes to *To review* in the Planner.
    - **Contact:** a contact card, or a message with a number in it. Quick Add opens already filled in.
+   - **WhatsApp business accounts** (asked 14 Nov), where the number can't be copied: open their contact info in WhatsApp, tap **Share contact**, then **Halqa**. No more forwarding the card to someone else first. This only works where WhatsApp offers the share menu for that contact; if WhatsApp hides the number completely, no app can see it.
+   - **A screenshot works too:** share a screenshot of the chat or contact info to **Halqa**. Halqa reads the number off the picture (on the phone itself) and opens Quick Add with it filled in.
 2. **Back Tap stays.** A ready-made one-block Shortcut, "Quick Add copied number": copy a number, Back Tap, and Quick Add opens with it filled in, never in Safari. Numbers split over two lines are joined.
 3. **iPhone contacts stay in step with Halqa, automatically.** Halqa is the master copy.
    - **New contact in Halqa:** saved to the iPhone contacts too. No more "Save to iPhone" step.

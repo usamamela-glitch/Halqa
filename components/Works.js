@@ -5,7 +5,8 @@ import { useNav } from '../lib/nav'
 import { savePhoto } from '../lib/images'
 import { queryWords, matchesWords, nameRank } from '../lib/search'
 import { byName } from '../lib/domain'
-import { WORK_CATEGORIES, categoryOf, categoryLabel, splitWorks, saveWork, setWorkDone, removeWork, workShareText } from '../lib/works'
+import { WORK_CATEGORIES, categoryOf, categoryLabel, categoryIcon, serialLabel, splitWorks, saveWork, setWorkDone, removeWork, workShareText } from '../lib/works'
+import { useContactSheets } from './contacts'
 import { Sheet, ActionSheet, Empty, Field, cx, ui, useToast, useImageUrl } from './ui'
 import { SwipeRow, shareText } from './screens/PlannerScreen'
 import { IconCheck, IconPlus, IconShare, IconMove, IconTrash, IconX, IconCamera, IconLayers, IconChevron } from './Icons'
@@ -96,7 +97,7 @@ export function WorksTab({ category, onCategory, sheets }) {
 
       <button className={ui.fab} onClick={() => openForm({ category: cat })} aria-label="Add work"><IconPlus size={28} /></button>
 
-      <Sheet open={!!viewing} onClose={() => setView(null)} title={viewing ? categoryLabel(categoryOf(viewing)) : ''}
+      <Sheet open={!!viewing} onClose={() => setView(null)} title={viewing ? `${categoryLabel(categoryOf(viewing))}${viewing.serial ? ` · ${serialLabel(viewing)}` : ''}` : ''}
         headerRight={viewing && <button className={w.editBtn} onClick={() => openForm(viewing)}>Edit</button>}>
         {viewing && (
           <WorkDetail work={viewing} names={names}
@@ -114,9 +115,9 @@ export function WorksTab({ category, onCategory, sheets }) {
         items={moving && WORK_CATEGORIES.filter(c => c.id !== categoryOf(moving)).map(c => ({
           label: c.label,
           onClick: async () => {
-            const before = moving.category
+            const before = { category: moving.category, serial: moving.serial ?? null }
             await saveWork(moving.id, { category: c.id })
-            toast(`Moved to ${c.label}`, { label: 'Undo', onClick: () => saveWork(moving.id, { category: before }) })
+            toast(`Moved to ${c.label}`, { label: 'Undo', onClick: () => saveWork(moving.id, before) })
           },
         }))} />
     </>
@@ -158,6 +159,7 @@ function WorkLine({ work, names, onToggle, onPress }) {
         <Tags work={work} names={names} />
         {done && <span className={p.where}>Done {new Date(work.done_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>}
       </button>
+      {work.serial ? <span className={w.serial}>{serialLabel(work)}</span> : null}
       {first && (
         <button className={w.thumbBtn} onClick={onPress} aria-label="Open">
           <Thumb path={first} />
@@ -364,5 +366,93 @@ export function WorkForm({ initial, names, onDone }) {
       <ActionSheet open={confirmDel} onClose={() => setConfirmDel(false)} title="Delete this work?"
         items={[{ label: 'Delete', danger: true, onClick: remove }]} />
     </form>
+  )
+}
+
+// ---------- On a village's Development tab ----------
+
+// Everything in Works tagged with this village, by category: open first, then done.
+// It's a live view of Works, so edits there show here straight away.
+export function VillageWorks({ village }) {
+  const toast = useToast()
+  const sheets = useContactSheets()
+  const works = useLiveQuery(() => db.works.toArray(), [], [])
+  const names = useNames()
+  const [view, setView] = useState(null)
+  const [form, setForm] = useState(null)
+  const [formKey, setFormKey] = useState(0)
+  const mine = useMemo(() => works.filter(x => (x.village_ids || []).includes(village.id)), [works, village.id])
+  const viewing = view && works.find(x => x.id === view)
+  const openForm = initial => { setView(null); setFormKey(k => k + 1); setForm(initial) }
+  const openCount = mine.filter(x => !x.done_at).length
+  const doneCount = mine.length - openCount
+
+  async function toggle(work) {
+    const done = !work.done_at
+    const undo = await setWorkDone(work, done)
+    toast(done ? 'Marked as done' : 'Marked as not done', { label: 'Undo', onClick: undo })
+  }
+
+  return (
+    <div className={w.village}>
+      <div className={w.villageHead}>
+        <span>From Works</span>
+        {mine.length > 0 && <span>{openCount} open{doneCount ? ` · ${doneCount} done` : ''}</span>}
+      </div>
+      {mine.length > 0 && (
+        <div className={cx(ui.card, p.dayCard)}>
+          {WORK_CATEGORIES.map(c => {
+            const list = mine.filter(x => categoryOf(x) === c.id)
+            if (!list.length) return null
+            const { open, recent, old } = splitWorks(list)
+            return (
+              <div key={c.id}>
+                <div className={w.villageCat}>{c.icon} {c.label}</div>
+                {[...open, ...recent, ...old].map(x => {
+                  const done = !!x.done_at
+                  const people = namesOf(x.contact_ids, names.contact)
+                  const pics = (x.images || []).length
+                  return (
+                    <button key={x.id} className={cx(w.vLine, done && w.vLineDone)} onClick={() => setView(x.id)}>
+                      <span className={cx(w.vDot, done && w.vDotDone)}>{done && <IconCheck size={11} />}</span>
+                      <span className={w.vText}>
+                        <span className={w.vTitle}>{((x.body || '').trim().split('\n')[0]) || 'No text'}</span>
+                        {done ? <span className={w.vSub}>Done {new Date(x.done_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</span>
+                          : (people.length > 0 || x.self_identified || pics > 0) && (
+                            <span className={w.tags}>
+                              {x.self_identified && <span className={cx(w.tag, w.tagSelf)}>★ Self identified</span>}
+                              {people.slice(0, 2).map((n, i) => <span key={i} className={cx(w.tag, w.tagPerson)}>👤 {n}</span>)}
+                              {people.length > 2 && <span className={cx(w.tag, w.tagPerson)}>+{people.length - 2}</span>}
+                              {pics > 0 && <span className={cx(w.tag, w.tagPics)}>📷 {pics}</span>}
+                            </span>
+                          )}
+                      </span>
+                      {x.serial ? <span className={w.serial}>{serialLabel(x)}</span> : null}
+                    </button>
+                  )
+                })}
+              </div>
+            )
+          })}
+        </div>
+      )}
+      <button className={w.villageAdd} onClick={() => openForm({ category: 'roads', village_ids: [village.id] })}>
+        <span className={w.villageAddPlus}><IconPlus size={16} /></span>Add to Works for {village.name}
+      </button>
+
+      <Sheet open={!!viewing} onClose={() => setView(null)} title={viewing ? `${categoryLabel(categoryOf(viewing))}${viewing.serial ? ` · ${serialLabel(viewing)}` : ''}` : ''}
+        headerRight={viewing && <button className={w.editBtn} onClick={() => openForm(viewing)}>Edit</button>}>
+        {viewing && (
+          <WorkDetail work={viewing} names={names}
+            onVillage={() => setView(null)}
+            onPerson={id => { setView(null); sheets.open(id) }}
+            onToggle={async () => { await toggle(viewing); if (!viewing.done_at) setView(null) }} />
+        )}
+      </Sheet>
+      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit work' : 'New work'}>
+        {form && <WorkForm key={formKey} initial={form} names={names} onDone={() => setForm(null)} />}
+      </Sheet>
+      {sheets.element}
+    </div>
   )
 }

@@ -1,3 +1,4 @@
+import { VillageWorks } from '../Works'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { queryWords, matchesWords } from '../../lib/search'
 import { useLiveQuery } from 'dexie-react-hooks'
@@ -50,6 +51,7 @@ export default function VillageScreen() {
       {tab === 'Development' && (
         <div className={v.form}>
           <AutoField label="Development notes" value={village.development} minRows={10} placeholder="Ongoing schemes, demands, roads, gas, electricity…" onSave={t => updateRow('villages', id, { development: t })} />
+          <VillageWorks village={village} />
         </div>
       )}
       {tab === 'Notes' && <NotesTab villageId={id} />}

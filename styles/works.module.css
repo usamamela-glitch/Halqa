@@ -1,0 +1,57 @@
+/* Works (13 Nov): one row = tick box, text + tags, first picture on the right */
+.rowMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; padding: 12px 8px 12px 2px; text-align: left; }
+.rowMain:active { background: #f3f6f9; }
+.body { font-size: 15px; font-weight: 600; line-height: 1.35; color: var(--ink); white-space: pre-line;
+  display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+.bodyDone { color: var(--faint); text-decoration: line-through; }
+.tags { display: flex; flex-wrap: wrap; gap: 5px; }
+.tag { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; white-space: nowrap; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.tagVillage { background: var(--teal-50); color: var(--teal-700); }
+.tagPerson { background: #eef1fb; color: #34489a; }
+.tagSelf { background: #fdf1dc; color: #a46a00; }
+
+.thumbBtn { position: relative; flex: none; align-self: flex-start; margin: 12px 12px 12px 0; }
+.thumb { display: block; width: 58px; height: 58px; object-fit: cover; border-radius: 10px; background: var(--bg); }
+.thumbEmpty { display: block; }
+.thumbCount { position: absolute; right: 4px; bottom: 4px; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px; background: rgba(0,0,0,.6); color: #fff; font-size: 11px; font-weight: 750; display: flex; align-items: center; justify-content: center; }
+
+/* Detail sheet */
+.editBtn { margin-right: 8px; height: 32px; padding: 0 12px; border-radius: 10px; background: var(--teal-50); color: var(--teal-700); font-weight: 700; font-size: 14.5px; }
+.detailText { font-size: 17px; line-height: 1.5; font-weight: 550; white-space: pre-line; overflow-wrap: anywhere; }
+.selfLine { margin-top: 10px; align-self: flex-start; display: inline-block; font-size: 13px; font-weight: 750; padding: 4px 10px; border-radius: 999px; background: #fdf1dc; color: #a46a00; }
+.group { margin-top: 18px; display: flex; flex-direction: column; gap: 8px; }
+.linkList { border-radius: 14px; background: var(--bg); overflow: hidden; }
+.linkRow { width: 100%; min-height: 46px; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; text-align: left; font-weight: 650; border-bottom: 1px solid var(--hair); color: var(--ink); }
+.linkRow:last-child { border-bottom: 0; }
+.linkRow:active { background: var(--hair); }
+.linkRow small { font-weight: 500; color: var(--muted); font-size: 13px; }
+.linkRow svg { flex: none; color: var(--faint); }
+.big { display: block; width: 100%; border-radius: 14px; background: var(--bg); }
+.bigEmpty { height: 220px; }
+.doneNote { margin-top: 8px; text-align: center; font-size: 13px; color: var(--muted); }
+
+/* Form */
+.picked { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; }
+.pickedChip { display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 4px 0 11px; border-radius: 16px; background: var(--teal-50); color: var(--teal-700); font-size: 14px; font-weight: 650; }
+.pickedChip button { width: 26px; height: 26px; border-radius: 13px; display: flex; align-items: center; justify-content: center; color: var(--teal-700); }
+.pickList { margin-top: 6px; max-height: 240px; overflow-y: auto; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
+.pickItem { width: 100%; min-height: 46px; padding: 8px 14px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; border-bottom: 1px solid var(--hair); text-align: left; }
+.pickItem:last-child { border-bottom: 0; }
+.pickItem:active { background: var(--bg); }
+.pickName { font-weight: 650; }
+.pickSub { font-size: 13px; color: var(--muted); }
+
+.switchRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 16px; padding: 12px 14px; background: var(--bg); border-radius: 14px; cursor: pointer; }
+.switchText { font-size: 16px; font-weight: 650; color: #a46a00; }
+.switch { appearance: none; -webkit-appearance: none; margin: 0; flex-shrink: 0; position: relative; width: 51px; height: 31px; border-radius: 31px; background: #c5ced8; transition: background 160ms ease; cursor: pointer; }
+.switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 2px 4px rgba(0,0,0,.2); transition: transform 160ms ease; }
+.switch:checked { background: var(--amber); }
+.switch:checked::after { transform: translateX(20px); }
+
+.formThumbs { display: flex; flex-wrap: wrap; gap: 8px; }
+.formThumb { position: relative; width: 76px; height: 76px; }
+.formThumbImg { width: 76px; height: 76px; border-radius: 12px; }
+.formThumbX { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; border-radius: 12px; background: rgba(15,29,36,.75); color: #fff; display: flex; align-items: center; justify-content: center; }
+.formThumbBusy { display: flex; align-items: center; justify-content: center; border-radius: 12px; background: var(--bg); color: var(--muted); font-weight: 800; }
+.addPic { width: 76px; height: 76px; border-radius: 12px; border: 1.5px dashed var(--teal-200); color: var(--teal-700); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.addPic:active { background: var(--teal-50); }

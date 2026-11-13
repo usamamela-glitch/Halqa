@@ -14,16 +14,18 @@ import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import { TodayCard } from './TodayScreen'
 import { NextLines } from './PlannerScreen'
 import { TellButton } from '../TellHalqa'
+import { WorksTab } from '../Works'
 import { parseSharedText, numberKey } from '../../lib/importContacts'
 import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
 
-const TABS = ['Qanungos', 'Notes', 'Search']
+const TABS = ['Qanungos', 'Works', 'Search']
 
 export default function HomeScreen() {
   const { push, setParams } = useNav()
   const { key, params } = useScreen()
-  const tab = params.tab || 'Qanungos'
+  // Notes was a tab until 13 Nov; an old saved 'Notes' tab opens Qanungos.
+  const tab = TABS.includes(params.tab) ? params.tab : 'Qanungos'
   const sheets = useContactSheets()
   const toast = useToast()
 
@@ -92,7 +94,7 @@ export default function HomeScreen() {
       tabs={<Tabs id="home" tabs={TABS} value={tab} onChange={t => setParams(key, { tab: t })} />}
     >
       {tab === 'Qanungos' && <QanungosTab villages={villages} contacts={contacts} pinnedCount={pinnedCount} onQuickAdd={() => sheets.quickAdd()} />}
-      {tab === 'Notes' && <NotesTab />}
+      {tab === 'Works' && <WorksTab category={params.workCategory} onCategory={c => setParams(key, { workCategory: c })} sheets={sheets} />}
       {tab === 'Search' && <SearchTab villages={villages} contacts={contacts} sheets={sheets} />}
       {sheets.element}
     </Screen>
@@ -113,6 +115,7 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
     return review ? `${review} to review` : ahead ? `${ahead} upcoming` : ''
   }, [], '')
   const toSort = useLiveQuery(() => db.import_queue.count(), [], 0)
+  const noteCount = useLiveQuery(() => db.general_notes.count(), [], 0)
   const [menu, setMenu] = useState(null)
   const [nameSheet, setNameSheet] = useState(null) // { id?, name }
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -167,6 +170,9 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
               <IconCalendar size={20} className={h.hubCal} /><span className={h.hubBtnLabel}>Planner</span><span className={h.hubBtnSub}>{plannerSub || '\u00a0'}</span>
             </button>
           </div>
+          <button className={h.notesLink} onClick={() => push('notes')}>
+            <IconNote size={16} />Notes · {noteCount}
+          </button>
         </div>
       </div>
       {toSort > 0 && (
@@ -276,7 +282,9 @@ export function NoteList({ notes, onOpen }) {
   )
 }
 
-function NotesTab() {
+// Notes moved off the home tabs (13 Nov): a slim "Notes · N" link under the
+// three teal buttons opens this screen.
+export function NotesScreen() {
   const { push } = useNav()
   const notes = useLiveQuery(() => db.general_notes.orderBy('created_at').reverse().toArray(), [], [])
   async function create() {
@@ -284,12 +292,12 @@ function NotesTab() {
     push('note', { table: 'general_notes', id: n.id, isNew: true })
   }
   return (
-    <>
+    <Screen title="Notes" home>
       {notes.length === 0
         ? <Empty icon={<IconNote size={28} />} title="No notes yet" text="General notes for the whole constituency live here." />
         : <NoteList notes={notes} onOpen={n => push('note', { table: 'general_notes', id: n.id })} />}
       <button className={ui.fab} onClick={create} aria-label="New note"><IconEdit size={26} /></button>
-    </>
+    </Screen>
   )
 }
 

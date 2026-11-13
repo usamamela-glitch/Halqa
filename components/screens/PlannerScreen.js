@@ -209,7 +209,7 @@ function CardPreview({ path }) {
 const SNAP = { type: 'spring', stiffness: 500, damping: 40 }
 let closeOpenRow = null   // only one row open at a time
 
-function SwipeRow({ actions, children }) {
+export function SwipeRow({ actions, children }) {
   const x = useMotionValue(0)
   const width = actions.length * 74
   const close = () => animate(x, 0, SNAP)
@@ -239,7 +239,7 @@ function SwipeRow({ actions, children }) {
 
 const longDay = day => (day ? new Date(`${day}T12:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).replace(',', '') : '')
 
-async function shareText(text, toast) {
+export async function shareText(text, toast) {
   try {
     if (navigator.share) { await navigator.share({ text }); return }
   } catch (e) { if (e?.name === 'AbortError') return }

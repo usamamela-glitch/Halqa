@@ -2,11 +2,11 @@
 
 Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain language, and show him screenshots or test links before changes he hasn't seen.
 
-## Status (12 Nov 2026)
+## Status (13 Nov 2026)
 - v2 is live on `main` (halqa-apps.vercel.app). Usama has no laptop: he works from the Claude app on his iPhone.
-- **How changes ship:** commit on `claude/review-requested-jvbtwm`, run `npm run build`, push the branch, then push the same commit to `main`. Vercel deploys `main` to production. After each deploy, check that `/` and `/sw.js` return 200.
+- **How changes ship:** commit on the session's `claude/…` branch, run `npm run build`, push the branch, then push the same commit to `main`. Vercel deploys `main` to production. After each deploy, check that `/` and `/sw.js` return 200.
 - **Access:** the cloud environment "Usama" stores network secrets for `api.supabase.com` and `api.vercel.com` (Name `Authorization`, Prefix `Bearer`). The Vercel token ("Claude Halqa") never expires. GitHub access comes from the Claude GitHub connector.
-- **Database updates** (all eight have been run):
+- **Database updates** (all nine are in the live database):
   - `supabase/migrations/20261016000000_halqa_v2.sql`
   - `supabase/migrations/20261017000000_analysis_reports.sql`
   - `supabase/migrations/20261029000000_daily_list.sql` (daily list: Later, Don't show, briefing stats)
@@ -15,6 +15,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - `supabase/migrations/20261109000000_planner.sql` (Planner events, private `event-cards` bucket)
   - `supabase/migrations/20261110000000_planner_lists.sql` (Planner lists and list items)
   - `supabase/migrations/20261111000000_event_time.sql` (exact time for non-wedding events)
+  - `supabase/migrations/20261113000000_works.sql` (Works; the table was already created on 13 Nov with 53 items, the file is the record)
   
   The auto-mode safety check blocks Claude from running SQL that changes the live database, so Usama pastes the SQL into the Supabase SQL Editor himself. Give him the **contents**, not the file name. "Run without RLS" is the right choice.
 - **Weekly check-up:** a scheduled task, "Halqa weekly check-up", runs every Monday at 8:53 PKT. It is read-only, except for the monthly backup into `halqa-backups`. It notifies him only if something needs attention.
@@ -59,7 +60,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - Header: "Halqa" + "NA-83 Sargodha-II", with three number boxes: Villages · Contacts · Pinned.
 - Sync badge (Synced / Offline · N waiting).
 - Header icons: map, AI analysis, settings.
-- Tabs: Qanungos · Notes · Search. **Qanungos stays the home page.**
+- Tabs: Qanungos · Works · Search (Notes was the middle tab until 13 Nov). **Qanungos stays the home page.**
 - A teal **"Today" card** under the tabs ("Today · 12 of 35 done", a progress bar, and "October 2026 briefing is ready" when one is waiting). Tapping it opens the daily list.
 - Main Groups and Day to Day side by side, under the Today card.
 - Qanungo cards: "…" menu (Rename / Remove), contact count, thin completion bar.
@@ -68,6 +69,19 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 
 - **11 Nov:** the three big count boxes (villages, contacts, pinned) became one small line under the constituency name, and the Today card now sits above Tell Halqa.
 - **11 Nov, Today hub:** Today is its own rounded dark green banner (tap for the Today list); a small gap, then on the plain grey background the next two days that have something on, one line each ("Fri 13 · Mehndi · Halalpur · Night"; a busy day lists "3 weddings afternoon · Jalsa 4:30 PM · 3 weddings night"), plus a "Review" line when WhatsApp cards are waiting; tapping a line opens the Planner scrolled to that day. Under that, three dark teal buttons: Tell Halqa, Main Groups, Planner. This replaced the separate Tell Halqa bar, the Coming-up boxes and the two big tiles. (Tell Halqa's bar is still at the top of the Planner.)
+
+- **13 Nov:** Notes left the tabs. A slim **"Notes · N"** link under the three teal buttons opens a Notes screen (same list, ✎ to add).
+
+## Works (built 13 Nov 2026)
+- **Where:** the middle home tab. Table `public.works` (category, body, village_ids, contact_ids, self_identified, images, done_at), 53 items to start (40 Roads, 13 Jobs). RLS: signed-in only, like every table. Synced and offline like the rest.
+- **Category pills:** Roads · Jobs · Electricity · Gas · Health · Education · Other, one at a time, never mixed. Each pill shows how many are still open. The chosen pill is remembered.
+- **Each row:** a done tick box, the text (up to 4 lines), tags for 📍 villages, 👤 people who asked (any number) and ★ Self identified, and the first picture as a thumbnail on the right (a small number on it when there are more).
+- **Tap a row:** a sheet with Edit, the full text, the villages (tap → village page), the people (tap → their contact card), the pictures full width (tap → full size) and **Mark as done**.
+- **Swipe left:** Share (iPhone share menu, text with villages and people) · Move (to another category, with Undo) · Delete (with Undo).
+- **Add (+) or Edit:** category, a text box, several villages, several people (search by name or village), a Self identified switch, and pictures from Photos. Pictures are shrunk and go into the `note-images` bucket under `works/`; offline they wait and upload later.
+- **Done:** ticked items stay in the list for 7 days, then go under "Show done".
+- **Code:** `components/Works.js`, `lib/works.js`, `styles/works.module.css`. Swipe rows are shared with the Planner (`SwipeRow` in `PlannerScreen.js`).
+- Not done yet (not asked): Works in Search, Tell Halqa or the AI analysis.
 
 ## Contacts
 - **Contact cards:** pin, call, WhatsApp and save-to-iPhone buttons on their own row under the details, so names keep the full width on small iPhones.

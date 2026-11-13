@@ -1,6 +1,6 @@
 import { AnimatePresence, motion, useDragControls } from 'framer-motion'
 import { useNav, ScreenContext } from '../lib/nav'
-import HomeScreen from './screens/HomeScreen'
+import HomeScreen, { NotesScreen } from './screens/HomeScreen'
 import QanungoScreen from './screens/QanungoScreen'
 import VillageScreen from './screens/VillageScreen'
 import MainGroupsScreen from './screens/MainGroupsScreen'
@@ -26,6 +26,7 @@ const SCREENS = {
   import: ImportScreen,
   today: TodayScreen,
   planner: PlannerScreen,
+  notes: NotesScreen,
 }
 
 // iOS-like push: 300ms, decelerating.

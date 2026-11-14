@@ -97,6 +97,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 
 - **Road types (14 Nov):** Roads can be a Main road, Link road or Small road (chosen in the form, shown as a grey label). The Roads tab has filters: All · Main · Link · Small. Column `works.road_type` (migration 20261114200000).
 
+- **Search (14 Nov):** a search box at the top of Projects. As you type, it suggests villages (with how many projects are tagged there), people who have asked for projects, and "word in the text" (how many projects mention it). Picking one shows a chip (📍 Bhabra ✕), and the category tabs and their counts are filtered to it; ✕ clears it. Enter searches the text.
+
 ## Contacts
 - **Contact cards:** pin, call, WhatsApp and save-to-iPhone buttons on their own row under the details, so names keep the full width on small iPhones.
 - **Save to iPhone:** downloads a vCard named "Name - Village" (e.g. "Rana Asif - Lilliani"). It's offered on each card, and as "Save to iPhone" in the confirmation after adding a contact.

@@ -39,35 +39,56 @@ export function WorksTab({ category, onCategory, sheets }) {
   const [moving, setMoving] = useState(null)
   const [showOld, setShowOld] = useState(false)
   const [roadType, setRoadType] = useState('all')
-  // Search: type, then pick a village, a person, or "word in the text". The tabs stay, filtered.
+  // Search: type, then pick villages, qanungos, people, or "word in the text".
+  // Several can be picked; a project shows if it matches any of them. The tabs stay, filtered.
   const [q, setQ] = useState('')
-  const [filter, setFilter] = useState(null)   // { kind: 'village' | 'person' | 'text', id?, label, text? }
+  const [filters, setFilters] = useState([])   // [{ kind: 'village' | 'qanungo' | 'person' | 'text', id?, label, text? }]
+  const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
   const matchesFilter = useMemo(() => {
-    if (!filter) return () => true
-    if (filter.kind === 'village') return x => (x.village_ids || []).includes(filter.id)
-    if (filter.kind === 'person') return x => (x.contact_ids || []).includes(filter.id)
-    const t = filter.text.toLowerCase()
-    return x => (x.body || '').toLowerCase().includes(t)
-  }, [filter])
+    if (!filters.length) return () => true
+    const tests = filters.map(f => {
+      if (f.kind === 'village') return x => (x.village_ids || []).includes(f.id)
+      if (f.kind === 'qanungo') {
+        const ids = new Set(names.villages.filter(v => v.qanungo_id === f.id).map(v => v.id))
+        return x => (x.village_ids || []).some(id => ids.has(id))
+      }
+      if (f.kind === 'person') return x => (x.contact_ids || []).includes(f.id)
+      const t = f.text.toLowerCase()
+      return x => (x.body || '').toLowerCase().includes(t)
+    })
+    return x => tests.some(t => t(x))
+  }, [filters, names])
   const suggestions = useMemo(() => {
     const words = queryWords(q)
     if (!words.length) return []
+    const taken = new Set(filters.map(f => `${f.kind}-${f.id || f.text}`))
     const byVillage = {}, byPerson = {}
     works.forEach(x => {
       (x.village_ids || []).forEach(id => { byVillage[id] = (byVillage[id] || 0) + 1 })
       ;(x.contact_ids || []).forEach(id => { byPerson[id] = (byPerson[id] || 0) + 1 })
     })
-    const villages = names.villages.filter(v => matchesWords(words, [v.name]))
+    const villages = names.villages.filter(v => !taken.has(`village-${v.id}`) && matchesWords(words, [v.name]))
       .sort((a, b) => (byVillage[b.id] || 0) - (byVillage[a.id] || 0) || nameRank(words, a.name) - nameRank(words, b.name) || byName(a, b))
-      .slice(0, 4).map(v => ({ kind: 'village', id: v.id, label: v.name, n: byVillage[v.id] || 0 }))
-    const people = names.contacts.filter(c => byPerson[c.id] && matchesWords(words, [c.name]))
+      .slice(0, 4).map(v => ({ kind: 'village', id: v.id, label: v.name, sub: qanungos.find(k => k.id === v.qanungo_id)?.name, n: byVillage[v.id] || 0 }))
+    const qs = qanungos.filter(k => !taken.has(`qanungo-${k.id}`) && matchesWords(words, [k.name])).slice(0, 3).map(k => {
+      const vs = names.villages.filter(v => v.qanungo_id === k.id)
+      const ids = new Set(vs.map(v => v.id))
+      return { kind: 'qanungo', id: k.id, label: k.name, villages: vs.length, n: works.filter(x => (x.village_ids || []).some(id => ids.has(id))).length }
+    })
+    const people = names.contacts.filter(c => byPerson[c.id] && !taken.has(`person-${c.id}`) && matchesWords(words, [c.name]))
       .sort((a, b) => byPerson[b.id] - byPerson[a.id] || byName(a, b))
       .slice(0, 4).map(c => ({ kind: 'person', id: c.id, label: c.name, sub: names.village[c.village_id]?.name, n: byPerson[c.id] }))
     const t = q.trim().toLowerCase()
-    const inText = works.filter(x => (x.body || '').toLowerCase().includes(t)).length
-    return [...villages, ...people, ...(inText ? [{ kind: 'text', text: q.trim(), label: `"${q.trim()}" in the text`, n: inText }] : [])]
-  }, [q, works, names])
-  const pick = sgn => { setFilter(sgn); setQ(''); document.activeElement?.blur?.() }
+    const inText = taken.has(`text-${q.trim()}`) ? 0 : works.filter(x => (x.body || '').toLowerCase().includes(t)).length
+    return [...villages, ...qs, ...people, ...(inText ? [{ kind: 'text', text: q.trim(), label: `"${q.trim()}" in the text`, n: inText }] : [])]
+  }, [q, works, names, qanungos, filters])
+  const pick = sgn => {
+    setFilters(fs => fs.some(f => f.kind === sgn.kind && (f.id || f.text) === (sgn.id || sgn.text)) ? fs : [...fs, sgn])
+    setQ(''); document.activeElement?.blur?.()
+  }
+  const unpick = f => setFilters(fs => fs.filter(x => x !== f))
+  const filterIcon = k => (k === 'village' ? '📍' : k === 'qanungo' ? '🗺️' : k === 'person' ? '👤' : '🔤')
+  const filterName = f => (f.kind === 'text' ? `"${f.text}"` : f.kind === 'qanungo' ? `${f.label} qanungo` : f.label)
 
   const cat = WORK_CATEGORIES.some(c => c.id === category) ? category : 'roads'
   const counts = useMemo(() => {
@@ -107,29 +128,33 @@ export function WorksTab({ category, onCategory, sheets }) {
 
   return (
     <>
-      {filter ? (
-        <button className={w.filterChip} onClick={() => setFilter(null)} aria-label="Clear search">
-          <span>{filter.kind === 'village' ? '📍' : filter.kind === 'person' ? '👤' : '🔤'} {filter.kind === 'text' ? `"${filter.text}"` : filter.label}</span><IconX size={14} />
-        </button>
-      ) : (
-        <div className={w.searchWrap}>
-          <input className={w.search} value={q} onChange={e => setQ(e.target.value)} placeholder="Search village, person or word…"
-            type="search" autoCorrect="off" autoCapitalize="off" spellCheck={false} enterKeyHint="search"
-            onKeyDown={e => { if (e.key === 'Enter' && q.trim()) pick({ kind: 'text', text: q.trim(), label: q.trim() }) }} />
-          {suggestions.length > 0 && (
-            <div className={w.suggest}>
-              {suggestions.map(sg => (
-                <button key={`${sg.kind}-${sg.id || sg.text}`} className={w.suggestItem} onMouseDown={e => e.preventDefault()} onClick={() => pick(sg)}>
-                  <span className={w.suggestName}>{sg.kind === 'village' ? '📍' : sg.kind === 'person' ? '👤' : '🔤'} {sg.label}</span>
-                  <span className={w.suggestSub}>
-                    {sg.kind === 'village' ? 'Village' : sg.kind === 'person' ? `Person${sg.sub ? ` · ${sg.sub}` : ''}` : 'Mentioned in'} · {sg.n} project{sg.n === 1 ? '' : 's'}
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
+      {filters.length > 0 && (
+        <div className={w.filterChips}>
+          {filters.map(f => (
+            <button key={`${f.kind}-${f.id || f.text}`} className={w.filterChip} onClick={() => unpick(f)} aria-label={`Remove ${filterName(f)}`}>
+              <span>{filterIcon(f.kind)} {filterName(f)}</span><IconX size={14} />
+            </button>
+          ))}
+          {filters.length > 1 && <button className={w.clearAll} onClick={() => setFilters([])}>Clear all</button>}
         </div>
       )}
+      <div className={w.searchWrap}>
+        <input className={w.search} value={q} onChange={e => setQ(e.target.value)} placeholder={filters.length ? 'Add another village, qanungo, person…' : 'Search village, qanungo, person or word…'}
+          type="search" autoCorrect="off" autoCapitalize="off" spellCheck={false} enterKeyHint="search"
+          onKeyDown={e => { if (e.key === 'Enter' && q.trim()) pick({ kind: 'text', text: q.trim(), label: q.trim() }) }} />
+        {suggestions.length > 0 && (
+          <div className={w.suggest}>
+            {suggestions.map(sg => (
+              <button key={`${sg.kind}-${sg.id || sg.text}`} className={w.suggestItem} onMouseDown={e => e.preventDefault()} onClick={() => pick(sg)}>
+                <span className={w.suggestName}>{filterIcon(sg.kind)} {sg.label}</span>
+                <span className={w.suggestSub}>
+                  {sg.kind === 'village' ? `Village${sg.sub ? ` · ${sg.sub} qanungo` : ''}` : sg.kind === 'qanungo' ? `Qanungo · ${sg.villages} villages` : sg.kind === 'person' ? `Person${sg.sub ? ` · ${sg.sub}` : ''}` : 'Mentioned in'} · {sg.n} project{sg.n === 1 ? '' : 's'}
+                </span>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
 
       <div className={p.tabs} style={{ marginTop: 0 }}>
         {WORK_CATEGORIES.map(c => (
@@ -149,8 +174,8 @@ export function WorksTab({ category, onCategory, sheets }) {
 
       <div className={ui.section} style={{ marginTop: 14 }}>
         {open.length + recent.length === 0 ? (
-          <Empty icon={<IconLayers size={28} />} title={`No ${categoryLabel(cat).toLowerCase()} projects${filter ? (filter.kind === 'text' ? ` mentioning "${filter.text}"` : ` for ${filter.label}`) : ''}`}
-            text={filter ? 'Try another tab, or tap ✕ to clear the search.' : 'Tap + to add one.'} />
+          <Empty icon={<IconLayers size={28} />} title={`No ${categoryLabel(cat).toLowerCase()} projects${filters.length ? ` for ${filters.map(filterName).join(', ')}` : ''}`}
+            text={filters.length ? 'Try another tab, or tap ✕ to remove a search.' : 'Tap + to add one.'} />
         ) : (
           <div className={cx(ui.card, p.dayCard)}>{[...open, ...recent].map(row)}</div>
         )}

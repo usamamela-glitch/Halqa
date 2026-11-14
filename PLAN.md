@@ -98,6 +98,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **Road types (14 Nov):** Roads can be a Main road, Link road or Small road (chosen in the form, shown as a grey label). The Roads tab has filters: All · Main · Link · Small. Column `works.road_type` (migration 20261114200000).
 
 - **Search (14 Nov):** a search box at the top of Projects. As you type, it suggests villages (with how many projects are tagged there), people who have asked for projects, and "word in the text" (how many projects mention it). Picking one shows a chip (📍 Bhabra ✕), and the category tabs and their counts are filtered to it; ✕ clears it. Enter searches the text.
+- **Several searches at once, and qanungos (14 Nov):** the search box stays after you pick something, so you can add more: two villages, a whole qanungo, a person. A project shows if it matches any of them; each chip has its own ✕, and "Clear all" appears when there are two or more. Typing "bhab" now offers both 📍 Bhabra (the village) and 🗺️ Bhabra (the qanungo, with its number of villages); the qanungo chip shows every project tagged to any village in that qanungo.
 
 ## Contacts
 - **Contact cards:** pin, call, WhatsApp and save-to-iPhone buttons on their own row under the details, so names keep the full width on small iPhones.

@@ -102,3 +102,8 @@
 .suggestName { font-size: 15px; font-weight: 700; }
 .suggestSub { font-size: 12.5px; color: var(--muted); }
 .filterChip { display: inline-flex; align-items: center; gap: 8px; margin-bottom: 10px; padding: 7px 12px; border-radius: 999px; background: var(--teal-50); color: var(--teal-700); font-size: 14.5px; font-weight: 750; box-shadow: inset 0 0 0 1.5px var(--teal-500); }
+
+/* Several searches at once: villages, qanungos, people (14 Nov) */
+.filterChips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+.filterChips .filterChip { margin-bottom: 0; }
+.clearAll { height: 32px; padding: 0 10px; font-size: 13.5px; font-weight: 700; color: var(--muted); }

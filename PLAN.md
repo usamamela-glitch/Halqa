@@ -241,6 +241,8 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows the l
 - **Next:** Usama is trying out what he says in Tell Halqa against where things land in the Planner, and will come back with changes.
 
 - **Pins (14 Nov):** a small pin button (grey off, amber on) on every event and list item. Pinned list items go to the top of their list. Pinned events show as slim amber lines (day · function · who · time) in a "📌 Pinned" box at the very top of Events, above To review; tapping one scrolls to its day. They also stay in their own day below. The Planner's Tell Halqa bar is now slim, one line with no subtitle. Columns `events.pinned` and `list_items.pinned` (migration 20261114100000, Usama runs it).
+- **Halqa list on the home page (14 Nov):** the slim Notes bar in the Today hub became a "Halqa list · 14 · first name" bar. Tap it to open the Planner on the Halqa tab; tap its **+** to add someone straight from the home page (the Add form opens, already set to Halqa). Notes moved to a small icon in the header, left of the map.
+- **+ on every list (14 Nov):** a small round + next to the ⋯ on each list tab's "To do in …" line opens the Add form. The Add row at the bottom of the list was removed.
 
 ## Native iPhone app (decided 11 Nov 2026; Apple account paid, waiting for approval)
 - The full agreed build list, phases and Usama's remaining Apple steps are in **NATIVE_APP.md**.

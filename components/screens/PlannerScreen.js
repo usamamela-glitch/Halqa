@@ -396,9 +396,7 @@ export function ItemForm({ initial, onDone }) {
   )
 }
 
-function ListView({ list, items, onEdit, onMenu }) {
-  const toast = useToast()
-  const [text, setText] = useState('')
+function ListView({ list, items, onEdit, onAdd, onMenu }) {
   const [showOld, setShowOld] = useState(false)
   const [moving, setMoving] = useState(null)
   const open = [...items.filter(i => !i.done_at)].sort((a, b) =>
@@ -407,33 +405,22 @@ function ListView({ list, items, onEdit, onMenu }) {
   const recent = done.filter(recentDone)
   const old = done.filter(i => !recentDone(i))
 
-  async function add(e) {
-    e.preventDefault()
-    const title = text.trim()
-    if (!title) return
-    await insertRow('list_items', { list_id: list.id, title })
-    setText('')
-    toast(`Added to ${list.name}`)
-  }
-
   return (
     <div className={ui.section}>
       <div className={ui.sectionHead}>
         <span>To do in {list.name}</span>
-        <button className={p.listMenu} onClick={onMenu} aria-label="List options"><IconMore size={18} /></button>
+        <span className={p.listHeadBtns}>
+          <button className={p.listAdd} onClick={onAdd} aria-label={`Add to ${list.name}`}><IconPlus size={17} /></button>
+          <button className={p.listMenu} onClick={onMenu} aria-label="List options"><IconMore size={18} /></button>
+        </span>
       </div>
       {open.length + recent.length === 0 ? (
-        <Empty icon={<IconCheck size={28} />} title="Nothing here" text={`Add people to meet and things to do in ${list.name}.`} />
+        <Empty icon={<IconCheck size={28} />} title="Nothing here" text={`Tap + to add people to meet and things to do in ${list.name}.`} />
       ) : (
         <div className={cx(ui.card, p.dayCard)}>
           {[...open, ...recent].map(i => <SwipeItem key={i.id} item={i} onPress={() => onEdit(i)} onMove={setMoving} />)}
         </div>
       )}
-      <form className={p.addRow} onSubmit={add}>
-        <span className={p.addPlus}><IconPlus size={18} /></span>
-        <input className={p.addInput} value={text} onChange={e => setText(e.target.value)} placeholder={`Add to ${list.name}…`} enterKeyHint="done" autoCapitalize="sentences" />
-        {text.trim() && <button type="submit" className={p.addBtn}>Add</button>}
-      </form>
       {old.length > 0 && (
         <>
           <button className={p.pastToggle} onClick={() => setShowOld(v => !v)}>{showOld ? 'Hide done' : `Show done (${old.length})`}</button>
@@ -542,7 +529,7 @@ export default function PlannerScreen() {
       </div>
 
       {current ? (
-        <ListView list={current} items={items.filter(i => i.list_id === current.id)} onEdit={setItemForm} onMenu={() => setListMenu(true)} />
+        <ListView list={current} items={items.filter(i => i.list_id === current.id)} onEdit={setItemForm} onAdd={() => setItemForm({ list_id: current.id })} onMenu={() => setListMenu(true)} />
       ) : (
         <>
           {pinnedEvents.length > 0 && (

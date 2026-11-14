@@ -71,3 +71,11 @@
 /* Slim Notes link under the three teal buttons (13 Nov) */
 .notesLink { width: 100%; display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 8px; padding: 9px; border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--teal-700); background: rgba(26,74,74,.06); }
 .notesLink:active { background: rgba(26,74,74,.12); }
+
+/* Halqa list bar, where the Notes link was (14 Nov); Notes moved to the header */
+.halqaBar { display: flex; align-items: center; gap: 6px; margin-top: 8px; padding: 4px 4px 4px 0; border-radius: 12px; background: var(--card); box-shadow: var(--shadow); }
+.halqaOpen { flex: 1; min-width: 0; text-align: left; padding: 6px 0 6px 14px; font-size: 14.5px; color: var(--teal-700); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.halqaOpen b { font-weight: 750; }
+.halqaFirst { font-weight: 500; color: var(--muted); font-size: 13.5px; }
+.halqaPlus { flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; }
+.halqaPlus:active { opacity: .8; }

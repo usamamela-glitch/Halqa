@@ -12,7 +12,7 @@ import { ContactRow, useContactSheets } from '../contacts'
 import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers, IconDownload } from '../Icons'
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import { TodayCard } from './TodayScreen'
-import { NextLines } from './PlannerScreen'
+import { NextLines, ItemForm } from './PlannerScreen'
 import { TellButton } from '../TellHalqa'
 import { WorksTab } from '../Works'
 import { parseSharedText, numberKey } from '../../lib/importContacts'
@@ -70,6 +70,7 @@ export default function HomeScreen() {
       barTitle={null}
       actions={
         <>
+          <BarButton onClick={() => push('notes')} aria-label="Notes"><IconNote size={21} /></BarButton>
           {SHOW_MAP && <BarButton onClick={() => push('map')} aria-label="District map"><IconMap size={21} /></BarButton>}
           <BarButton onClick={() => push('analysis')} aria-label="AI analysis"><IconSparkles size={21} /></BarButton>
           <BarButton onClick={() => push('settings')} aria-label="Settings"><IconSettings size={21} /></BarButton>
@@ -115,7 +116,15 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
     return review ? `${review} to review` : ahead ? `${ahead} upcoming` : ''
   }, [], '')
   const toSort = useLiveQuery(() => db.import_queue.count(), [], 0)
-  const noteCount = useLiveQuery(() => db.general_notes.count(), [], 0)
+  // The Halqa list (people to see, things to do in the constituency), one tap from home (14 Nov).
+  const halqaList = useLiveQuery(async () => {
+    const list = (await db.planner_lists.toArray()).find(l => (l.name || '').trim().toLowerCase() === 'halqa')
+    if (!list) return null
+    const open = (await db.list_items.where('list_id').equals(list.id).toArray()).filter(i => !i.done_at)
+      .sort((a, b) => (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (a.day || '9999').localeCompare(b.day || '9999') || (a.created_at || '').localeCompare(b.created_at || ''))
+    return { list, open }
+  }, [], null)
+  const [addHalqa, setAddHalqa] = useState(0)
   const [menu, setMenu] = useState(null)
   const [nameSheet, setNameSheet] = useState(null) // { id?, name }
   const [confirmDelete, setConfirmDelete] = useState(null)
@@ -170,11 +179,20 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
               <IconCalendar size={20} className={h.hubCal} /><span className={h.hubBtnLabel}>Planner</span><span className={h.hubBtnSub}>{plannerSub || '\u00a0'}</span>
             </button>
           </div>
-          <button className={h.notesLink} onClick={() => push('notes')}>
-            <IconNote size={16} />Notes · {noteCount}
-          </button>
+          {halqaList && (
+            <div className={h.halqaBar}>
+              <button className={h.halqaOpen} onClick={() => push('planner', { tab: halqaList.list.id })}>
+                <b>{halqaList.list.name} list · {halqaList.open.length}</b>
+                {halqaList.open[0] && <span className={h.halqaFirst}> · {halqaList.open[0].title}</span>}
+              </button>
+              <button className={h.halqaPlus} onClick={() => setAddHalqa(k => k + 1)} aria-label={`Add to ${halqaList.list.name}`}><IconPlus size={18} /></button>
+            </div>
+          )}
         </div>
       </div>
+      <Sheet open={!!addHalqa && !!halqaList} onClose={() => setAddHalqa(0)} title={`Add to ${halqaList?.list.name || 'Halqa'}`}>
+        {!!addHalqa && halqaList && <ItemForm key={addHalqa} initial={{ list_id: halqaList.list.id }} onDone={() => setAddHalqa(0)} />}
+      </Sheet>
       {toSort > 0 && (
         <Card className={h.importCard} onClick={() => push('import')}>
           <span className={cx(ui.featureIcon, h.importIcon)}><IconDownload size={21} /></span>

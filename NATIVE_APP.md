@@ -85,7 +85,7 @@ Everything in the web app comes across unchanged, including recent additions:
 
 ## Apple account
 - **Parts 1–2 done 11 Nov:** enrolled as Individual and paid US$99 (enrollment ID MC56U7MJV6). Waiting for Apple's "Welcome to the Apple Developer Program" email (up to 2 business days).
-- **Payment problem (found ~14 Nov):** the card was never charged (nothing in the bank), and the account still says Pending with "complete your purchase". The delayed charge was probably declined. Usama has emailed Apple Developer Support (enrollment ID MC56U7MJV6). Fallbacks: pay through the Apple Developer app (App Store billing), or retry with a different card or a dollar card.
+- **Payment problem (found ~14 Nov):** the card was never charged (nothing in the bank), and the account still says Pending with "complete your purchase". The delayed charge was probably declined. Usama has emailed Apple Developer Support (enrollment ID MC56U7MJV6). The Apple Developer app route is closed: it says "Enrollment through the Apple Developer app is not available for this Apple Account" (14 Nov). Remaining fallback: retry the website payment with a different card (credit or dollar card), but only after Apple replies.
 
 ## Waiting on Usama (after Apple's "Welcome" email)
 - **Part 3:** send the Team ID; register the App ID `com.usamamela.halqa`.

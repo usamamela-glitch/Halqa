@@ -5,7 +5,7 @@ import { useNav } from '../lib/nav'
 import { savePhoto } from '../lib/images'
 import { queryWords, matchesWords, nameRank } from '../lib/search'
 import { byName } from '../lib/domain'
-import { WORK_CATEGORIES, categoryOf, categoryLabel, categoryIcon, serialLabel, splitWorks, saveWork, setWorkDone, setWorkPinned, removeWork, workShareText } from '../lib/works'
+import { WORK_CATEGORIES, categoryOf, categoryLabel, categoryIcon, serialLabel, splitWorks, saveWork, setWorkDone, setWorkPinned, removeWork, workShareText, ROAD_TYPES, roadTypeLabel } from '../lib/works'
 import { useContactSheets } from './contacts'
 import { Sheet, ActionSheet, Empty, Field, cx, ui, useToast, useImageUrl } from './ui'
 import { SwipeRow, shareText } from './screens/PlannerScreen'
@@ -38,6 +38,7 @@ export function WorksTab({ category, onCategory, sheets }) {
   const [formKey, setFormKey] = useState(0)
   const [moving, setMoving] = useState(null)
   const [showOld, setShowOld] = useState(false)
+  const [roadType, setRoadType] = useState('all')
 
   const cat = WORK_CATEGORIES.some(c => c.id === category) ? category : 'roads'
   const counts = useMemo(() => {
@@ -45,7 +46,7 @@ export function WorksTab({ category, onCategory, sheets }) {
     works.forEach(x => { if (!x.done_at) n[categoryOf(x)] = (n[categoryOf(x)] || 0) + 1 })
     return n
   }, [works])
-  const { open, recent, old } = useMemo(() => splitWorks(works.filter(x => categoryOf(x) === cat)), [works, cat])
+  const { open, recent, old } = useMemo(() => splitWorks(works.filter(x => categoryOf(x) === cat && (cat !== 'roads' || roadType === 'all' || x.road_type === roadType))), [works, cat, roadType])
   const viewing = view && works.find(x => x.id === view)
 
   const openForm = initial => { setView(null); setFormKey(k => k + 1); setForm(initial) }
@@ -84,6 +85,14 @@ export function WorksTab({ category, onCategory, sheets }) {
           </button>
         ))}
       </div>
+
+      {cat === 'roads' && (
+        <div className={w.roadFilter}>
+          {[{ id: 'all', short: 'All' }, ...ROAD_TYPES].map(r => (
+            <button key={r.id} className={cx(w.roadChip, roadType === r.id && w.roadChipOn)} onClick={() => setRoadType(r.id)}>{r.short}</button>
+          ))}
+        </div>
+      )}
 
       <div className={ui.section} style={{ marginTop: 14 }}>
         {open.length + recent.length === 0 ? (
@@ -141,9 +150,11 @@ function Thumb({ path, className }) {
 function Tags({ work, names }) {
   const villages = namesOf(work.village_ids, names.village)
   const people = namesOf(work.contact_ids, names.contact)
-  if (!villages.length && !people.length && !work.self_identified) return null
+  const road = categoryOf(work) === 'roads' && roadTypeLabel(work.road_type)
+  if (!villages.length && !people.length && !work.self_identified && !road) return null
   return (
     <span className={w.tags}>
+      {road && <span className={cx(w.tag, w.tagRoad)}>{road}</span>}
       {villages.map((n, i) => <span key={`v${i}`} className={cx(w.tag, w.tagVillage)}>📍 {n}</span>)}
       {people.map((n, i) => <span key={`c${i}`} className={cx(w.tag, w.tagPerson)}>👤 {n}</span>)}
       {work.self_identified && <span className={cx(w.tag, w.tagSelf)}>★ Self identified</span>}
@@ -305,6 +316,7 @@ export function WorkForm({ initial, names, onDone }) {
     contact_ids: initial?.contact_ids || [],
     self_identified: !!initial?.self_identified,
     images: initial?.images || [],
+    road_type: initial?.road_type || null,
   }))
   const [adding, setAdding] = useState(0)
   const [confirmDel, setConfirmDel] = useState(false)
@@ -328,7 +340,7 @@ export function WorkForm({ initial, names, onDone }) {
 
   async function save(e) {
     e.preventDefault()
-    await saveWork(initial?.id, { ...f, body: f.body.trim() })
+    await saveWork(initial?.id, { ...f, body: f.body.trim(), road_type: f.category === 'roads' ? f.road_type : null })
     toast(isNew ? `Added to ${categoryLabel(f.category)}` : 'Saved')
     onDone()
   }
@@ -348,6 +360,17 @@ export function WorkForm({ initial, names, onDone }) {
           ))}
         </div>
       </div>
+      {f.category === 'roads' && (
+        <div className={ui.field}>
+          <span className={ui.label}>Road type</span>
+          <div className={p.chips}>
+            {ROAD_TYPES.map(r => (
+              <button type="button" key={r.id} className={cx(ui.chipBtn, f.road_type === r.id && ui.chipBtnOn)}
+                onClick={() => set('road_type', f.road_type === r.id ? null : r.id)}>{r.label}</button>
+            ))}
+          </div>
+        </div>
+      )}
       <Field label="What needs doing">
         <textarea className={ui.textarea} value={f.body} onChange={e => set('body', e.target.value)} autoFocus={isNew}
           placeholder="e.g. Road from Lilliani to Kot Momin, 3 km" autoCapitalize="sentences" rows={4} />

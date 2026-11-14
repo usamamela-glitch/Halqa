@@ -545,19 +545,26 @@ export default function PlannerScreen() {
         <ListView list={current} items={items.filter(i => i.list_id === current.id)} onEdit={setItemForm} onMenu={() => setListMenu(true)} />
       ) : (
         <>
+          {pinnedEvents.length > 0 && (
+            <div className={ui.section}>
+              <div className={ui.sectionHead}><span>📌 Pinned</span><span>{pinnedEvents.length}</span></div>
+              <div className={p.pinnedBox}>
+                {pinnedEvents.map(e => (
+                  <button key={e.id} className={p.pinnedLine} onClick={() =>
+                    document.getElementById(`planner-day-${e.day || 'none'}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+                    <span className={p.pinnedDay}>{!e.day ? 'No date' : e.day === today ? 'Today' : shortDay(e.day)}</span>
+                    <span className={p.pinnedWhat}>{tagFor(e)}<span> · {e.title || 'Untitled'}</span></span>
+                    <span className={cx(p.pinnedWhen, p[`part_${e.part}`])}>{whenLabel(e)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
           {review.length > 0 && (
             <div className={ui.section}>
               <div className={ui.sectionHead}><span>To review</span><span>{review.reduce((n, b) => n + b.length, 0)}</span></div>
               <div className={p.stack}>{review.map(b => <ReviewBatch key={b[0].batch_id || b[0].id} events={b} onEdit={setForm} />)}</div>
-            </div>
-          )}
-
-          {pinnedEvents.length > 0 && (
-            <div className={ui.section}>
-              <div className={ui.sectionHead}><span>📌 Pinned</span><span>{pinnedEvents.length}</span></div>
-              <div className={cx(ui.card, p.dayCard)}>
-                {pinnedEvents.map(e => <SwipeEvent key={e.id} ev={e} showDay onPress={() => setForm(e)} />)}
-              </div>
             </div>
           )}
 

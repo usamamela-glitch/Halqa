@@ -136,3 +136,12 @@
 .pinBtn { flex: none; width: 36px; height: 36px; margin: 8px 6px 0 0; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #b4bec8; }
 .pinBtn:active { background: var(--hair); }
 .pinBtnOn { color: #c98208; }
+
+/* Pinned events: slim lines at the top of Events (14 Nov) */
+.pinnedBox { background: #fff7e8; border: 1.5px solid #f1d9a8; border-radius: 14px; padding: 2px 12px; }
+.pinnedLine { width: 100%; display: flex; align-items: center; gap: 8px; padding: 8px 0; font-size: 13.5px; text-align: left; white-space: nowrap; }
+.pinnedLine + .pinnedLine { border-top: 1px solid #f3e4c4; }
+.pinnedDay { flex: none; width: 58px; font-weight: 800; color: #a66e00; }
+.pinnedWhat { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; font-weight: 700; color: var(--ink); }
+.pinnedWhat span { font-weight: 500; color: #7d6e52; }
+.pinnedWhen { flex: none; font-size: 12.5px; font-weight: 700; color: var(--teal-700); }

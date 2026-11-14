@@ -1,8 +1,8 @@
-.bar { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 12px; border-radius: 16px; background: var(--card); border: 1.5px solid #b9d8d6; box-shadow: var(--shadow); text-align: left; }
+.bar { width: 100%; display: flex; align-items: center; gap: 10px; padding: 7px 12px; margin-bottom: 10px; border-radius: 16px; background: var(--card); border: 1.5px solid #b9d8d6; box-shadow: var(--shadow); text-align: left; }
 .bar:active { background: #f3f6f9; }
-.spark { flex: none; width: 34px; height: 34px; border-radius: 11px; background: linear-gradient(135deg, #2f8582, var(--teal)); color: #fff; display: flex; align-items: center; justify-content: center; }
+.spark { flex: none; width: 28px; height: 28px; border-radius: 9px; background: linear-gradient(135deg, #2f8582, var(--teal)); color: #fff; display: flex; align-items: center; justify-content: center; }
 .barText { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.barText strong { font-size: 16px; font-weight: 750; }
+.barText strong { font-size: 15px; font-weight: 750; }
 .barText span { font-size: 13px; color: var(--muted); }
 
 .say { min-height: 130px; font-size: 16.5px; }

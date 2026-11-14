@@ -180,8 +180,8 @@ export function TellBar() {
   return (
     <>
       <button className={t.bar} onClick={() => setOpen(true)}>
-        <span className={t.spark}><IconSparkles size={18} /></span>
-        <span className={t.barText}><strong>Tell Halqa</strong><span>Add an event, a to-do, a note…</span></span>
+        <span className={t.spark}><IconSparkles size={15} /></span>
+        <span className={t.barText}><strong>Tell Halqa</strong></span>
       </button>
       <TellSheet open={open} onClose={() => setOpen(false)} onContact={prefill => sheets.quickAdd(prefill)} />
       {sheets.element}

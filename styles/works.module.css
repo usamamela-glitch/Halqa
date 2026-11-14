@@ -85,3 +85,9 @@
 .pinBtn { width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #b4bec8; }
 .pinBtn:active { background: var(--hair); }
 .pinBtnOn { color: #c98208; }
+
+/* Road types: Main / Link / Small (14 Nov) */
+.roadFilter { display: flex; gap: 6px; margin-top: 10px; }
+.roadChip { height: 30px; padding: 0 12px; border-radius: 999px; font-size: 13.5px; font-weight: 650; color: var(--ink-2); background: var(--bg-deep); }
+.roadChipOn { background: var(--teal-50); color: var(--teal-700); box-shadow: inset 0 0 0 1.5px var(--teal-500); }
+.tagRoad { background: #eef1f4; color: #3a4953; }

@@ -93,6 +93,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **Pinning (14 Nov):** a small pin button under each item's number (grey off, amber on), or "Pin to the top" in the item. Not in the swipe (Usama found four swipe buttons too crowded). Pinned open items go first in their own category (and on village and contact lists), with a 📌. Column `works.pinned` (migration 20261114000000, Usama runs it).
 - **On a contact card (14 Nov):** an "Asked for" list of every target the person is tagged in, open first, with numbers; tap to open (`ContactTargets` in `components/Works.js`). The optional "2 open asks" note on Today-list cards was offered but not built.
 
+- **Road types (14 Nov):** Roads can be a Main road, Link road or Small road (chosen in the form, shown as a grey label). The Roads tab has filters: All · Main · Link · Small. Column `works.road_type` (migration 20261114200000).
+
 ## Contacts
 - **Contact cards:** pin, call, WhatsApp and save-to-iPhone buttons on their own row under the details, so names keep the full width on small iPhones.
 - **Save to iPhone:** downloads a vCard named "Name - Village" (e.g. "Rana Asif - Lilliani"). It's offered on each card, and as "Save to iPhone" in the confirmation after adding a contact.
@@ -232,7 +234,7 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows the l
 - **Fix (12 Nov):** forms (Edit event, Quick Add…) sometimes opened half-way up the screen, because iPhone didn't report that the keyboard had closed. Sheets now only make room for the keyboard while a text box is being typed in, and re-check after focus changes (`useKeyboardInset` in `components/ui.js`). Usama to confirm on his phone.
 - **Next:** Usama is trying out what he says in Tell Halqa against where things land in the Planner, and will come back with changes.
 
-- **Pins (14 Nov):** a small pin button (grey off, amber on) on every event and list item. Pinned list items go to the top of their list. Pinned events show in a "📌 Pinned" section at the top of Events **and** stay in their own day below. Columns `events.pinned` and `list_items.pinned` (migration 20261114100000, Usama runs it).
+- **Pins (14 Nov):** a small pin button (grey off, amber on) on every event and list item. Pinned list items go to the top of their list. Pinned events show as slim amber lines (day · function · who · time) in a "📌 Pinned" box at the very top of Events, above To review; tapping one scrolls to its day. They also stay in their own day below. The Planner's Tell Halqa bar is now slim, one line with no subtitle. Columns `events.pinned` and `list_items.pinned` (migration 20261114100000, Usama runs it).
 
 ## Native iPhone app (decided 11 Nov 2026; Apple account paid, waiting for approval)
 - The full agreed build list, phases and Usama's remaining Apple steps are in **NATIVE_APP.md**.

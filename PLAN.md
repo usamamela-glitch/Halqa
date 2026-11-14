@@ -6,7 +6,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - v2 is live on `main` (halqa-apps.vercel.app). Usama has no laptop: he works from the Claude app on his iPhone.
 - **How changes ship:** commit on the session's `claude/…` branch, run `npm run build`, push the branch, then push the same commit to `main`. Vercel deploys `main` to production. After each deploy, check that `/` and `/sw.js` return 200.
 - **Access:** the cloud environment "Usama" stores network secrets for `api.supabase.com` and `api.vercel.com` (Name `Authorization`, Prefix `Bearer`). The Vercel token ("Claude Halqa") never expires. GitHub access comes from the Claude GitHub connector.
-- **Database updates** (all eleven are in the live database):
+- **Database updates** (all thirteen are in the live database):
   - `supabase/migrations/20261016000000_halqa_v2.sql`
   - `supabase/migrations/20261017000000_analysis_reports.sql`
   - `supabase/migrations/20261029000000_daily_list.sql` (daily list: Later, Don't show, briefing stats)
@@ -17,7 +17,9 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - `supabase/migrations/20261111000000_event_time.sql` (exact time for non-wedding events)
   - `supabase/migrations/20261113000000_works.sql` (Works; the table was already created on 13 Nov with 53 items, the file is the record)
   - `supabase/migrations/20261113100000_works_serial.sql` (serial numbers R-1, J-1…, with a trigger for new or moved items)
-  - `supabase/migrations/20261114000000_works_pinned.sql` (pinned targets)
+  - `supabase/migrations/20261114000000_works_pinned.sql` (pinned projects)
+  - `supabase/migrations/20261114100000_planner_pins.sql` (pinned events and list items)
+  - `supabase/migrations/20261114200000_works_road_type.sql` (road type: main, link or small)
 - **Never put Usama's personal data in the repo.** On 13 Nov the safety check blocked a migration containing his notes (a CNIC, phone numbers), and then blocked pushes from that session. Data imports go in a paste for him to run; the code holds only table definitions.
   
   The auto-mode safety check blocks Claude from running SQL that changes the live database, so Usama pastes the SQL into the Supabase SQL Editor himself. Give him the **contents**, not the file name. "Run without RLS" is the right choice.

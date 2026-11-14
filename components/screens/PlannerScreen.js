@@ -8,7 +8,7 @@ import { KINDS, WEDDING_FUNCTIONS, PARTS, tagFor, partLabel, whenLabel, partFrom
   sortLists, listIdByName, toggleDone, removeListItem, DONE_KEEP_DAYS } from '../../lib/events'
 import { deleteRow } from '../../lib/store'
 import { Screen, BarButton, Card, Sheet, ActionSheet, Empty, Field, cx, ui, useToast } from '../ui'
-import { IconPlus, IconCalendar, IconChevron, IconNote, IconCheck, IconMore, IconEdit, IconTrash, IconShare, IconMove } from '../Icons'
+import { IconPlus, IconCalendar, IconChevron, IconNote, IconCheck, IconMore, IconEdit, IconTrash, IconShare, IconMove, IconPin } from '../Icons'
 import { motion, animate, useMotionValue } from 'framer-motion'
 import { useNav, useScreen } from '../../lib/nav'
 import { TellBar } from '../TellHalqa'
@@ -28,6 +28,19 @@ function useCardImage(path) {
 }
 
 const isPdf = path => /\.pdf$/i.test(path || '')
+
+// Small pin button (grey off, amber on), as in Projects.
+function PinButton({ pinned, onClick }) {
+  return (
+    <button className={cx(p.pinBtn, pinned && p.pinBtnOn)} onClick={onClick} aria-label={pinned ? 'Unpin' : 'Pin to the top'}>
+      <IconPin size={16} filled={!!pinned} />
+    </button>
+  )
+}
+async function togglePin(table, row, toast) {
+  await updateRow(table, row.id, { pinned: !row.pinned })
+  toast(row.pinned ? 'Unpinned' : 'Pinned to the top', { label: 'Undo', onClick: () => updateRow(table, row.id, { pinned: !!row.pinned }) })
+}
 
 export function EventLine({ ev, onPress, showDay }) {
   const where = [...new Set([ev.village, ev.venue].filter(Boolean))].join(' · ')
@@ -262,7 +275,10 @@ function SwipeEvent({ ev, onPress, showDay }) {
       { label: 'Share', tone: 'share', icon: <IconShare size={19} />, onClick: share },
       { label: 'Delete', tone: 'delete', icon: <IconTrash size={19} />, onClick: del },
     ]}>
-      <EventLine ev={ev} onPress={onPress} showDay={showDay} />
+      <div className={p.pinRow}>
+        <EventLine ev={ev} onPress={onPress} showDay={showDay} />
+        <PinButton pinned={ev.pinned} onClick={() => togglePin('events', ev, toast)} />
+      </div>
     </SwipeRow>
   )
 }
@@ -280,7 +296,7 @@ function SwipeItem({ item, onPress, listName, showDay, onMove }) {
       { label: 'Move', tone: 'move', icon: <IconMove size={19} />, onClick: () => onMove(item) },
       { label: 'Delete', tone: 'delete', icon: <IconTrash size={19} />, onClick: del },
     ]}>
-      <ItemLine item={item} onPress={onPress} listName={listName} showDay={showDay} />
+      <ItemLine item={item} onPress={onPress} listName={listName} showDay={showDay} onPin={() => togglePin('list_items', item, toast)} />
     </SwipeRow>
   )
 }
@@ -302,7 +318,7 @@ function MoveSheet({ item, onClose }) {
 
 const recentDone = i => i.done_at && Date.now() - new Date(i.done_at).getTime() < DONE_KEEP_DAYS * 864e5
 
-export function ItemLine({ item, onPress, listName, showDay = true }) {
+export function ItemLine({ item, onPress, listName, showDay = true, onPin }) {
   const done = !!item.done_at
   return (
     <div className={cx(p.item, done && p.itemDone)}>
@@ -316,6 +332,7 @@ export function ItemLine({ item, onPress, listName, showDay = true }) {
         {done ? <span className={p.where}>Done {dayLabel(item.done_at.slice(0, 10))}</span>
           : showDay && item.day && <span className={p.pill}>{dayLabel(item.day)}</span>}
       </button>
+      {onPin && !done && <PinButton pinned={item.pinned} onClick={onPin} />}
     </div>
   )
 }
@@ -385,7 +402,7 @@ function ListView({ list, items, onEdit, onMenu }) {
   const [showOld, setShowOld] = useState(false)
   const [moving, setMoving] = useState(null)
   const open = [...items.filter(i => !i.done_at)].sort((a, b) =>
-    (a.day || '9999').localeCompare(b.day || '9999') || (a.created_at || '').localeCompare(b.created_at || ''))
+    (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0) || (a.day || '9999').localeCompare(b.day || '9999') || (a.created_at || '').localeCompare(b.created_at || ''))
   const done = items.filter(i => i.done_at).sort((a, b) => b.done_at.localeCompare(a.done_at))
   const recent = done.filter(recentDone)
   const old = done.filter(i => !recentDone(i))
@@ -470,6 +487,8 @@ export default function PlannerScreen() {
   const confirmed = events.filter(e => e.status !== 'review')
   const upcoming = sortEvents(confirmed.filter(e => !e.day || e.day >= today))
   const past = sortEvents(confirmed.filter(e => e.day && e.day < today)).reverse()
+  // Pinned events show in their own section at the top, and also in their place below.
+  const pinnedEvents = upcoming.filter(e => e.pinned)
   // List items with a date also show under Events (until done).
   const datedItems = items.filter(i => i.day && !i.done_at && i.day >= today)
 
@@ -530,6 +549,15 @@ export default function PlannerScreen() {
             <div className={ui.section}>
               <div className={ui.sectionHead}><span>To review</span><span>{review.reduce((n, b) => n + b.length, 0)}</span></div>
               <div className={p.stack}>{review.map(b => <ReviewBatch key={b[0].batch_id || b[0].id} events={b} onEdit={setForm} />)}</div>
+            </div>
+          )}
+
+          {pinnedEvents.length > 0 && (
+            <div className={ui.section}>
+              <div className={ui.sectionHead}><span>📌 Pinned</span><span>{pinnedEvents.length}</span></div>
+              <div className={cx(ui.card, p.dayCard)}>
+                {pinnedEvents.map(e => <SwipeEvent key={e.id} ev={e} showDay onPress={() => setForm(e)} />)}
+              </div>
             </div>
           )}
 

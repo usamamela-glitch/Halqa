@@ -63,7 +63,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - Header: "Halqa" + "NA-83 Sargodha-II", with three number boxes: Villages · Contacts · Pinned.
 - Sync badge (Synced / Offline · N waiting).
 - Header icons: map, AI analysis, settings.
-- Tabs: Qanungos · Targets · Search (Notes was the middle tab until 13 Nov; the tab was called Works on 13 Nov, then renamed Targets on 14 Nov). **Qanungos stays the home page.**
+- Tabs: Qanungos · Projects · Search (Notes was the middle tab until 13 Nov; this tab was called Works on 13 Nov, Targets on 14 Nov, then Projects on 14 Nov). **Qanungos stays the home page.**
 - A teal **"Today" card** under the tabs ("Today · 12 of 35 done", a progress bar, and "October 2026 briefing is ready" when one is waiting). Tapping it opens the daily list.
 - Main Groups and Day to Day side by side, under the Today card.
 - Qanungo cards: "…" menu (Rename / Remove), contact count, thin completion bar.
@@ -89,7 +89,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **Serial numbers (13 Nov):** each item has a short number per category, oldest first: R (roads), J (jobs), E (electricity), G (gas), H (health), Ed (education), O (other), e.g. R-17. Column `works.serial` (migration 20261113100000, run by Usama); the app gives new or moved items the next number, and a database trigger fills any that are missing. Shown on each row, in the item's title and in shared text.
 - **Village Development tab (13 Nov):** under the village's own development notes, a live "From Works" list of everything tagged with that village, grouped by category with numbers, ○/✓ and who asked; tap to open, and "+ Add to Works for <village>" pre-fills the village (`VillageWorks` in `components/Works.js`).
 
-- **14 Nov: renamed "Targets" on screen** (the home tab, "From Targets" on village pages, "New target"). The code and table keep the name `works`.
+- **14 Nov: renamed "Projects" on screen** (it was "Targets" for a day) (the home tab, "From Targets" on village pages, "New target"). The code and table keep the name `works`.
 - **Pinning (14 Nov):** a small pin button under each item's number (grey off, amber on), or "Pin to the top" in the item. Not in the swipe (Usama found four swipe buttons too crowded). Pinned open items go first in their own category (and on village and contact lists), with a 📌. Column `works.pinned` (migration 20261114000000, Usama runs it).
 - **On a contact card (14 Nov):** an "Asked for" list of every target the person is tagged in, open first, with numbers; tap to open (`ContactTargets` in `components/Works.js`). The optional "2 open asks" note on Today-list cards was offered but not built.
 
@@ -231,6 +231,8 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows the l
 - **Tell Halqa dictation:** the 🎙 is the iPhone keyboard's (Apple's speech recognition), not Claude's, so names and mixed Urdu/English come out worse than in the Claude app. Options offered (Usama is leaving it for now, 10 Nov): (1) switch to an English (India) keyboard for dictation; (2) have Claude correct misheard names against contact and village names; (3) record inside Halqa and use a dedicated speech-to-text service (OpenAI or ElevenLabs, extra key, about Rs 2 per minute).
 - **Fix (12 Nov):** forms (Edit event, Quick Add…) sometimes opened half-way up the screen, because iPhone didn't report that the keyboard had closed. Sheets now only make room for the keyboard while a text box is being typed in, and re-check after focus changes (`useKeyboardInset` in `components/ui.js`). Usama to confirm on his phone.
 - **Next:** Usama is trying out what he says in Tell Halqa against where things land in the Planner, and will come back with changes.
+
+- **Pins (14 Nov):** a small pin button (grey off, amber on) on every event and list item. Pinned list items go to the top of their list. Pinned events show in a "📌 Pinned" section at the top of Events **and** stay in their own day below. Columns `events.pinned` and `list_items.pinned` (migration 20261114100000, Usama runs it).
 
 ## Native iPhone app (decided 11 Nov 2026; Apple account paid, waiting for approval)
 - The full agreed build list, phases and Usama's remaining Apple steps are in **NATIVE_APP.md**.

@@ -19,7 +19,7 @@ import { parseSharedText, numberKey } from '../../lib/importContacts'
 import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
 
-const TABS = ['Qanungos', 'Targets', 'Search']
+const TABS = ['Qanungos', 'Projects', 'Search']
 
 export default function HomeScreen() {
   const { push, setParams } = useNav()
@@ -94,7 +94,7 @@ export default function HomeScreen() {
       tabs={<Tabs id="home" tabs={TABS} value={tab} onChange={t => setParams(key, { tab: t })} />}
     >
       {tab === 'Qanungos' && <QanungosTab villages={villages} contacts={contacts} pinnedCount={pinnedCount} onQuickAdd={() => sheets.quickAdd()} />}
-      {tab === 'Targets' && <WorksTab category={params.workCategory} onCategory={c => setParams(key, { workCategory: c })} sheets={sheets} />}
+      {tab === 'Projects' && <WorksTab category={params.workCategory} onCategory={c => setParams(key, { workCategory: c })} sheets={sheets} />}
       {tab === 'Search' && <SearchTab villages={villages} contacts={contacts} sheets={sheets} />}
       {sheets.element}
     </Screen>

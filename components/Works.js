@@ -87,7 +87,7 @@ export function WorksTab({ category, onCategory, sheets }) {
 
       <div className={ui.section} style={{ marginTop: 14 }}>
         {open.length + recent.length === 0 ? (
-          <Empty icon={<IconLayers size={28} />} title={`No ${categoryLabel(cat).toLowerCase()} targets`} text="Tap + to add one." />
+          <Empty icon={<IconLayers size={28} />} title={`No ${categoryLabel(cat).toLowerCase()} projects`} text="Tap + to add one." />
         ) : (
           <div className={cx(ui.card, p.dayCard)}>{[...open, ...recent].map(row)}</div>
         )}
@@ -99,7 +99,7 @@ export function WorksTab({ category, onCategory, sheets }) {
         )}
       </div>
 
-      <button className={ui.fab} onClick={() => openForm({ category: cat })} aria-label="Add target"><IconPlus size={28} /></button>
+      <button className={ui.fab} onClick={() => openForm({ category: cat })} aria-label="Add project"><IconPlus size={28} /></button>
 
       <Sheet open={!!viewing} onClose={() => setView(null)} title={viewing ? `${categoryLabel(categoryOf(viewing))}${viewing.serial ? ` · ${serialLabel(viewing)}` : ''}` : ''}
         headerRight={viewing && <button className={w.editBtn} onClick={() => openForm(viewing)}>Edit</button>}>
@@ -112,7 +112,7 @@ export function WorksTab({ category, onCategory, sheets }) {
         )}
       </Sheet>
 
-      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit target' : 'New target'}>
+      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit project' : 'New project'}>
         {form && <WorkForm key={formKey} initial={form} names={names} onDone={() => setForm(null)} />}
       </Sheet>
 
@@ -380,7 +380,7 @@ export function WorkForm({ initial, names, onDone }) {
         {isNew ? 'Add' : 'Save'}
       </button>
       {!isNew && <button type="button" className={p.delete} onClick={() => setConfirmDel(true)}>Delete</button>}
-      <ActionSheet open={confirmDel} onClose={() => setConfirmDel(false)} title="Delete this target?"
+      <ActionSheet open={confirmDel} onClose={() => setConfirmDel(false)} title="Delete this project?"
         items={[{ label: 'Delete', danger: true, onClick: remove }]} />
     </form>
   )
@@ -413,7 +413,7 @@ export function VillageWorks({ village }) {
   return (
     <div className={w.village}>
       <div className={w.villageHead}>
-        <span>From Targets</span>
+        <span>From Projects</span>
         {mine.length > 0 && <span>{openCount} open{doneCount ? ` · ${doneCount} done` : ''}</span>}
       </div>
       {mine.length > 0 && (
@@ -455,7 +455,7 @@ export function VillageWorks({ village }) {
         </div>
       )}
       <button className={w.villageAdd} onClick={() => openForm({ category: 'roads', village_ids: [village.id] })}>
-        <span className={w.villageAddPlus}><IconPlus size={16} /></span>Add to Targets for {village.name}
+        <span className={w.villageAddPlus}><IconPlus size={16} /></span>Add to Projects for {village.name}
       </button>
 
       <Sheet open={!!viewing} onClose={() => setView(null)} title={viewing ? `${categoryLabel(categoryOf(viewing))}${viewing.serial ? ` · ${serialLabel(viewing)}` : ''}` : ''}
@@ -468,7 +468,7 @@ export function VillageWorks({ village }) {
             onPin={() => setWorkPinned(viewing, !viewing.pinned)} />
         )}
       </Sheet>
-      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit target' : 'New target'}>
+      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit project' : 'New project'}>
         {form && <WorkForm key={formKey} initial={form} names={names} onDone={() => setForm(null)} />}
       </Sheet>
       {sheets.element}
@@ -528,7 +528,7 @@ export function ContactTargets({ contactId }) {
             onPin={() => setWorkPinned(viewing, !viewing.pinned)} />
         )}
       </Sheet>
-      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit target' : 'New target'}>
+      <Sheet open={!!form} onClose={() => setForm(null)} title={form?.id ? 'Edit project' : 'New project'}>
         {form && <WorkForm key={formKey} initial={form} names={names} onDone={() => setForm(null)} />}
       </Sheet>
     </div>

@@ -129,3 +129,10 @@
 .batchNote { padding: 12px 14px 0; border-top: 1px solid var(--hair); }
 .batchNote + .batchActions { border-top: 0; }
 .swipe_pin { background: #c98208; }
+
+/* Pins in the Planner (14 Nov) */
+.pinRow { display: flex; align-items: flex-start; }
+.pinRow > .line { flex: 1; min-width: 0; }
+.pinBtn { flex: none; width: 36px; height: 36px; margin: 8px 6px 0 0; display: flex; align-items: center; justify-content: center; border-radius: 10px; color: #b4bec8; }
+.pinBtn:active { background: var(--hair); }
+.pinBtnOn { color: #c98208; }

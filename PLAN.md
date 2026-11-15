@@ -245,6 +245,7 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows the l
 - **+ on every list (14 Nov):** a small round + next to the ⋯ on each list tab's "To do in …" line opens the Add form. The Add row at the bottom of the list was removed.
 - **Notes button (15 Nov):** Notes is a small yellow round button (white pad and pen, "Notes" underneath) next to Synced in the home header. **Day to Day notes removed from the Planner (15 Nov):** the card at the bottom of Events is gone; the old text stays in the database (table day_note), nothing deleted.
 - **Qanungos tab renamed Home (15 Nov):** the home tabs are Home · Projects · Search. The app always opens on Home (also after 30+ minutes away while on the home screen); tapping the big "Halqa" title goes to Home; the back arrow still returns to wherever you were. The qanungo list keeps its "Qanungos" heading inside Home.
+- **Smoother page changes (15 Nov):** Main Groups (800+ pinned) took about a second to draw while sliding in. Now it draws the first 100 at once and the rest in blocks after the slide; the jump buttons draw everything first. Pages underneath no longer redraw when a page opens or closes (split navigation context), and cards use a CSS press effect instead of one animation helper per row.
 
 ## Native iPhone app (decided 11 Nov 2026; Apple account paid, waiting for approval)
 - The full agreed build list, phases and Usama's remaining Apple steps are in **NATIVE_APP.md**.

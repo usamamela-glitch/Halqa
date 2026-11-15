@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
 import { useNav } from '../../lib/nav'
@@ -16,6 +16,15 @@ export default function MainGroupsScreen() {
   const villages = useLiveQuery(() => db.villages.toArray(), [], [])
   const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
   const sectionRefs = useRef({})
+  // 800+ pinned rows took a second to draw, right while the page slid in (15 Nov).
+  // Draw the first rows at once and the rest in small batches after the slide.
+  const [shown, setShown] = useState(40)  // the first block is drawn at once
+  const total = contacts.length
+  useEffect(() => {
+    if (shown >= total) return
+    const t = setTimeout(() => setShown(n => n + CHUNK), shown === 40 ? 380 : 40)
+    return () => clearTimeout(t)
+  }, [shown, total])
 
   const groups = useMemo(() => {
     const vById = Object.fromEntries(villages.map(v => [v.id, v]))
@@ -31,16 +40,25 @@ export default function MainGroupsScreen() {
     return [...map.values()]
       .sort((a, b) => (a.name === 'Other') - (b.name === 'Other') || a.name.localeCompare(b.name))
       .map(g => ({ ...g, items: g.items.sort((x, y) => byName(x.c, y.c)) }))
+      // Blocks of up to 100 rows, each drawn once, so later blocks don't redraw earlier ones.
+      .map(g => ({ ...g, chunks: Array.from({ length: Math.ceil(g.items.length / CHUNK) }, (_, i) => g.items.slice(i * CHUNK, (i + 1) * CHUNK)) }))
   }, [contacts, villages, qanungos])
+  // Where each block starts in the whole list, top to bottom.
+  const starts = useMemo(() => {
+    let at = 0
+    return groups.map(g => g.chunks.map(ch => { const s = at; at += ch.length; return s }))
+  }, [groups])
 
   const levels = contacts.map(c => contactedLevel(daysSince(c.last_contacted)))
   const recent = levels.filter(l => l === 'green').length
   const overdue = levels.filter(l => l === 'red' || l === 'none').length
 
-  async function unpin(c) {
+  const toastRef = useRef(toast)
+  toastRef.current = toast
+  const unpin = useCallback(async c => {
     await updateRow('contacts', c.id, { pinned: false })
-    toast(`Unpinned ${c.name}`, { label: 'Undo', onClick: () => updateRow('contacts', c.id, { pinned: true }) })
-  }
+    toastRef.current(`Unpinned ${c.name}`, { label: 'Undo', onClick: () => updateRow('contacts', c.id, { pinned: true }) })
+  }, [])
 
   return (
     <Screen
@@ -61,20 +79,16 @@ export default function MainGroupsScreen() {
         <nav className={m.jump} aria-label="Jump to Qanungo">
           {groups.map(g => (
             <button key={g.name} type="button" className={m.jumpBtn}
-              onClick={() => sectionRefs.current[g.name]?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+              onClick={() => { setShown(total); setTimeout(() => sectionRefs.current[g.name]?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 30) }}>
               {g.name}<span className={m.jumpCount}>{g.items.length}</span>
             </button>
           ))}
         </nav>
-        {groups.map(g => (
+        {groups.map((g, gi) => (
         <div key={g.name} className={cx(ui.section, m.section)} ref={el => { sectionRefs.current[g.name] = el }}>
           <h2 className={m.head}><span>{g.name}</span><span className={m.headCount}>{g.items.length}</span></h2>
           <ul className={ui.list}>
-            {g.items.map(({ c, village }) => (
-              <ContactRow key={c.id} contact={c} villageName={village?.name} subtitle={village?.name || 'Unknown village'} showContacted
-                onPress={() => push('village', { id: c.village_id, tab: 'Contacts', highlight: c.id })}
-                onUnpin={() => unpin(c)} />
-            ))}
+            {g.chunks.map((ch, i) => starts[gi][i] < shown && <Rows key={i} items={ch} push={push} unpin={unpin} />)}
           </ul>
         </div>
         ))}
@@ -82,3 +96,13 @@ export default function MainGroupsScreen() {
     </Screen>
   )
 }
+
+const CHUNK = 100
+
+const Rows = memo(function Rows({ items, push, unpin }) {
+  return items.map(({ c, village }) => (
+    <ContactRow key={c.id} contact={c} villageName={village?.name} subtitle={village?.name || 'Unknown village'} showContacted
+      onPress={() => push('village', { id: c.village_id, tab: 'Contacts', highlight: c.id })}
+      onUnpin={() => unpin(c)} />
+  ))
+})

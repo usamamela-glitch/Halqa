@@ -81,9 +81,11 @@ export function Tabs({ tabs, value, onChange, id }) {
 // ---------- Pressable card ----------
 
 export function Card({ as = 'button', className, children, ...rest }) {
-  const C = as === 'div' ? motion.div : motion.button
+  // Plain element with a CSS press effect (15 Nov): a framer-motion card per row
+  // made long lists (Main Groups, 800+ rows) slow to open and close.
+  const C = as === 'div' ? 'div' : 'button'
   return (
-    <C whileTap={{ scale: 0.97 }} transition={{ type: 'spring', stiffness: 600, damping: 30 }} className={cx(s.card, className)} {...rest}>
+    <C className={cx(s.card, className)} {...rest}>
       {children}
     </C>
   )

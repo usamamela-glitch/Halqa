@@ -1,5 +1,6 @@
+import { memo, useMemo } from 'react'
 import { AnimatePresence, motion, useDragControls } from 'framer-motion'
-import { useNav, ScreenContext } from '../lib/nav'
+import { useNav, useNavStack, ScreenContext } from '../lib/nav'
 import HomeScreen, { NotesScreen } from './screens/HomeScreen'
 import QanungoScreen from './screens/QanungoScreen'
 import VillageScreen from './screens/VillageScreen'
@@ -40,6 +41,9 @@ function Layer({ entry, index, top, onBack }) {
   const isTop = index === top
   const canSwipe = isTop && index > 0
   const controls = useDragControls()
+  // The screen itself only redraws when its own params change, not when another page opens on top.
+  const screenValue = useMemo(() => ({ key: entry.key, params: entry.params }), [entry.key, entry.params])
+  const body = useMemo(() => <Comp />, [Comp])
 
   return (
     <motion.div
@@ -58,8 +62,8 @@ function Layer({ entry, index, top, onBack }) {
       onPointerDown={e => { if (canSwipe && e.clientX < 28) controls.start(e) }}
       aria-hidden={!isTop}
     >
-      <ScreenContext.Provider value={{ key: entry.key, params: entry.params, isTop }}>
-        <Comp />
+      <ScreenContext.Provider value={screenValue}>
+        {body}
       </ScreenContext.Provider>
       <motion.div
         style={{ position: 'absolute', inset: 0, background: 'rgba(5,20,24,0.18)', pointerEvents: isTop ? 'none' : 'auto', zIndex: 100 }}
@@ -72,7 +76,8 @@ function Layer({ entry, index, top, onBack }) {
 }
 
 export default function Navigator() {
-  const { stack, pop } = useNav()
+  const { pop } = useNav()
+  const { stack } = useNavStack()
   const top = stack.length - 1
   return (
     <AnimatePresence initial={false}>

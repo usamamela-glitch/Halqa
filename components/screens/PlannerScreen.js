@@ -12,6 +12,7 @@ import { IconPlus, IconCalendar, IconChevron, IconNote, IconCheck, IconMore, Ico
 import { motion, animate, useMotionValue } from 'framer-motion'
 import { useNav, useScreen } from '../../lib/nav'
 import { TellBar } from '../TellHalqa'
+import { NotesPanel, newGeneralNote } from './HomeScreen'
 import p from '../../styles/planner.module.css'
 
 // The card photo (private bucket): a short-lived link, fetched when online.
@@ -449,7 +450,7 @@ export default function PlannerScreen() {
   const today = localDay()
   const lists = sortLists(rawLists)
   const listName = Object.fromEntries(lists.map(l => [l.id, l.name]))
-  const tab = params.tab && (params.tab === 'calendar' || listName[params.tab]) ? params.tab : 'calendar'
+  const tab = params.tab && (params.tab === 'calendar' || params.tab === 'notes' || listName[params.tab]) ? params.tab : 'calendar'
   const setTab = t => setParams(key, { tab: t })
   const current = lists.find(l => l.id === tab)
 
@@ -512,7 +513,7 @@ export default function PlannerScreen() {
 
   return (
     <Screen title="Planner" subtitle="Weddings, meetings and lists"
-      actions={<BarButton onClick={() => (current ? setItemForm({ list_id: current.id }) : setForm({}))} aria-label="Add"><IconPlus size={22} /></BarButton>}>
+      actions={<BarButton onClick={() => (tab === 'notes' ? newGeneralNote(push) : current ? setItemForm({ list_id: current.id }) : setForm({}))} aria-label="Add"><IconPlus size={22} /></BarButton>}>
 
       <TellBar />
 
@@ -523,10 +524,21 @@ export default function PlannerScreen() {
             {l.name}{openCount(l.id) > 0 && <b>{openCount(l.id)}</b>}
           </button>
         ))}
+        <button className={cx(p.tabPill, tab === 'notes' && p.tabOn)} onClick={() => setTab('notes')}>Notes</button>
         <button className={cx(p.tabPill, p.tabAdd)} onClick={() => setListSheet({ name: '' })}>+ New list</button>
       </div>
 
-      {current ? (
+      {tab === 'notes' ? (
+        <div className={ui.section}>
+          <div className={ui.sectionHead}>
+            <span>Notes</span>
+            <span className={p.listHeadBtns}>
+              <button className={p.listAdd} onClick={() => newGeneralNote(push)} aria-label="New note"><IconPlus size={17} /></button>
+            </span>
+          </div>
+          <NotesPanel />
+        </div>
+      ) : current ? (
         <ListView list={current} items={items.filter(i => i.list_id === current.id)} onEdit={setItemForm} onAdd={() => setItemForm({ list_id: current.id })} onMenu={() => setListMenu(true)} />
       ) : (
         <>

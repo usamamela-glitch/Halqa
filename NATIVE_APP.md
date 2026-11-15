@@ -69,7 +69,7 @@ Everything in the web app comes across unchanged, including recent additions:
 - The Today hub on the home screen, event times, and the "Reached …? Yes / No" bar.
 - **Home tab** (renamed from Qanungos, 15 Nov): the app opens on it; tapping "Halqa" goes there.
 - **Halqa list bar** on Home with a + to add straight to the Halqa list, and a **+ next to ⋯** on every Planner list (14 Nov).
-- **Notes** as a yellow round button next to Synced (15 Nov). Day to Day notes removed from the Planner.
+- **Notes** is a tab in the Planner (15 Nov). Day to Day notes removed from the Planner.
 - **Projects:** search by village, qanungo, person or word, several at once (14 Nov).
 - **Main Groups draws only what's on screen** (15 Nov), so it opens and closes smoothly however many are pinned. The native shell uses the same engine as Safari, so big lists cost the same there; this fix is what makes them smooth, in both.
 

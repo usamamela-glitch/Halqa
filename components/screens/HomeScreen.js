@@ -82,13 +82,7 @@ export default function HomeScreen() {
               <button className={h.brandTitle} onClick={() => setParams(key, { tab: 'Home' })}>Halqa</button>
               <div className={h.brandSub}>{CONSTITUENCY}</div>
             </div>
-            <div className={h.heroRight}>
-              <button className={h.notesBtn} onClick={() => push('notes')} aria-label="Notes">
-                <svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="18" fill="#f5c518" /><rect x="10" y="9" width="13" height="18" rx="2.5" fill="none" stroke="#fff" strokeWidth="2" /><path d="M13 14h7M13 18h7M13 22h4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" /><g transform="rotate(35 25 18)"><rect x="23.5" y="9" width="3.6" height="14" rx="1" fill="#fff" /><path d="M23.5 23l1.8 3.4 1.8-3.4z" fill="#fff" /></g></svg>
-                <span>Notes</span>
-              </button>
-              <span className={h.syncSlot}><SyncPill /></span>
-            </div>
+            <SyncPill />
           </div>
           <div className={h.miniStats}>
             <span><b>{villages.length.toLocaleString()}</b> village{villages.length === 1 ? '' : 's'}</span>
@@ -307,19 +301,26 @@ export function NoteList({ notes, onOpen }) {
 
 // Notes moved off the home tabs (13 Nov): a slim "Notes · N" link under the
 // three teal buttons opens this screen.
-export function NotesScreen() {
+export async function newGeneralNote(push) {
+  const n = await insertRow('general_notes', { body: '', images: [] })
+  push('note', { table: 'general_notes', id: n.id, isNew: true })
+}
+
+// The general notes list. Since 15 Nov it lives in the Planner's Notes tab.
+export function NotesPanel() {
   const { push } = useNav()
   const notes = useLiveQuery(() => db.general_notes.orderBy('created_at').reverse().toArray(), [], [])
-  async function create() {
-    const n = await insertRow('general_notes', { body: '', images: [] })
-    push('note', { table: 'general_notes', id: n.id, isNew: true })
-  }
+  return notes.length === 0
+    ? <Empty icon={<IconNote size={28} />} title="No notes yet" text="General notes for the whole constituency. Tap + to write one." />
+    : <NoteList notes={notes} onOpen={n => push('note', { table: 'general_notes', id: n.id })} />
+}
+
+export function NotesScreen() {
+  const { push } = useNav()
   return (
     <Screen title="Notes" home>
-      {notes.length === 0
-        ? <Empty icon={<IconNote size={28} />} title="No notes yet" text="General notes for the whole constituency live here." />
-        : <NoteList notes={notes} onOpen={n => push('note', { table: 'general_notes', id: n.id })} />}
-      <button className={ui.fab} onClick={create} aria-label="New note"><IconEdit size={26} /></button>
+      <NotesPanel />
+      <button className={ui.fab} onClick={() => newGeneralNote(push)} aria-label="New note"><IconEdit size={26} /></button>
     </Screen>
   )
 }

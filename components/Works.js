@@ -5,11 +5,11 @@ import { useNav } from '../lib/nav'
 import { savePhoto } from '../lib/images'
 import { queryWords, matchesWords, nameRank } from '../lib/search'
 import { byName } from '../lib/domain'
-import { WORK_CATEGORIES, categoryOf, categoryLabel, categoryIcon, serialLabel, splitWorks, saveWork, setWorkDone, setWorkPinned, removeWork, workShareText, ROAD_TYPES, roadTypeLabel } from '../lib/works'
+import { categoryOf, categoryLabel, serialLabel, splitWorks, saveWork, setWorkDone, setWorkPinned, removeWork, workShareText, ROAD_TYPES, roadTypeLabel, useWorkCategories, addCategory, renameCategory, removeCategory, isCustomCategory } from '../lib/works'
 import { useContactSheets } from './contacts'
 import { Sheet, ActionSheet, Empty, Field, cx, ui, useToast, useImageUrl } from './ui'
 import { SwipeRow, shareText } from './screens/PlannerScreen'
-import { IconCheck, IconPlus, IconShare, IconMove, IconTrash, IconX, IconCamera, IconLayers, IconChevron, IconPin } from './Icons'
+import { IconCheck, IconPlus, IconShare, IconMove, IconTrash, IconX, IconCamera, IconLayers, IconChevron, IconPin, IconEdit } from './Icons'
 import p from '../styles/planner.module.css'
 import w from '../styles/works.module.css'
 
@@ -39,6 +39,10 @@ export function WorksTab({ category, onCategory, sheets }) {
   const [moving, setMoving] = useState(null)
   const [showOld, setShowOld] = useState(false)
   const [roadType, setRoadType] = useState('all')
+  const cats = useWorkCategories()
+  const [catSheet, setCatSheet] = useState(null)   // { id?, name }: new list, or renaming one
+  const [catMenu, setCatMenu] = useState(false)
+  const [confirmDropCat, setConfirmDropCat] = useState(false)
   // Search: type, then pick villages, qanungos, people, or "word in the text".
   // Several can be picked; a project shows if it matches any of them. The tabs stay, filtered.
   const [q, setQ] = useState('')
@@ -90,7 +94,7 @@ export function WorksTab({ category, onCategory, sheets }) {
   const filterIcon = k => (k === 'village' ? '📍' : k === 'qanungo' ? '🗺️' : k === 'person' ? '👤' : '🔤')
   const filterName = f => (f.kind === 'text' ? `"${f.text}"` : f.kind === 'qanungo' ? `${f.label} qanungo` : f.label)
 
-  const cat = WORK_CATEGORIES.some(c => c.id === category) ? category : 'roads'
+  const cat = cats.some(c => c.id === category) ? category : 'roads'
   const counts = useMemo(() => {
     const n = {}
     works.forEach(x => { if (!x.done_at && matchesFilter(x)) n[categoryOf(x)] = (n[categoryOf(x)] || 0) + 1 })
@@ -114,6 +118,20 @@ export function WorksTab({ category, onCategory, sheets }) {
     const undo = await setWorkPinned(work, !work.pinned)
     toast(work.pinned ? 'Unpinned' : 'Pinned to the top', { label: 'Undo', onClick: undo })
   }
+  async function saveCat(e) {
+    e.preventDefault()
+    const name = (catSheet.name || '').trim()
+    if (!name) return
+    const id = catSheet.id ? await renameCategory(catSheet.id, name) : await addCategory(name)
+    if (id) { setShowOld(false); onCategory(id) }
+    setCatSheet(null)
+  }
+  async function dropCat() {
+    const n = await removeCategory(cat)
+    toast(n ? `Deleted ${categoryLabel(cat)} · ${n} project${n === 1 ? '' : 's'} moved to Other` : `Deleted ${categoryLabel(cat)}`)
+    onCategory(n ? 'other' : 'roads')
+  }
+
   const share = work => shareText(workShareText(work, namesOf(work.village_ids, names.village), namesOf(work.contact_ids, names.contact)), toast)
 
   const row = work => (
@@ -157,12 +175,20 @@ export function WorksTab({ category, onCategory, sheets }) {
       </div>
 
       <div className={p.tabs} style={{ marginTop: 0 }}>
-        {WORK_CATEGORIES.map(c => (
-          <button key={c.id} className={cx(p.tabPill, cat === c.id && p.tabOn)} onClick={() => { setShowOld(false); onCategory(c.id) }}>
+        {cats.map(c => (
+          <button key={c.id} className={cx(p.tabPill, cat === c.id && p.tabOn)}
+            onClick={() => { if (cat === c.id && c.custom) { setCatMenu(true); return } setShowOld(false); onCategory(c.id) }}>
             {c.label}{counts[c.id] ? <b>{counts[c.id]}</b> : null}
           </button>
         ))}
+        <button className={cx(p.tabPill, p.tabAdd)} onClick={() => setCatSheet({ name: '' })}>+ New list</button>
       </div>
+
+      {isCustomCategory(cat) && (
+        <div className={w.roadFilter}>
+          <button className={w.roadChip} onClick={() => setCatMenu(true)}><IconEdit size={13} /> Rename or delete {categoryLabel(cat)}</button>
+        </div>
+      )}
 
       {cat === 'roads' && (
         <div className={w.roadFilter}>
@@ -205,7 +231,7 @@ export function WorksTab({ category, onCategory, sheets }) {
       </Sheet>
 
       <ActionSheet open={!!moving} onClose={() => setMoving(null)} title="Move to…"
-        items={moving && WORK_CATEGORIES.filter(c => c.id !== categoryOf(moving)).map(c => ({
+        items={moving && cats.filter(c => c.id !== categoryOf(moving)).map(c => ({
           label: c.label,
           onClick: async () => {
             const before = { category: moving.category, serial: moving.serial ?? null }
@@ -213,6 +239,25 @@ export function WorksTab({ category, onCategory, sheets }) {
             toast(`Moved to ${c.label}`, { label: 'Undo', onClick: () => saveWork(moving.id, before) })
           },
         }))} />
+
+      <Sheet open={!!catSheet} onClose={() => setCatSheet(null)} title={catSheet?.id ? 'Rename list' : 'New list'}>
+        {catSheet && (
+          <form onSubmit={saveCat}>
+            <Field label="Name">
+              <input className={ui.input} autoFocus value={catSheet.name} onChange={e => setCatSheet(x => ({ ...x, name: e.target.value }))} placeholder="e.g. Water supply" autoCapitalize="words" />
+            </Field>
+            <button type="submit" className={cx(ui.btn, ui.btnPrimary, ui.btnBlock)} style={{ marginTop: 18 }} disabled={!catSheet.name.trim()}>{catSheet.id ? 'Save' : 'Add list'}</button>
+          </form>
+        )}
+      </Sheet>
+      <ActionSheet open={catMenu} onClose={() => setCatMenu(false)} title={categoryLabel(cat)}
+        items={[
+          { label: 'Rename list', icon: <IconEdit size={20} />, onClick: () => setCatSheet({ id: cat, name: categoryLabel(cat) }) },
+          { label: 'Delete list', icon: <IconTrash size={20} />, danger: true, onClick: () => setConfirmDropCat(true) },
+        ]} />
+      <ActionSheet open={confirmDropCat} onClose={() => setConfirmDropCat(false)}
+        title={`Delete ${categoryLabel(cat)}?`}
+        items={[{ label: 'Delete list (its projects move to Other)', danger: true, onClick: dropCat }]} />
     </>
   )
 }
@@ -399,6 +444,8 @@ export function WorkForm({ initial, names, onDone }) {
   }))
   const [adding, setAdding] = useState(0)
   const [confirmDel, setConfirmDel] = useState(false)
+  const cats = useWorkCategories()
+  const [newCat, setNewCat] = useState(null)   // text of a new list typed here, or null
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
 
   const villageItems = useMemo(() => names.villages.map(v => ({ id: v.id, name: v.name })), [names.villages])
@@ -419,8 +466,9 @@ export function WorkForm({ initial, names, onDone }) {
 
   async function save(e) {
     e.preventDefault()
-    await saveWork(initial?.id, { ...f, body: f.body.trim(), road_type: f.category === 'roads' ? f.road_type : null })
-    toast(isNew ? `Added to ${categoryLabel(f.category)}` : 'Saved')
+    const category = newCat && newCat.trim() ? await addCategory(newCat) : f.category
+    await saveWork(initial?.id, { ...f, category, body: f.body.trim(), road_type: category === 'roads' ? f.road_type : null })
+    toast(isNew ? `Added to ${categoryLabel(category)}` : 'Saved')
     onDone()
   }
   async function remove() {
@@ -434,12 +482,15 @@ export function WorkForm({ initial, names, onDone }) {
       <div className={ui.field}>
         <span className={ui.label}>Category</span>
         <div className={p.chips}>
-          {WORK_CATEGORIES.map(c => (
-            <button type="button" key={c.id} className={cx(ui.chipBtn, f.category === c.id && ui.chipBtnOn)} onClick={() => set('category', c.id)}>{c.label}</button>
+          {cats.map(c => (
+            <button type="button" key={c.id} className={cx(ui.chipBtn, newCat === null && f.category === c.id && ui.chipBtnOn)} onClick={() => { setNewCat(null); set('category', c.id) }}>{c.label}</button>
           ))}
+          {newCat !== null
+            ? <input className={cx(ui.input, p.newListInput)} autoFocus value={newCat} onChange={e => setNewCat(e.target.value)} placeholder="New list name" autoCapitalize="words" />
+            : <button type="button" className={cx(ui.chipBtn, p.chipNew)} onClick={() => setNewCat('')}>+ New list</button>}
         </div>
       </div>
-      {f.category === 'roads' && (
+      {newCat === null && f.category === 'roads' && (
         <div className={ui.field}>
           <span className={ui.label}>Road type</span>
           <div className={p.chips}>
@@ -478,7 +529,7 @@ export function WorkForm({ initial, names, onDone }) {
           </label>
         </div>
       </div>
-      <button type="submit" className={cx(ui.btn, ui.btnPrimary, ui.btnBlock)} style={{ marginTop: 22 }} disabled={!f.body.trim() || adding > 0}>
+      <button type="submit" className={cx(ui.btn, ui.btnPrimary, ui.btnBlock)} style={{ marginTop: 22 }} disabled={!f.body.trim() || adding > 0 || (newCat !== null && !newCat.trim())}>
         {isNew ? 'Add' : 'Save'}
       </button>
       {!isNew && <button type="button" className={p.delete} onClick={() => setConfirmDel(true)}>Delete</button>}
@@ -500,6 +551,7 @@ export function VillageWorks({ village }) {
   const [view, setView] = useState(null)
   const [form, setForm] = useState(null)
   const [formKey, setFormKey] = useState(0)
+  const cats = useWorkCategories()
   const mine = useMemo(() => works.filter(x => (x.village_ids || []).includes(village.id)), [works, village.id])
   const viewing = view && works.find(x => x.id === view)
   const openForm = initial => { setView(null); setFormKey(k => k + 1); setForm(initial) }
@@ -520,7 +572,7 @@ export function VillageWorks({ village }) {
       </div>
       {mine.length > 0 && (
         <div className={cx(ui.card, p.dayCard)}>
-          {WORK_CATEGORIES.map(c => {
+          {cats.map(c => {
             const list = mine.filter(x => categoryOf(x) === c.id)
             if (!list.length) return null
             const { open, recent, old } = splitWorks(list)

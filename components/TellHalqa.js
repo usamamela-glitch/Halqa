@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
 import { insertRow, updateRow } from '../lib/store'
-import { WORK_CATEGORIES, categoryOf, categoryLabel, categoryIcon, roadTypeLabel, serialLabel, saveWork, setWorkDone, setWorkPinned } from '../lib/works'
+import { allCategories, categoryOf, categoryLabel, categoryIcon, roadTypeLabel, serialLabel, saveWork, setWorkDone, setWorkPinned } from '../lib/works'
 import { WorkForm } from './Works'
 import { tellHalqa } from '../lib/tell'
 import { describeError } from '../lib/analysis'
@@ -34,8 +34,8 @@ const villageIds = (villages, names) => [...new Set((names || []).map(n => findV
 function findWork(works, serial) {
   const m = /^\s*([A-Za-z]+)\s*-?\s*(\d+)\s*$/.exec(serial || '')
   if (!m) return null
-  const cat = WORK_CATEGORIES.find(c => c.prefix.toLowerCase() === m[1].toLowerCase())
-  return cat ? works.find(w => categoryOf(w) === cat.id && w.serial === +m[2]) || null : null
+  const ids = allCategories(works).filter(c => c.prefix.toLowerCase() === m[1].toLowerCase()).map(c => c.id)
+  return works.find(w => ids.includes(categoryOf(w)) && w.serial === +m[2]) || null
 }
 const CHANGE_TEXT = {
   done: 'Mark as done', not_done: 'Mark as not done', pin: 'Pin to the top', unpin: 'Unpin',

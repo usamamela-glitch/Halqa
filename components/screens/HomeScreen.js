@@ -19,13 +19,13 @@ import { parseSharedText, numberKey } from '../../lib/importContacts'
 import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
 
-const TABS = ['Qanungos', 'Projects', 'Search']
+const TABS = ['Home', 'Projects', 'Search']
 
 export default function HomeScreen() {
   const { push, setParams } = useNav()
   const { key, params } = useScreen()
   // Notes was a tab until 13 Nov; an old saved 'Notes' tab opens Qanungos.
-  const tab = TABS.includes(params.tab) ? params.tab : 'Qanungos'
+  const tab = TABS.includes(params.tab) ? params.tab : 'Home'
   const sheets = useContactSheets()
   const toast = useToast()
 
@@ -79,7 +79,7 @@ export default function HomeScreen() {
         <>
           <div className={h.heroTop}>
             <div className={h.brand}>
-              <div className={h.brandTitle}>Halqa</div>
+              <button className={h.brandTitle} onClick={() => setParams(key, { tab: 'Home' })}>Halqa</button>
               <div className={h.brandSub}>{CONSTITUENCY}</div>
             </div>
             <div className={h.heroRight}>
@@ -99,7 +99,7 @@ export default function HomeScreen() {
       }
       tabs={<Tabs id="home" tabs={TABS} value={tab} onChange={t => setParams(key, { tab: t })} />}
     >
-      {tab === 'Qanungos' && <QanungosTab villages={villages} contacts={contacts} pinnedCount={pinnedCount} onQuickAdd={() => sheets.quickAdd()} />}
+      {tab === 'Home' && <QanungosTab villages={villages} contacts={contacts} pinnedCount={pinnedCount} onQuickAdd={() => sheets.quickAdd()} />}
       {tab === 'Projects' && <WorksTab category={params.workCategory} onCategory={c => setParams(key, { workCategory: c })} sheets={sheets} />}
       {tab === 'Search' && <SearchTab villages={villages} contacts={contacts} sheets={sheets} />}
       {sheets.element}

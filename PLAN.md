@@ -244,6 +244,7 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows the l
 - **Halqa list on the home page (14 Nov):** the slim Notes bar in the Today hub became a "Halqa list · 14 · first name" bar. Tap it to open the Planner on the Halqa tab; tap its **+** to add someone straight from the home page (the Add form opens, already set to Halqa). Notes moved to a small icon in the header, left of the map.
 - **+ on every list (14 Nov):** a small round + next to the ⋯ on each list tab's "To do in …" line opens the Add form. The Add row at the bottom of the list was removed.
 - **Notes button (15 Nov):** Notes is a small yellow round button (white pad and pen, "Notes" underneath) next to Synced in the home header. **Day to Day notes removed from the Planner (15 Nov):** the card at the bottom of Events is gone; the old text stays in the database (table day_note), nothing deleted.
+- **Qanungos tab renamed Home (15 Nov):** the home tabs are Home · Projects · Search. The app always opens on Home (also after 30+ minutes away while on the home screen); tapping the big "Halqa" title goes to Home; the back arrow still returns to wherever you were. The qanungo list keeps its "Qanungos" heading inside Home.
 
 ## Native iPhone app (decided 11 Nov 2026; Apple account paid, waiting for approval)
 - The full agreed build list, phases and Usama's remaining Apple steps are in **NATIVE_APP.md**.

@@ -2,7 +2,7 @@
 
 Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain language, and show him screenshots or test links before changes he hasn't seen.
 
-## Status (14 Nov 2026)
+## Status (15 Nov 2026)
 - v2 is live on `main` (halqa-apps.vercel.app). Usama has no laptop: he works from the Claude app on his iPhone.
 - **How changes ship:** commit on the session's `claude/…` branch, run `npm run build`, push the branch, then push the same commit to `main`. Vercel deploys `main` to production. After each deploy, check that `/` and `/sw.js` return 200.
 - **Access:** the cloud environment "Usama" stores network secrets for `api.supabase.com` and `api.vercel.com` (Name `Authorization`, Prefix `Bearer`). The Vercel token ("Claude Halqa") never expires. GitHub access comes from the Claude GitHub connector.
@@ -64,8 +64,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 ## Home page
 - Header: "Halqa" + "NA-83 Sargodha-II", with three number boxes: Villages · Contacts · Pinned.
 - Sync badge (Synced / Offline · N waiting).
-- Header icons: map, AI analysis, settings.
-- Tabs: Qanungos · Projects · Search (Notes was the middle tab until 13 Nov; this tab was called Works on 13 Nov, Targets on 14 Nov, then Projects on 14 Nov). **Qanungos stays the home page.**
+- Header icons: map, AI analysis, settings. Next to Synced: a yellow round **Notes** button (15 Nov).
+- Tabs: **Home** · Projects · Search (15 Nov; the first tab was called Qanungos until then. Notes was the middle tab until 13 Nov; Projects was called Works on 13 Nov, Targets on 14 Nov). The app opens on Home; tapping the big "Halqa" title goes to Home.
 - A teal **"Today" card** under the tabs ("Today · 12 of 35 done", a progress bar, and "October 2026 briefing is ready" when one is waiting). Tapping it opens the daily list.
 - Main Groups and Day to Day side by side, under the Today card.
 - Qanungo cards: "…" menu (Rename / Remove), contact count, thin completion bar.
@@ -76,6 +76,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - **11 Nov, Today hub:** Today is its own rounded dark green banner (tap for the Today list); a small gap, then on the plain grey background the next two days that have something on, one line each ("Fri 13 · Mehndi · Halalpur · Night"; a busy day lists "3 weddings afternoon · Jalsa 4:30 PM · 3 weddings night"), plus a "Review" line when WhatsApp cards are waiting; tapping a line opens the Planner scrolled to that day. Under that, three dark teal buttons: Tell Halqa, Main Groups, Planner. This replaced the separate Tell Halqa bar, the Coming-up boxes and the two big tiles. (Tell Halqa's bar is still at the top of the Planner.)
 
 - **13 Nov:** Notes left the tabs. A slim **"Notes · N"** link under the three teal buttons opens a Notes screen (same list, ✎ to add).
+- **14–15 Nov:** that slim link became the **Halqa list** bar ("Halqa list · 14 · first name", with a + to add from home), and Notes became the yellow button next to Synced. The home page now reads, top to bottom: header · Home/Projects/Search · Today banner · next two days · Tell Halqa / Main Groups / Planner · Halqa list bar · Qanungos.
+- **Not on Home:** Usama said on 14 Nov that the home page is as busy as it should get. New things should replace something or go elsewhere.
 
 ## Works (built 13 Nov 2026)
 - **Where:** the middle home tab. Table `public.works` (category, body, village_ids, contact_ids, self_identified, images, done_at), 53 items to start (40 Roads, 13 Jobs). RLS: signed-in only, like every table. Synced and offline like the rest.
@@ -124,6 +126,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - WhatsApp won't tell other apps which number is on it, so the first WhatsApp tap on someone with 2–3 numbers asks "Which number is on WhatsApp?".
   - The choice is remembered in `contacts.whatsapp_phone` and syncs; after that the WhatsApp button goes straight to that number.
   - On the contact card each number has its own WhatsApp button; the remembered one has a green outline, and using another one changes the remembered number.
+
+- **Lists sent on WhatsApp (15 Nov):** Usama can paste a list of names and numbers (Urdu is fine). Claude translates the names, checks every number against Halqa (matching the last 10 digits of all four number fields), lists the ones already there, and gives him SQL to paste for the rest. First used for "Farrukh Khan's list": 21 added to Bhagtanwala Proper, each description starting "Farrukh Khan's list", and 7 were already in. The data goes only in the paste, never in the repo.
 
 ## Importing iPhone contacts (built 25 Oct 2026, one-time)
 - **Purpose:** a one-time import of the roughly 5,660 contacts in his iPhone, of which at least 3,500 belong in Halqa. From now on he saves new people directly in Halqa.
@@ -275,6 +279,8 @@ Tapping WhatsApp/Call is only an attempt: in the Today list the card shows the l
   - **Done 5 Nov 2026.** Live at halqa-pi.vercel.app (Vercel account mubeenjutt-7091, GitHub g8wzfd875d-cell/halqa). His own Claude maintains it from now on; Usama set up both Shortcuts on his iPhone. Usama's decision (7 Nov): the friend's copy is his own. He adds login, backups or anything else himself; we don't maintain it.
   - Lessons for next time: GitHub's web uploader fails on dragged folders, so upload the zip and let Claude unzip it. "Continue with Apple" gives GitHub a hidden Apple relay address that only GitHub can email, so a Vercel account made through that GitHub never gets its verification codes; use a Vercel account made with a real email instead.
   - Usama's day-of checklist is the artifact "Halqa NA-78 Setup" (claude.ai/artifact/9ZHru6MothWU86faU6ZbB3).
+
+- **If Halqa ever goes on the App Store (discussed 15 Nov, nothing decided):** a one-time setup (constituency, rural or urban wording such as Qanungo/Ward and Village/Mohalla, the list of areas, map, Projects categories, contact tags), then Settings for everyday choices: colour scheme, light or dark, text size, labels, home buttons, Today list size, notifications, contacts sync, caller ID, location, language, Face ID lock, backup and export, staff access. Card layouts stay the same for everyone. The first step would be gathering the words that are written directly into the screens ("Qanungo", "Village", "Projects") into one place, which is also needed for any friend's copy or an Urdu version.
 
 ## Dropped
 - **Automatic iPhone Contacts sync (CardDAV, 17 Oct):** built, but the iPhone never connected, so the one-tap save button was chosen instead. It may be revisited (see the ideas above).

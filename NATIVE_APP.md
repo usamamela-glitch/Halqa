@@ -1,6 +1,6 @@
 # Halqa: the native iPhone app
 
-Agreed with Usama, 11 Nov 2026. This is the build list for when Apple approves the developer account.
+Agreed with Usama, 11 Nov 2026 (updated 15 Nov). This is the build list for when Apple approves the developer account.
 
 ## How it works
 - **Same app, same look.** The current Halqa is wrapped in a native iPhone shell (Capacitor). Every screen and all data stay as they are.
@@ -67,6 +67,15 @@ Everything in the web app comes across unchanged, including recent additions:
 - **The last try stays on Today-list cards** ("Tried yesterday 9:30 PM", "Tried Tue 10 Nov, 4:12 PM") until a newer try, up to 90 days (12 Nov). It's kept on the phone; the native app keeps it the same way.
 - **Forms no longer open half-way up the screen** after the keyboard closes (fixed 12 Nov). In the native app the keyboard is handled natively, which should end this for good.
 - The Today hub on the home screen, event times, and the "Reached …? Yes / No" bar.
+- **Home tab** (renamed from Qanungos, 15 Nov): the app opens on it; tapping "Halqa" goes there.
+- **Halqa list bar** on Home with a + to add straight to the Halqa list, and a **+ next to ⋯** on every Planner list (14 Nov).
+- **Notes** as a yellow round button next to Synced (15 Nov). Day to Day notes removed from the Planner.
+- **Projects:** search by village, qanungo, person or word, several at once (14 Nov).
+- **Main Groups draws only what's on screen** (15 Nov), so it opens and closes smoothly however many are pinned. The native shell uses the same engine as Safari, so big lists cost the same there; this fix is what makes them smooth, in both.
+
+## Swiping back (decided 15 Nov)
+- In the web app, swiping from the left edge makes the iPhone play its own back animation, and Halqa's slide played on top of it (a flash of the old page). Fixed: Halqa now skips its slide when the iPhone has already animated it; the ‹ back arrow keeps Halqa's slide.
+- **In the native app:** the iPhone's own swipe-back is off by default inside an app shell, so only Halqa's own edge swipe (drag the page from the left edge) will run: one animation, page follows the finger. Keep it that way; don't switch on the iPhone's web swipe-back in the shell. Test swiping back from Main Groups, the Planner and the Today list on the first TestFlight build.
 
 ## Friends, later (decided 12 Nov: Usama's own native app first, friends after more discussion)
 - **Idea discussed:** one Apple account (Usama's) with a separate app per friend ("Halqa NA-78", "Halqa NA-xx"). Each native shell opens **that friend's own website**, so the friend's own Claude keeps changing the inside, with no Apple access. Usama and Claude own the shell: the iPhone features, TestFlight, and the rebuild every ~60 days. Usama keeps control (he can update the app or remove a friend) but pays for and maintains the shells; he can't see friends' data.

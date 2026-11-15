@@ -70,7 +70,6 @@ export default function HomeScreen() {
       barTitle={null}
       actions={
         <>
-          <BarButton onClick={() => push('notes')} aria-label="Notes"><IconNote size={21} /></BarButton>
           {SHOW_MAP && <BarButton onClick={() => push('map')} aria-label="District map"><IconMap size={21} /></BarButton>}
           <BarButton onClick={() => push('analysis')} aria-label="AI analysis"><IconSparkles size={21} /></BarButton>
           <BarButton onClick={() => push('settings')} aria-label="Settings"><IconSettings size={21} /></BarButton>
@@ -83,7 +82,13 @@ export default function HomeScreen() {
               <div className={h.brandTitle}>Halqa</div>
               <div className={h.brandSub}>{CONSTITUENCY}</div>
             </div>
-            <SyncPill />
+            <div className={h.heroRight}>
+              <button className={h.notesBtn} onClick={() => push('notes')} aria-label="Notes">
+                <svg width="34" height="34" viewBox="0 0 36 36" aria-hidden="true"><circle cx="18" cy="18" r="18" fill="#f5c518" /><rect x="10" y="9" width="13" height="18" rx="2.5" fill="none" stroke="#fff" strokeWidth="2" /><path d="M13 14h7M13 18h7M13 22h4" stroke="#fff" strokeWidth="1.8" strokeLinecap="round" /><g transform="rotate(35 25 18)"><rect x="23.5" y="9" width="3.6" height="14" rx="1" fill="#fff" /><path d="M23.5 23l1.8 3.4 1.8-3.4z" fill="#fff" /></g></svg>
+                <span>Notes</span>
+              </button>
+              <SyncPill />
+            </div>
           </div>
           <div className={h.miniStats}>
             <span><b>{villages.length.toLocaleString()}</b> village{villages.length === 1 ? '' : 's'}</span>

@@ -79,3 +79,8 @@
 .halqaFirst { font-weight: 500; color: var(--muted); font-size: 13.5px; }
 .halqaPlus { flex: none; width: 34px; height: 34px; border-radius: 10px; background: var(--teal); color: #fff; display: flex; align-items: center; justify-content: center; }
 .halqaPlus:active { opacity: .8; }
+
+/* Notes: a small yellow round button next to Synced (15 Nov) */
+.heroRight { display: flex; align-items: center; gap: 10px; }
+.notesBtn { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .02em; margin-bottom: -6px; }
+.notesBtn:active { opacity: .8; }

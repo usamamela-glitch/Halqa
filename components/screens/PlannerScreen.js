@@ -439,7 +439,6 @@ export default function PlannerScreen() {
   const events = useLiveQuery(() => db.events.toArray(), [], [])
   const rawLists = useLiveQuery(() => db.planner_lists.toArray(), [], [])
   const items = useLiveQuery(() => db.list_items.toArray(), [], [])
-  const dayNote = useLiveQuery(() => db.day_note.get(1), [])
   const [form, setForm] = useState(null)        // {} new, or an event
   const [itemForm, setItemForm] = useState(null) // {list_id} new, or an item
   const [listSheet, setListSheet] = useState(null) // { id?, name }
@@ -491,7 +490,6 @@ export default function PlannerScreen() {
     if (g && g.key === k) g.items.push(x)
     else groups.push({ key: k, label: dayLabel(x.day), items: [x] })
   })
-  const notePreview = (dayNote?.body || '').split('\n').find(l => l.trim())
   const openCount = id => items.filter(i => i.list_id === id && !i.done_at).length
 
   async function saveList(e) {
@@ -573,12 +571,6 @@ export default function PlannerScreen() {
               </div>
             ))}
           </div>
-
-          <Card className={p.noteCard} onClick={() => push('dayNote')}>
-            <span className={cx(ui.featureIcon, p.noteIcon)}><IconNote size={20} /></span>
-            <span className={p.noteText}><strong>Day to Day notes</strong><span>{notePreview || 'Empty'}</span></span>
-            <IconChevron size={18} />
-          </Card>
 
           {past.length > 0 && (
             <div className={ui.section}>

@@ -30,3 +30,7 @@
   background: var(--teal-50); border-radius: 12px; padding: 3px 10px;
 }
 
+
+/* Only the rows on screen are drawn (15 Nov) */
+.vlist { position: relative; width: 100%; }
+.vrow { position: absolute; top: 0; left: 0; width: 100%; }

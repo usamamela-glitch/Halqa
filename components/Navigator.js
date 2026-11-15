@@ -13,6 +13,7 @@ import AnalysisScreen from './screens/AnalysisScreen'
 import ImportScreen from './screens/ImportScreen'
 import TodayScreen from './screens/TodayScreen'
 import PlannerScreen from './screens/PlannerScreen'
+import CalendarScreen from './screens/CalendarScreen'
 
 const SCREENS = {
   home: HomeScreen,
@@ -27,6 +28,7 @@ const SCREENS = {
   import: ImportScreen,
   today: TodayScreen,
   planner: PlannerScreen,
+  calendar: CalendarScreen,
   notes: NotesScreen,
 }
 

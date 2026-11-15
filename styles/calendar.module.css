@@ -1,0 +1,34 @@
+/* The Planner calendar (15 Nov) */
+.body { padding: 4px 0 calc(var(--safe-bottom) + 90px); background: var(--card); min-height: 100%; }
+.month { padding-top: 10px; scroll-margin-top: calc(var(--safe-top) + 54px); }
+.monthName { font-size: 26px; font-weight: 800; letter-spacing: -0.6px; padding: 6px 16px 8px; color: var(--ink); }
+.week { display: grid; grid-template-columns: repeat(7, 1fr); padding: 0 4px 5px; font-size: 11px; font-weight: 700; color: var(--faint); text-align: center; border-bottom: 1px solid var(--hair); }
+.grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); padding: 0 4px; }
+.blank { border-bottom: 1px solid var(--hair); }
+.day { min-height: 74px; display: flex; flex-direction: column; align-items: stretch; gap: 2px; padding: 4px 1px 5px; border-bottom: 1px solid var(--hair); text-align: center; min-width: 0; }
+.day:active { background: #f3f6f9; }
+.num { align-self: center; width: 28px; height: 28px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 15px; font-weight: 600; color: var(--ink); margin-bottom: 1px; }
+.past .num { color: var(--muted); }
+.today { background: var(--teal); color: #fff !important; font-weight: 800; }
+.sel { background: #f2c94c; color: #3d2e00 !important; font-weight: 800; }
+.chip { display: block; font-size: 9.5px; font-weight: 700; line-height: 1.35; padding: 1px 3px; border-radius: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.chipWedding { background: #dff0ee; color: #1a5550; }
+.chipOther { background: #e3e9fb; color: #2f4593; }
+.chipPin { background: #fdeccb; color: #8a5a00; }
+.chipReview { background: #f3f5f7; color: #6d7c88; box-shadow: inset 0 0 0 1px #b6c0c8; border: 0; }
+.chipItem { background: #eceff3; color: #3a4953; }
+.chipDone { background: #f3f5f7; color: #a3aeb7; text-decoration: line-through; }
+.past .chip { opacity: .75; }
+.more { font-size: 9.5px; font-weight: 700; color: var(--muted); text-align: left; padding-left: 3px; }
+.todayBtn { position: fixed; left: 16px; bottom: calc(var(--safe-bottom) + 18px); z-index: 40; height: 40px; padding: 0 18px; border-radius: 20px; background: var(--card); color: var(--teal-700); font-weight: 750; font-size: 15px; box-shadow: 0 4px 16px rgba(0,0,0,.14); border: 1px solid var(--border); }
+.sheet { display: flex; flex-direction: column; gap: 8px; }
+.none { color: var(--muted); padding: 4px 2px 6px; }
+.row { display: flex; flex-direction: column; gap: 3px; text-align: left; padding: 11px 13px; border: 1px solid var(--border); border-radius: 14px; background: var(--card); }
+.row:active { background: #f3f6f9; }
+.rowTop { display: flex; align-items: center; gap: 8px; }
+.rowTag { font-size: 12px; font-weight: 750; padding: 2px 8px; border-radius: 999px; }
+.rowWhen { margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--amber, #c98208); }
+.rowTitle { font-size: 16px; font-weight: 750; color: var(--ink); }
+.rowSub { font-size: 13px; color: var(--muted); }
+.rowGo { font-size: 13px; font-weight: 700; color: var(--teal-700); margin-top: 2px; }
+.add { display: flex; align-items: center; gap: 8px; margin-top: 4px; padding: 13px 14px; border-radius: 14px; background: var(--teal-50); color: var(--teal-700); font-weight: 750; font-size: 15px; }

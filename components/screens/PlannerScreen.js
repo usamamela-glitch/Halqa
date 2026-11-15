@@ -13,6 +13,7 @@ import { motion, animate, useMotionValue } from 'framer-motion'
 import { useNav, useScreen } from '../../lib/nav'
 import { TellBar } from '../TellHalqa'
 import { NotesPanel, newGeneralNote } from './HomeScreen'
+import { tidyEventCards } from '../../lib/cards'
 import p from '../../styles/planner.module.css'
 
 // The card photo (private bucket): a short-lived link, fetched when online.
@@ -223,7 +224,7 @@ function CardPreview({ path }) {
 const SNAP = { type: 'spring', stiffness: 500, damping: 40 }
 let closeOpenRow = null   // only one row open at a time
 
-export function SwipeRow({ actions, children }) {
+export function SwipeRow({ actions, children, rowId }) {
   const x = useMotionValue(0)
   const width = actions.length * 74
   const close = () => animate(x, 0, SNAP)
@@ -233,7 +234,7 @@ export function SwipeRow({ actions, children }) {
     animate(x, -width, SNAP)
   }
   return (
-    <div className={p.swipe}>
+    <div className={p.swipe} id={rowId}>
       <div className={p.swipeActions} style={{ width }}>
         {actions.map(a => (
           <button key={a.label} className={cx(p.swipeBtn, p[`swipe_${a.tone}`])} onClick={() => { close(); a.onClick() }}>
@@ -272,7 +273,7 @@ function SwipeEvent({ ev, onPress, showDay }) {
     toast('Event deleted', { label: 'Undo', onClick: () => insertRow('events', ev) })
   }
   return (
-    <SwipeRow actions={[
+    <SwipeRow rowId={`row-${ev.id}`} actions={[
       { label: 'Share', tone: 'share', icon: <IconShare size={19} />, onClick: share },
       { label: 'Delete', tone: 'delete', icon: <IconTrash size={19} />, onClick: del },
     ]}>
@@ -292,7 +293,7 @@ function SwipeItem({ item, onPress, listName, showDay, onMove }) {
     toast('Deleted', { label: 'Undo', onClick: () => insertRow('list_items', item) })
   }
   return (
-    <SwipeRow actions={[
+    <SwipeRow rowId={`row-${item.id}`} actions={[
       { label: 'Share', tone: 'share', icon: <IconShare size={19} />, onClick: share },
       { label: 'Move', tone: 'move', icon: <IconMove size={19} />, onClick: () => onMove(item) },
       { label: 'Delete', tone: 'delete', icon: <IconTrash size={19} />, onClick: del },
@@ -465,6 +466,32 @@ export default function PlannerScreen() {
     el.scrollIntoView({ block: 'start' })
   })
 
+  // Past invitation cards are deleted once a day (lib/cards.js).
+  useEffect(() => { tidyEventCards().catch(() => {}) }, [])
+
+  // "Show in Planner" from the calendar: open the right tab, scroll to the card and flash it.
+  const showRef = useRef(null)
+  showRef.current = ({ id, day, listId, isItem }) => {
+    const pastDay = day && day < today
+    if (isItem && (pastDay || !day)) setTab(listId)
+    else setTab('calendar')
+    if (!isItem && pastDay) setShowPast(true)
+    let tries = 0
+    const find = () => {
+      const el = document.getElementById(`row-${id}`)
+      if (!el) { if (++tries < 20) return setTimeout(find, 60); return }
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+      el.classList.add(p.flashRow)
+      setTimeout(() => el.classList.remove(p.flashRow), 1800)
+    }
+    setTimeout(find, 80)
+  }
+  useEffect(() => {
+    const on = e => showRef.current(e.detail)
+    window.addEventListener('halqa:planner-show', on)
+    return () => window.removeEventListener('halqa:planner-show', on)
+  }, [])
+
   const review = useMemo(() => {
     const byBatch = {}
     events.filter(e => e.status === 'review').forEach(e => { (byBatch[e.batch_id || e.id] ||= []).push(e) })
@@ -566,7 +593,10 @@ export default function PlannerScreen() {
           )}
 
           <div className={ui.section}>
-            <div className={ui.sectionHead}><span>Upcoming</span><span>{entries.length}</span></div>
+            <div className={ui.sectionHead}>
+              <span>Upcoming · {entries.length}</span>
+              <button className={p.calBtn} onClick={() => push('calendar')} aria-label="Calendar"><IconCalendar size={17} /></button>
+            </div>
             {groups.length === 0 ? (
               <Empty icon={<IconCalendar size={28} />} title="Nothing planned yet"
                 text="Share wedding cards from WhatsApp with “Add to Halqa”, or tap + to add an event." />

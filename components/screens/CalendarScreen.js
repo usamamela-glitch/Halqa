@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
 import { useNav } from '../../lib/nav'
@@ -27,6 +27,34 @@ function chipOf(x) {
   if (e.pinned) return { cls: c.chipPin, text: `📌 ${text}` }
   return { cls: e.kind === 'wedding' ? c.chipWedding : c.chipOther, text }
 }
+
+// One month. Drawn again only when its own days change (or the tapped day is in it),
+// so tapping a day doesn't redraw the whole calendar (16 Nov).
+const Month = memo(function Month({ y, m, byDay, today, sel, onPick }) {
+  const first = new Date(y, m, 1).getDay()
+  const n = new Date(y, m + 1, 0).getDate()
+  const cells = []
+  for (let i = 0; i < first; i++) cells.push(<div key={`b${i}`} className={c.blank} />)
+  for (let d = 1; d <= n; d++) {
+    const day = `${y}-${pad(m + 1)}-${pad(d)}`
+    const chips = (byDay[day] || []).map(chipOf)
+    cells.push(
+      <button key={day} className={cx(c.day, day < today && c.past)} onClick={() => onPick(day)}>
+        <span className={cx(c.num, day === today && c.today, day === sel && c.sel)}>{d}</span>
+        {chips.slice(0, 3).map((ch, i) => <span key={i} className={cx(c.chip, ch.cls)}>{ch.text}</span>)}
+        {chips.length > 3 && <span className={c.more}>+{chips.length - 3}</span>}
+      </button>
+    )
+  }
+  const label = new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'long', ...(y !== new Date().getFullYear() ? { year: 'numeric' } : {}) })
+  return (
+    <section id={`cal-${monthKey(y, m)}`} className={c.month}>
+      <h2 className={c.monthName}>{label}</h2>
+      <div className={c.week}>{WEEK.map((w, i) => <span key={i}>{w}</span>)}</div>
+      <div className={c.grid}>{cells}</div>
+    </section>
+  )
+})
 
 export default function CalendarScreen() {
   const { pop } = useNav()
@@ -128,30 +156,8 @@ export default function CalendarScreen() {
     <Screen barTitle="Calendar" scrollRef={scrollRef} bodyClassName={c.body}
       actions={<BarButton onClick={() => setForm({ day: sel || today })} aria-label="New event"><IconPlus size={22} /></BarButton>}>
       {months.slice(shown.start, shown.end + 1).map(({ y, m }) => {
-        const first = new Date(y, m, 1).getDay()
-        const n = new Date(y, m + 1, 0).getDate()
-        const cells = []
-        for (let i = 0; i < first; i++) cells.push(<div key={`b${i}`} className={c.blank} />)
-        for (let d = 1; d <= n; d++) {
-          const day = `${y}-${pad(m + 1)}-${pad(d)}`
-          const list = byDay[day] || []
-          const chips = list.map(chipOf)
-          cells.push(
-            <button key={day} className={cx(c.day, day < today && c.past)} onClick={() => setSel(day)}>
-              <span className={cx(c.num, day === today && c.today, day === sel && c.sel)}>{d}</span>
-              {chips.slice(0, 3).map((ch, i) => <span key={i} className={cx(c.chip, ch.cls)}>{ch.text}</span>)}
-              {chips.length > 3 && <span className={c.more}>+{chips.length - 3}</span>}
-            </button>
-          )
-        }
-        const label = new Date(y, m, 1).toLocaleDateString('en-GB', { month: 'long', ...(y !== new Date().getFullYear() ? { year: 'numeric' } : {}) })
-        return (
-          <section key={monthKey(y, m)} id={`cal-${monthKey(y, m)}`} className={c.month}>
-            <h2 className={c.monthName}>{label}</h2>
-            <div className={c.week}>{WEEK.map((w, i) => <span key={i}>{w}</span>)}</div>
-            <div className={c.grid}>{cells}</div>
-          </section>
-        )
+        const key = monthKey(y, m)
+        return <Month key={key} y={y} m={m} byDay={byDay} today={today} sel={sel && sel.startsWith(key) ? sel : null} onPick={setSel} />
       })}
 
       <button className={c.todayBtn} onClick={toToday}>Today</button>

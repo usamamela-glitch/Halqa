@@ -1,6 +1,6 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion, useDragControls } from 'framer-motion'
+import { AnimatePresence, motion, useDragControls, useMotionValue, usePresence } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
 import { getSyncState, subscribeSync, syncNow } from '../lib/sync'
@@ -159,6 +159,33 @@ function Portal({ children }) {
   return el ? createPortal(children, el) : null
 }
 
+// The sheet itself. Its slide up and down runs on the graphics chip (Web
+// Animations), so it stays smooth while the page behind is busy (16 Nov).
+// Dragging it down by the handle still uses framer-motion.
+const SHEET_IN = 'cubic-bezier(0.32, 0.72, 0, 1)'
+function SheetPanel({ inset, controls, onClose, children }) {
+  const [isPresent, safeToRemove] = usePresence()
+  const ref = useRef(null)
+  const y = useMotionValue(0)
+  useLayoutEffect(() => {
+    ref.current?.animate([{ transform: 'translateY(100%)' }, { transform: 'translateY(0px)' }], { duration: 320, easing: SHEET_IN })
+  }, [])
+  useEffect(() => {
+    if (isPresent || !ref.current) return
+    const a = ref.current.animate([{ transform: `translateY(${y.get()}px)` }, { transform: 'translateY(100%)' }], { duration: 240, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' })
+    a.onfinish = () => safeToRemove()
+  }, [isPresent])
+  return (
+    <motion.div ref={ref} className={s.sheet} role="dialog" aria-modal="true"
+      style={{ y, bottom: inset, maxHeight: `calc(100dvh - ${inset}px - var(--safe-top) - 24px)` }}
+      drag="y" dragListener={false} dragControls={controls}
+      dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0.05, bottom: 0.7 }}
+      onDragEnd={(_, i) => { if (i.offset.y > 110 || i.velocity.y > 600) onClose() }}>
+      {children}
+    </motion.div>
+  )
+}
+
 export function Sheet({ open, onClose, title, children, headerRight }) {
   const controls = useDragControls()
   const inset = useKeyboardInset()
@@ -169,13 +196,7 @@ export function Sheet({ open, onClose, title, children, headerRight }) {
           <>
             <motion.div key="bd" className={s.backdrop} onClick={onClose}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }} />
-            <motion.div key="sh" className={s.sheet} role="dialog" aria-modal="true"
-              style={{ bottom: inset, maxHeight: `calc(100dvh - ${inset}px - var(--safe-top) - 24px)` }}
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 380, damping: 30, mass: 0.9 }}
-              drag="y" dragListener={false} dragControls={controls}
-              dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0.05, bottom: 0.7 }}
-              onDragEnd={(_, i) => { if (i.offset.y > 110 || i.velocity.y > 600) onClose() }}>
+            <SheetPanel key="sh" inset={inset} controls={controls} onClose={onClose}>
               <div className={s.sheetGrab} onPointerDown={e => controls.start(e)}>
                 <div className={s.handle} />
                 {(title || headerRight) && (
@@ -187,7 +208,7 @@ export function Sheet({ open, onClose, title, children, headerRight }) {
                 )}
               </div>
               <div className={s.sheetBody}>{children}</div>
-            </motion.div>
+            </SheetPanel>
           </>
         )}
       </AnimatePresence>

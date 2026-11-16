@@ -24,7 +24,7 @@ Agreed with Usama, 11 Nov 2026 (updated 15 Nov). This is the build list for when
    - **No village added to names:** Usama already writes the place into names, so no "(village)" suffix, to avoid doubling.
    - **Deleting** someone in Halqa never deletes them from the iPhone; Halqa asks instead.
    - **Edits made on the iPhone** don't flow back into Halqa (one direction only, keeps it simple). Could be added later.
-4. ~~**Caller ID.**~~ **Dropped (17 Nov).** The iPhone only shows an app's caller-ID line for numbers that are *not* in the iPhone's contacts, and everyone in Halqa is also saved in the iPhone with the same name (Usama wants them in both). So the line would never appear. Also not possible: the full description or a Halqa card over an incoming call (Apple allows only one short line). The after-call prompt (Phase 2) still gives the card one tap away.
+4. ~~**Caller ID.**~~ **Dropped (17 Nov).** The iPhone only shows an app's caller-ID line for numbers that are *not* in the iPhone's contacts, and everyone in Halqa is also saved in the iPhone with the same name (Usama wants them in both). So the line would never appear. Also not possible: the full description or a Halqa card over an incoming call (Apple allows only one short line). For calls started from Halqa, the after-call prompt (Phase 2, item 12) gives the card one tap away; for incoming calls, copy the number in Recents and Back Tap.
 5. **Native polish:**
    - no Safari and no web address bar
    - a proper icon and opening screen
@@ -54,7 +54,7 @@ Agreed with Usama, 11 Nov 2026 (updated 15 Nov). This is the build list for when
    - areas you've been away from, e.g. "Nobody in Bhabra contacted for 30 days"
 10. **Widgets:** Today (9 of 35) and the next two events. They can be removed any time.
 11. **iPhone Calendar:** Planner events go into the iPhone Calendar automatically, with the venue, so the Watch and CarPlay show them and one tap starts directions.
-12. **After a call** started from Halqa, the "did you reach them?" question appears reliably.
+12. **After a call** started from Halqa, the "Reached …? Yes / No" question appears reliably, with the card one tap away (Usama likes this, 17 Nov). **Incoming calls:** iOS never tells an app who called, so there's no automatic prompt; the route to the caller's card is Recents → copy the number → Back Tap, which opens the existing card (full description) when the number is in Halqa.
 
 ## Phase 3
 13. **Siri and the Action button:** "Tell Halqa…" and Quick Add.

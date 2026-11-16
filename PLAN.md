@@ -20,6 +20,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
   - `supabase/migrations/20261114000000_works_pinned.sql` (pinned projects)
   - `supabase/migrations/20261114100000_planner_pins.sql` (pinned events and list items)
   - `supabase/migrations/20261114200000_works_road_type.sql` (road type: main, link or small)
+- **Two sessions at once (16 Nov):** another Claude session merged "Projects: + New list" (PR #1) while this one was shipping the calendar. Its change dropped `categoryIcon` from the imports in `components/Works.js` while the contact card's "Asked for" list still used it, so opening such a contact crashed Halqa ("Can't find variable: categoryIcon"). Fixed 16 Nov. `npm run build` does not catch a missing name, so before shipping also run an undefined-name check (eslint 8 with `no-undef` and `react/jsx-no-undef` over components, lib and pages), and before pushing to main always `git fetch` and merge `origin/main` first.
 - **Never put Usama's personal data in the repo.** On 13 Nov the safety check blocked a migration containing his notes (a CNIC, phone numbers), and then blocked pushes from that session. Data imports go in a paste for him to run; the code holds only table definitions.
   
   The auto-mode safety check blocks Claude from running SQL that changes the live database, so Usama pastes the SQL into the Supabase SQL Editor himself. Give him the **contents**, not the file name. "Run without RLS" is the right choice.

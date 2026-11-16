@@ -24,7 +24,7 @@ Agreed with Usama, 11 Nov 2026 (updated 15 Nov). This is the build list for when
    - **No village added to names:** Usama already writes the place into names, so no "(village)" suffix, to avoid doubling.
    - **Deleting** someone in Halqa never deletes them from the iPhone; Halqa asks instead.
    - **Edits made on the iPhone** don't flow back into Halqa (one direction only, keeps it simple). Could be added later.
-4. **Caller ID.** An incoming call from any Halqa number shows "Name · Village · Pinned", even if the number isn't saved on the iPhone.
+4. ~~**Caller ID.**~~ **Dropped (17 Nov).** The iPhone only shows an app's caller-ID line for numbers that are *not* in the iPhone's contacts, and everyone in Halqa is also saved in the iPhone with the same name (Usama wants them in both). So the line would never appear. Also not possible: the full description or a Halqa card over an incoming call (Apple allows only one short line). The after-call prompt (Phase 2) still gives the card one tap away.
 5. **Native polish:**
    - no Safari and no web address bar
    - a proper icon and opening screen
@@ -87,6 +87,7 @@ Everything in the web app comes across unchanged, including recent additions:
 - **Friend 2** would first get a fresh, empty web copy with all current features (own GitHub, Supabase, Vercel, Claude API key). Needs: constituency, rural or urban wording, map.
 
 ## Discussed and parked (not building now)
+- **Caller ID with the description** (17 Nov): dropped, see Phase 1 item 4.
 - **A message queue:** AI-written personal WhatsApp messages; tap to send, then the next. About 20 people in 10 minutes.
 - **Personal voice notes** to top contacts.
 - **WhatsApp Business broadcast lists** (people who saved the number), and the official WhatsApp business system (costly; Meta restricts political use).

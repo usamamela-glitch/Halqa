@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
 import { insertRow, updateRow, deleteRow, restoreRow, newId } from '../lib/store'
 import { savePhoto } from '../lib/images'
-import { telHref, waHref, phonesOf, phoneDigits, downloadVCard } from '../lib/phone'
+import { telHref, waHref, phonesOf, phoneDigits, downloadVCard, cleanText } from '../lib/phone'
 import { TAGS, daysSince, contactedLevel, contactedLabel, byName, addedDate } from '../lib/domain'
 import { useLocalStorage } from '../lib/hooks'
 import { markInTouch, recordAttempt, inTouchToday } from '../lib/touch'
@@ -319,14 +319,14 @@ function ContactForm({ initial, onDone, onOpenExisting, quick, focus }) {
   }
 
   async function save() {
-    const name = f.name.trim()
+    const name = cleanText(f.name).replace(/\s+/g, ' ').trim()
     if (!name || !f.village_id || saving) return
     setSaving(true)
     const data = {
       village_id: f.village_id,
       name,
-      phone: f.phone.trim(), phone2: f.phone2.trim(), phone3: f.phone3.trim(),
-      description: f.description.trim(),
+      phone: cleanText(f.phone).trim(), phone2: cleanText(f.phone2).trim(), phone3: cleanText(f.phone3).trim(),
+      description: cleanText(f.description).trim(),
     }
     // Only send new-feature columns when used, so saving still works before
     // the database migration has been run.

@@ -5,7 +5,7 @@ import { useNav, useScreen } from '../../lib/nav'
 import { insertRow, updateRow, deleteRow } from '../../lib/store'
 import { villageCompletion, byName, shortDate, TAGS, bulkAddTimes, addedLabel } from '../../lib/domain'
 import { plainText } from '../../lib/images'
-import { phoneDigits, phonesOf } from '../../lib/phone'
+import { phoneDigits, phonesOf, cleanText } from '../../lib/phone'
 import { Screen, BarButton, Tabs, Card, Sheet, ActionSheet, Empty, Field, SearchBox, SyncPill, cx, ui, useToast, useSyncState } from '../ui'
 import { maybeAutoBriefing } from '../../lib/briefing'
 import { ContactRow, useContactSheets } from '../contacts'
@@ -47,8 +47,8 @@ export default function HomeScreen() {
     if (!p.has('add')) return
     window.history.replaceState(null, '', window.location.pathname)
     ;(async () => {
-      let name = (p.get('name') || '').trim()
-      let phones = (p.get('phone') || '').split(/[\n,;]+/).map(s => s.trim()).filter(Boolean)
+      let name = cleanText(p.get('name')).trim()
+      let phones = cleanText(p.get('phone')).split(/[\n,;]+/).map(s => s.trim()).filter(Boolean)
       let villageId = null
       if (p.has('text')) ({ name, phones, villageId } = parseSharedText(p.get('text'), await db.villages.toArray()))
       const keys = phones.map(numberKey).filter(k => k.length >= 10)

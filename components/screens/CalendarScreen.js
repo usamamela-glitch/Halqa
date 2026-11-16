@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
 import { useNav } from '../../lib/nav'
@@ -46,13 +46,13 @@ export default function CalendarScreen() {
     return m
   }, [events, items])
 
-  // From the earliest month with something (at most 2 years back) to a year after the last, and at least a year ahead.
+  // From two years back to two months after the last dated thing, and at least a year ahead.
   const months = useMemo(() => {
     const now = new Date()
     const days = Object.keys(byDay).sort()
-    const first = days[0] ? new Date(`${days[0]}T12:00:00`) : now
     const last = days[days.length - 1] ? new Date(`${days[days.length - 1]}T12:00:00`) : now
-    let y = Math.max(Math.min(first.getFullYear() * 12 + first.getMonth(), now.getFullYear() * 12 + now.getMonth()), now.getFullYear() * 12 + now.getMonth() - 24)
+    // Always from two years back, so the months don't shift when the data loads.
+    let y = now.getFullYear() * 12 + now.getMonth() - 24
     const end = Math.max(last.getFullYear() * 12 + last.getMonth() + 2, now.getFullYear() * 12 + now.getMonth() + 12)
     const out = []
     for (; y <= end; y++) out.push({ y: Math.floor(y / 12), m: y % 12 })
@@ -60,9 +60,42 @@ export default function CalendarScreen() {
   }, [byDay])
 
   const nowKey = monthKey(new Date().getFullYear(), new Date().getMonth())
-  const toToday = smooth => document.getElementById(`cal-${nowKey}`)?.scrollIntoView({ block: 'start', behavior: smooth ? 'smooth' : 'auto' })
-  const jumped = useRef(false)
-  useEffect(() => { if (!jumped.current && months.length) { jumped.current = true; requestAnimationFrame(() => toToday(false)) } })
+  const nowIdx = Math.max(0, months.findIndex(x => monthKey(x.y, x.m) === nowKey))
+
+  // Drawing 30+ months at once made the page stutter while it slid in (16 Nov).
+  // Start with this month and the next two; add the later months just after the
+  // slide, and earlier months as he scrolls up (keeping his place on screen).
+  const [range, setRange] = useState(null)   // { start, end } indexes into months, inclusive
+  const shown = range || { start: Math.max(0, nowIdx - 1), end: Math.min(months.length - 1, nowIdx + 2) }
+  useEffect(() => {
+    if (shown.end >= months.length - 1) return
+    const t = setTimeout(() => setRange(r => { const cur = r || shown; return { ...cur, end: Math.min(months.length - 1, cur.end + 3) } }), range ? 60 : 420)
+    return () => clearTimeout(t)
+  }, [shown.end, months.length, range])
+  const keep = useRef(null)   // scroll height before earlier months were added
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    el.style.overflowAnchor = 'none'   // we keep his place ourselves (iPhone Safari has no scroll anchoring)
+    const onScroll = () => {
+      if (el.scrollTop > 400 || keep.current != null) return
+      setRange(r => { const cur = r || shown; if (cur.start <= 0) return r; keep.current = el.scrollHeight; return { ...cur, start: Math.max(0, cur.start - 3) } })
+    }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  })
+  useLayoutEffect(() => {
+    const el = scrollRef.current
+    if (el && keep.current != null) { el.scrollTop += el.scrollHeight - keep.current; keep.current = null }
+  }, [shown.start])
+  // Open on this month: scroll past the month above before the first frame is drawn.
+  const opened = useRef(false)
+  useLayoutEffect(() => {
+    if (opened.current || !months.length) return
+    const el = document.getElementById(`cal-${nowKey}`)
+    if (el && scrollRef.current) { opened.current = true; scrollRef.current.scrollTop = el.offsetTop - (scrollRef.current.querySelector('header')?.offsetHeight || 0) }
+  })
+  const toToday = () => { const el = document.getElementById(`cal-${nowKey}`); if (el && scrollRef.current) scrollRef.current.scrollTop = el.offsetTop - (scrollRef.current.querySelector('header')?.offsetHeight || 0) }
 
   const showInPlanner = x => {
     const detail = x.ev ? { id: x.ev.id, day: x.ev.day } : { id: x.item.id, day: x.item.day, listId: x.item.list_id, isItem: true }
@@ -75,7 +108,7 @@ export default function CalendarScreen() {
   return (
     <Screen barTitle="Calendar" scrollRef={scrollRef} bodyClassName={c.body}
       actions={<BarButton onClick={() => setForm({ day: sel || today })} aria-label="New event"><IconPlus size={22} /></BarButton>}>
-      {months.map(({ y, m }) => {
+      {months.slice(shown.start, shown.end + 1).map(({ y, m }) => {
         const first = new Date(y, m, 1).getDay()
         const n = new Date(y, m + 1, 0).getDate()
         const cells = []
@@ -102,7 +135,7 @@ export default function CalendarScreen() {
         )
       })}
 
-      <button className={c.todayBtn} onClick={() => toToday(true)}>Today</button>
+      <button className={c.todayBtn} onClick={toToday}>Today</button>
 
       <Sheet open={!!sel} onClose={() => setSel(null)} title={sel ? longDay(sel) : ''}>
         {sel && (

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { createPortal } from 'react-dom'
-import { AnimatePresence, motion, useDragControls, useMotionValue, usePresence } from 'framer-motion'
+import { AnimatePresence, animate, motion, useMotionValue, usePresence } from 'framer-motion'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
 import { getSyncState, subscribeSync, syncNow } from '../lib/sync'
@@ -163,10 +163,12 @@ function Portal({ children }) {
 // Animations), so it stays smooth while the page behind is busy (16 Nov).
 // Dragging it down by the handle still uses framer-motion.
 const SHEET_IN = 'cubic-bezier(0.32, 0.72, 0, 1)'
-function SheetPanel({ inset, controls, onClose, children }) {
+function SheetPanel({ inset, onClose, children }) {
   const [isPresent, safeToRemove] = usePresence()
   const ref = useRef(null)
   const y = useMotionValue(0)
+  const closeRef = useRef(onClose)
+  closeRef.current = onClose
   useLayoutEffect(() => {
     ref.current?.animate([{ transform: 'translateY(100%)' }, { transform: 'translateY(0px)' }], { duration: 320, easing: SHEET_IN })
   }, [])
@@ -175,19 +177,60 @@ function SheetPanel({ inset, controls, onClose, children }) {
     const a = ref.current.animate([{ transform: `translateY(${y.get()}px)` }, { transform: 'translateY(100%)' }], { duration: 240, easing: 'cubic-bezier(0.4, 0, 1, 1)', fill: 'forwards' })
     a.onfinish = () => safeToRemove()
   }, [isPresent])
+
+  // Swipe down to close, starting anywhere in the top third of the sheet (17 Nov),
+  // when its content is scrolled to the top. Typing fields are left alone.
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let st = null
+    const onStart = e => {
+      const t = e.touches[0]
+      if (!t || e.touches.length > 1 || e.target.closest('input, textarea, select, [contenteditable="true"]')) { st = null; return }
+      const r = el.getBoundingClientRect()
+      const body = el.querySelector('[data-sheet-body]')
+      const inZone = t.clientY - r.top < r.height / 3 || !!e.target.closest('[data-sheet-grab]')
+      st = inZone && (!body || body.scrollTop <= 0) ? { x0: t.clientX, y0: t.clientY, drag: false, lastY: t.clientY, lastT: performance.now(), v: 0 } : null
+    }
+    const onMove = e => {
+      if (!st) return
+      const t = e.touches[0], dy = t.clientY - st.y0, dx = t.clientX - st.x0
+      if (!st.drag) {
+        if (dy > 8 && dy > Math.abs(dx)) st.drag = true
+        else { if (dy < -4 || Math.abs(dx) > 10) st = null; return }
+      }
+      e.preventDefault()
+      y.set(Math.max(0, dy))
+      const now = performance.now()
+      if (now > st.lastT) st.v = (t.clientY - st.lastY) / (now - st.lastT)
+      st.lastY = t.clientY; st.lastT = now
+    }
+    const onEnd = () => {
+      if (!st || !st.drag) { st = null; return }
+      const far = y.get() > 110 || st.v > 0.6
+      st = null
+      if (far) closeRef.current()
+      else animate(y, 0, { duration: 0.22, ease: [0.32, 0.72, 0, 1] })
+    }
+    el.addEventListener('touchstart', onStart, { passive: true })
+    el.addEventListener('touchmove', onMove, { passive: false })
+    el.addEventListener('touchend', onEnd)
+    el.addEventListener('touchcancel', onEnd)
+    return () => {
+      el.removeEventListener('touchstart', onStart); el.removeEventListener('touchmove', onMove)
+      el.removeEventListener('touchend', onEnd); el.removeEventListener('touchcancel', onEnd)
+    }
+  }, [])
+
   return (
     <motion.div ref={ref} className={s.sheet} role="dialog" aria-modal="true"
-      style={{ y, bottom: inset, maxHeight: `calc(100dvh - ${inset}px - var(--safe-top) - 24px)` }}
-      drag="y" dragListener={false} dragControls={controls}
-      dragConstraints={{ top: 0, bottom: 0 }} dragElastic={{ top: 0.05, bottom: 0.7 }}
-      onDragEnd={(_, i) => { if (i.offset.y > 110 || i.velocity.y > 600) onClose() }}>
+      style={{ y, bottom: inset, maxHeight: `calc(100dvh - ${inset}px - var(--safe-top) - 24px)` }}>
       {children}
     </motion.div>
   )
 }
 
 export function Sheet({ open, onClose, title, children, headerRight }) {
-  const controls = useDragControls()
   const inset = useKeyboardInset()
   return (
     <Portal>
@@ -196,8 +239,8 @@ export function Sheet({ open, onClose, title, children, headerRight }) {
           <>
             <motion.div key="bd" className={s.backdrop} onClick={onClose}
               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.22 }} />
-            <SheetPanel key="sh" inset={inset} controls={controls} onClose={onClose}>
-              <div className={s.sheetGrab} onPointerDown={e => controls.start(e)}>
+            <SheetPanel key="sh" inset={inset} onClose={onClose}>
+              <div className={s.sheetGrab} data-sheet-grab>
                 <div className={s.handle} />
                 {(title || headerRight) && (
                   <div className={s.sheetHead}>
@@ -207,7 +250,7 @@ export function Sheet({ open, onClose, title, children, headerRight }) {
                   </div>
                 )}
               </div>
-              <div className={s.sheetBody}>{children}</div>
+              <div className={s.sheetBody} data-sheet-body>{children}</div>
             </SheetPanel>
           </>
         )}

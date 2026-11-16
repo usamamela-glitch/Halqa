@@ -1,6 +1,6 @@
-import { memo, useMemo } from 'react'
-import { AnimatePresence, motion, useDragControls } from 'framer-motion'
-import { useNav, useNavStack, ScreenContext } from '../lib/nav'
+import { useLayoutEffect, useMemo, useRef } from 'react'
+import { motion, useTransform } from 'framer-motion'
+import { useNav, useNavStack, ScreenContext, registerLayer } from '../lib/nav'
 import HomeScreen, { NotesScreen } from './screens/HomeScreen'
 import QanungoScreen from './screens/QanungoScreen'
 import VillageScreen from './screens/VillageScreen'
@@ -32,69 +32,89 @@ const SCREENS = {
   notes: NotesScreen,
 }
 
-// iOS-like push: 300ms, decelerating.
-const EASE = [0.32, 0.72, 0, 1]
-const T = { duration: 0.3, ease: EASE }
-const NOW = { duration: 0 }
-// The page leaving reads `custom` from AnimatePresence at the moment it leaves.
-const VARIANTS = { out: instant => (instant ? { opacity: 0, transition: NOW } : { x: '100%', transition: T }) }
-
-// On the iPhone (web app), the iPhone's own edge swipe already goes back. Halqa's
-// own edge drag on top of it made one swipe go back twice (16 Nov), so it is off
-// there; it stays for other browsers and for the native app shell.
-const IOS_WEB = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/.test(navigator.userAgent) && !(typeof window !== 'undefined' && window.Capacitor)
-
+// Pages slide like an iPhone app (16 Nov): the top page follows its position; the
+// page underneath sits 28% to the left, dimmed, and follows the top page in. A
+// swipe from the left edge drags the top page; let go past a third of the screen
+// (or with a flick) and it goes back, otherwise it slides back into place.
 const layerStyle = { position: 'fixed', inset: 0, overflow: 'hidden', background: 'var(--bg)', willChange: 'transform' }
+const edgeStyle = { position: 'absolute', left: 0, top: 'calc(var(--safe-top) + 54px)', bottom: 0, width: 22, zIndex: 90, touchAction: 'none' }
+const W = () => (typeof window !== 'undefined' ? window.innerWidth : 400)
 
-function Layer({ entry, index, top, onBack, instant }) {
-  const t = instant ? NOW : T
+function EdgeSwipe({ x, onBack, onSettle }) {
+  const start = e => {
+    const el = e.currentTarget
+    const x0 = e.clientX, y0 = e.clientY
+    let dragging = false, lastX = x0, lastT = performance.now(), v = 0
+    el.setPointerCapture?.(e.pointerId)
+    const move = ev => {
+      const dx = ev.clientX - x0, dy = ev.clientY - y0
+      if (!dragging) {
+        if (Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy)) dragging = true
+        else return
+      }
+      x.set(Math.max(0, dx))
+      const now = performance.now()
+      if (now > lastT) v = (ev.clientX - lastX) / (now - lastT)
+      lastX = ev.clientX; lastT = now
+    }
+    const up = ev => {
+      el.removeEventListener('pointermove', move); el.removeEventListener('pointerup', up); el.removeEventListener('pointercancel', up)
+      if (!dragging) {
+        // A tap on the thin edge strip: pass it on to what's underneath.
+        el.style.pointerEvents = 'none'
+        const under = document.elementFromPoint(ev.clientX, ev.clientY)
+        el.style.pointerEvents = ''
+        under?.click?.()
+        return
+      }
+      if (x.get() > W() / 3 || v > 0.45) onBack()
+      else onSettle()
+    }
+    el.addEventListener('pointermove', move); el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up)
+  }
+  return <div style={edgeStyle} onPointerDown={start} aria-hidden />
+}
+
+function Layer({ entry, index, top, topX }) {
+  const { getX, pop, settle, enter } = useNav()
+  const layerRef = useRef(null), dimRef = useRef(null)
+  useLayoutEffect(() => {
+    registerLayer(entry.key, { layer: layerRef.current, dim: dimRef.current })
+    if (entry.fresh) enter(entry.key)
+    return () => registerLayer(entry.key, null)
+  }, [])
   const Comp = SCREENS[entry.screen] || HomeScreen
   const isTop = index === top
-  const canSwipe = isTop && index > 0 && !IOS_WEB
-  const controls = useDragControls()
+  const own = getX(entry.key)
+  // The page underneath: 28% to the left and dimmed, moving in as the top page moves out.
+  const underX = useTransform(topX, v => -0.28 * (W() - v))
+  const dim = useTransform(topX, v => Math.max(0, 1 - v / W()))
   // The screen itself only redraws when its own params change, not when another page opens on top.
   const screenValue = useMemo(() => ({ key: entry.key, params: entry.params }), [entry.key, entry.params])
   const body = useMemo(() => <Comp />, [Comp])
 
   return (
     <motion.div
-      style={{ ...layerStyle, zIndex: index + 1, visibility: index < top - 1 ? 'hidden' : 'visible', boxShadow: index > 0 ? '-8px 0 30px rgba(0,0,0,0.12)' : 'none' }}
-      initial={index === 0 ? false : { x: '100%' }}
-      animate={{ x: isTop ? 0 : '-28%' }}
-      custom={instant}
-      variants={VARIANTS}
-      exit="out"
-      transition={t}
-      drag={canSwipe ? 'x' : false}
-      dragListener={false}
-      dragControls={controls}
-      dragConstraints={{ left: 0, right: 0 }}
-      dragElastic={{ left: 0, right: 1 }}
-      dragMomentum={false}
-      onDragEnd={(_, info) => { if (info.offset.x > 90 || info.velocity.x > 500) onBack() }}
-      onPointerDown={e => { if (canSwipe && e.clientX < 28) controls.start(e) }}
+      ref={layerRef}
+      style={{ ...layerStyle, x: isTop ? own : underX, zIndex: index + 1, visibility: index < top - 1 ? 'hidden' : 'visible', boxShadow: index > 0 ? '-8px 0 30px rgba(0,0,0,0.12)' : 'none' }}
       aria-hidden={!isTop}
     >
       <ScreenContext.Provider value={screenValue}>
         {body}
       </ScreenContext.Provider>
+      {isTop && index > 0 && <EdgeSwipe x={own} onBack={pop} onSettle={() => settle(entry.key)} />}
       <motion.div
-        style={{ position: 'absolute', inset: 0, background: 'rgba(5,20,24,0.18)', pointerEvents: isTop ? 'none' : 'auto', zIndex: 100 }}
-        initial={false}
-        animate={{ opacity: isTop ? 0 : 1 }}
-        transition={t}
+        ref={dimRef}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(5,20,24,0.18)', pointerEvents: isTop ? 'none' : 'auto', zIndex: 100, opacity: isTop ? 0 : index === top - 1 ? dim : 1 }}
       />
     </motion.div>
   )
 }
 
 export default function Navigator() {
-  const { pop } = useNav()
-  const { stack, instant } = useNavStack()
+  const { getX } = useNav()
+  const { stack } = useNavStack()
   const top = stack.length - 1
-  return (
-    <AnimatePresence initial={false} custom={instant}>
-      {stack.map((entry, i) => <Layer key={entry.key} entry={entry} index={i} top={top} onBack={pop} instant={instant} />)}
-    </AnimatePresence>
-  )
+  const topX = getX(stack[top].key)
+  return stack.map((entry, i) => <Layer key={entry.key} entry={entry} index={i} top={top} topX={topX} />)
 }

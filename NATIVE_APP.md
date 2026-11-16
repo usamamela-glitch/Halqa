@@ -78,7 +78,7 @@ Everything in the web app comes across unchanged, including recent additions:
 
 ## Swiping back (decided 15 Nov)
 - In the web app, swiping from the left edge makes the iPhone play its own back animation, and Halqa's slide played on top of it (a flash of the old page). Fixed: Halqa now skips its slide when the iPhone has already animated it; the ‹ back arrow keeps Halqa's slide.
-- **16 Nov:** in the web app, Halqa's own edge drag is now switched off on the iPhone (the iPhone's swipe and Halqa's drag together went back twice). It switches itself back on in the native shell (`window.Capacitor`).
+- **16 Nov (evening), rebuilt:** Halqa no longer uses the browser's history, so the iPhone's own swipe-back never runs, in the web app or in the shell. Halqa's own edge swipe (page follows the finger, the page underneath slides in with it) is the only one, everywhere. Slides run on the graphics chip. Nothing extra to do for the native app.
 - **In the native app:** the iPhone's own swipe-back is off by default inside an app shell, so only Halqa's own edge swipe (drag the page from the left edge) will run: one animation, page follows the finger. Keep it that way; don't switch on the iPhone's web swipe-back in the shell. Test swiping back from Main Groups, the Planner and the Today list on the first TestFlight build.
 
 ## Friends, later (decided 12 Nov: Usama's own native app first, friends after more discussion)

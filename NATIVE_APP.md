@@ -72,6 +72,7 @@ Everything in the web app comes across unchanged, including recent additions:
 - **Notes** is a tab in the Planner (15 Nov). Day to Day notes removed from the Planner.
 - **Projects:** search by village, qanungo, person or word, several at once (14 Nov).
 - **Calendar in the Planner** (15 Nov): a month view of every dated event and to-do, with "Show in Planner" and "Add an event on this day". Phase 2's iPhone Calendar sync (item 11) would be extra: it puts the same events into the iPhone's own Calendar app.
+- **Tap the top bar to scroll up** on every screen (16 Nov). In the native app, also connect the iPhone's own status-bar tap (Capacitor `statusTap`) to the same scroll.
 - **Past invitation cards deleted** automatically once the event has passed (15 Nov).
 - **Main Groups draws only what's on screen** (15 Nov), so it opens and closes smoothly however many are pinned. The native shell uses the same engine as Safari, so big lists cost the same there; this fix is what makes them smooth, in both.
 

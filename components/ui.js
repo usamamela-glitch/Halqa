@@ -30,7 +30,8 @@ export function Screen({ title, subtitle, hero, actions, back = true, home = fal
 
   return (
     <div className={s.screen} ref={ref} onScroll={onScroll} data-scroll>
-      <header className={s.bar}>
+      {/* Tap the top bar (not its buttons) to scroll back to the top, like tapping the iPhone's status bar (16 Nov). */}
+      <header className={s.bar} onClick={e => { if (!e.target.closest('button, a, input')) ref.current?.scrollTo({ top: 0, behavior: 'smooth' }) }}>
         <div className={s.barSide}>
           {back && (
             <button className={cx(s.barBtn, s.barBtnBack)} onClick={onBack || pop} aria-label="Back">

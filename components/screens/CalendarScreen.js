@@ -65,28 +65,47 @@ export default function CalendarScreen() {
   // Drawing 30+ months at once made the page stutter while it slid in (16 Nov).
   // Start with this month and the next two; add the later months just after the
   // slide, and earlier months as he scrolls up (keeping his place on screen).
+  // Keeping his place when months are added above: remember the month at the top of
+  // the screen and how far down it was, then put it back exactly there.
+  const keep = useRef(null)
+  const anchor = el => {
+    const top = el.scrollTop
+    const sec = [...el.querySelectorAll('section[id^="cal-"]')].find(x => x.offsetTop + x.offsetHeight > top)
+    return sec ? { id: sec.id, off: sec.offsetTop - top } : null
+  }
   const [range, setRange] = useState(null)   // { start, end } indexes into months, inclusive
-  const shown = range || { start: Math.max(0, nowIdx - 1), end: Math.min(months.length - 1, nowIdx + 2) }
+  // Only this month is drawn while the page slides in; the month before and the next
+  // ones follow just after the slide (the month before keeps his place on screen).
+  const shown = range || { start: nowIdx, end: nowIdx }
   useEffect(() => {
-    if (shown.end >= months.length - 1) return
-    const t = setTimeout(() => setRange(r => { const cur = r || shown; return { ...cur, end: Math.min(months.length - 1, cur.end + 3) } }), range ? 60 : 420)
+    if (range) return
+    const t = setTimeout(() => {
+      keep.current = scrollRef.current ? anchor(scrollRef.current) : null
+      setRange({ start: Math.max(0, nowIdx - 1), end: Math.min(months.length - 1, nowIdx + 3) })
+    }, 380)
     return () => clearTimeout(t)
-  }, [shown.end, months.length, range])
-  const keep = useRef(null)   // scroll height before earlier months were added
+  }, [range, nowIdx, months.length])
+  useEffect(() => {
+    if (!range || range.end >= months.length - 1) return
+    const t = setTimeout(() => setRange(r => ({ ...r, end: Math.min(months.length - 1, r.end + 3) })), 80)
+    return () => clearTimeout(t)
+  }, [range, months.length])
   useEffect(() => {
     const el = scrollRef.current
     if (!el) return
     el.style.overflowAnchor = 'none'   // we keep his place ourselves (iPhone Safari has no scroll anchoring)
     const onScroll = () => {
       if (el.scrollTop > 400 || keep.current != null) return
-      setRange(r => { const cur = r || shown; if (cur.start <= 0) return r; keep.current = el.scrollHeight; return { ...cur, start: Math.max(0, cur.start - 3) } })
+      setRange(r => { if (!r || r.start <= 0) return r; keep.current = anchor(el); return { ...r, start: Math.max(0, r.start - 3) } })
     }
     el.addEventListener('scroll', onScroll, { passive: true })
     return () => el.removeEventListener('scroll', onScroll)
   })
   useLayoutEffect(() => {
     const el = scrollRef.current
-    if (el && keep.current != null) { el.scrollTop += el.scrollHeight - keep.current; keep.current = null }
+    const k = keep.current
+    if (el && k) { const sec = document.getElementById(k.id); if (sec) el.scrollTop = sec.offsetTop - k.off }
+    keep.current = null
   }, [shown.start])
   // Open on this month: scroll past the month above before the first frame is drawn.
   const opened = useRef(false)

@@ -39,13 +39,18 @@ const NOW = { duration: 0 }
 // The page leaving reads `custom` from AnimatePresence at the moment it leaves.
 const VARIANTS = { out: instant => (instant ? { opacity: 0, transition: NOW } : { x: '100%', transition: T }) }
 
+// On the iPhone (web app), the iPhone's own edge swipe already goes back. Halqa's
+// own edge drag on top of it made one swipe go back twice (16 Nov), so it is off
+// there; it stays for other browsers and for the native app shell.
+const IOS_WEB = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/.test(navigator.userAgent) && !(typeof window !== 'undefined' && window.Capacitor)
+
 const layerStyle = { position: 'fixed', inset: 0, overflow: 'hidden', background: 'var(--bg)', willChange: 'transform' }
 
 function Layer({ entry, index, top, onBack, instant }) {
   const t = instant ? NOW : T
   const Comp = SCREENS[entry.screen] || HomeScreen
   const isTop = index === top
-  const canSwipe = isTop && index > 0
+  const canSwipe = isTop && index > 0 && !IOS_WEB
   const controls = useDragControls()
   // The screen itself only redraws when its own params change, not when another page opens on top.
   const screenValue = useMemo(() => ({ key: entry.key, params: entry.params }), [entry.key, entry.params])

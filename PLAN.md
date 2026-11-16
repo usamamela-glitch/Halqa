@@ -130,6 +130,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 
 - **Lists sent on WhatsApp (15 Nov):** Usama can paste a list of names and numbers (Urdu is fine). Claude translates the names, checks every number against Halqa (matching the last 10 digits of all four number fields), lists the ones already there, and gives him SQL to paste for the rest. First used for "Farrukh Khan's list": 21 added to Bhagtanwala Proper, each description starting "Farrukh Khan's list", and 7 were already in. The data goes only in the paste, never in the repo.
 
+- **Search finds mentions everywhere (17 Nov):** results come in groups. 1) **Contacts** whose name, village or number matches (words in any order, as before). 2) **Mentioned in a description:** contacts whose description has the exact words in that order ("Mian Ilyas's nephew"), with the words highlighted. 3) **Projects** that mention them (tap to open, with Edit). 4) **Notes and Planner:** village notes, general notes, events (title, note, venue) and list items, each labelled with where it is; tapping opens it. Exact words means whole words in order, capitals ignored: "mian ilyas" matches "Mian Ilyas's" and "mian ilyas ka", not "Ilyas Mian" or "Mian Ilyasabad". Descriptions no longer match words in any order (only the exact phrase). Spelling variants are tried only when nothing matches at all.
+
 ## Importing iPhone contacts (built 25 Oct 2026, one-time)
 - **Purpose:** a one-time import of the roughly 5,660 contacts in his iPhone, of which at least 3,500 belong in Halqa. From now on he saves new people directly in Halqa.
 - **How:** export a .vcf from the Contacts app (Lists → hold "All Contacts" → Export → Save to Files), then Settings → Import contacts → choose the file.

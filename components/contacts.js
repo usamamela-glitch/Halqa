@@ -76,7 +76,22 @@ export function ContactedBadge({ contact }) {
   return <span className={cx(ui.badge, ui[`badge_${level}`])}>{d === null ? 'Not yet' : d === 0 ? 'Today' : `${d}d`}</span>
 }
 
-export function ContactRow({ contact, villageName, subtitle, onPress, highlight, showContacted, onUnpin, rowRef }) {
+// Highlight the searched words in a description (17 Nov).
+function Marked({ text, phrase }) {
+  const g = new RegExp(phrase.source, 'giu')
+  const out = []
+  let last = 0, m
+  while ((m = g.exec(text)) && out.length < 20) {
+    if (m.index > last) out.push(text.slice(last, m.index))
+    out.push(<mark key={m.index} style={{ background: '#fff1b8', color: 'inherit', borderRadius: 3, padding: '0 1px' }}>{m[0]}</mark>)
+    last = m.index + m[0].length
+    if (!m[0].length) g.lastIndex++
+  }
+  out.push(text.slice(last))
+  return out
+}
+
+export function ContactRow({ contact, villageName, subtitle, onPress, highlight, showContacted, onUnpin, rowRef, mark }) {
   const phones = phonesOf(contact)
   const tags = contact.tags || []
   return (
@@ -89,7 +104,7 @@ export function ContactRow({ contact, villageName, subtitle, onPress, highlight,
           </div>
           {subtitle && <span className={s.sub}>{subtitle}</span>}
           <span className={s.sub}>{phones.join(' · ') || 'No number'}</span>
-          {contact.description && <span className={s.desc}>{contact.description}</span>}
+          {contact.description && <span className={s.desc}>{mark ? <Marked text={contact.description} phrase={mark} /> : contact.description}</span>}
           {(tags.length > 0 || showContacted) && (
             <div className={s.meta}>
               {showContacted && <ContactedBadge contact={contact} />}

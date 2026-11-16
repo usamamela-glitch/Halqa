@@ -634,17 +634,24 @@ export function VillageWorks({ village }) {
 
 // Every target this person has asked for (they're tagged in it), open first.
 export function ContactTargets({ contactId }) {
+  const works = useLiveQuery(() => db.works.toArray(), [], [])
+  const mine = useMemo(() => works.filter(x => (x.contact_ids || []).includes(contactId)), [works, contactId])
+  if (!mine.length) return null
+  const { open, recent, old } = splitWorks(mine)
+  const n = open.length, all = open.length + recent.length + old.length
+  return <WorkList list={[...open, ...recent, ...old]} heading="Asked for" headRight={`${n} open${all > n ? ` · ${all - n} done` : ''}`} />
+}
+
+// A short list of projects with their numbers; tapping one opens it (with Edit).
+// Used on contact cards ("Asked for") and in Search (17 Nov).
+export function WorkList({ list, heading, headRight, className }) {
   const toast = useToast()
   const works = useLiveQuery(() => db.works.toArray(), [], [])
   const names = useNames()
   const [view, setView] = useState(null)
   const [form, setForm] = useState(null)
   const [formKey, setFormKey] = useState(0)
-  const mine = useMemo(() => works.filter(x => (x.contact_ids || []).includes(contactId)), [works, contactId])
   const viewing = view && works.find(x => x.id === view)
-  if (!mine.length) return null
-  const { open, recent, old } = splitWorks(mine)
-  const list = [...open, ...recent, ...old]
   const openForm = initial => { setView(null); setFormKey(k => k + 1); setForm(initial) }
 
   async function toggle(work) {
@@ -654,8 +661,8 @@ export function ContactTargets({ contactId }) {
   }
 
   return (
-    <div className={w.contactTargets}>
-      <div className={w.villageHead}><span>Asked for</span><span>{open.length} open{list.length > open.length ? ` · ${list.length - open.length} done` : ''}</span></div>
+    <div className={className || w.contactTargets}>
+      <div className={w.villageHead}><span>{heading}</span><span>{headRight}</span></div>
       <div className={cx(ui.card, p.dayCard)}>
         {list.map(x => {
           const done = !!x.done_at

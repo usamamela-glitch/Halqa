@@ -85,3 +85,12 @@
 .notesBtn { display: flex; flex-direction: column; align-items: center; gap: 2px; color: #fff; font-size: 10px; font-weight: 700; letter-spacing: .02em; margin-bottom: -6px; }
 .notesBtn:active { opacity: .8; }
 button.brandTitle { color: inherit; text-align: left; padding: 0; background: none; }
+
+/* Search: notes and Planner mentions (17 Nov) */
+.elseList { border-radius: 14px; background: var(--card); box-shadow: var(--shadow); overflow: hidden; }
+.elseRow { width: 100%; display: flex; flex-direction: column; gap: 3px; padding: 11px 14px; border-bottom: 1px solid var(--hair); text-align: left; }
+.elseRow:last-child { border-bottom: 0; }
+.elseRow:active { background: #f3f6f9; }
+.elseWhere { font-size: 12px; font-weight: 750; color: var(--teal-700); letter-spacing: .02em; }
+.elseText { font-size: 14.5px; color: var(--ink); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+.mark { background: #fff1b8; color: inherit; border-radius: 3px; padding: 0 1px; }

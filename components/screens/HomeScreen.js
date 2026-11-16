@@ -14,7 +14,7 @@ import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import { TodayCard } from './TodayScreen'
 import { NextLines, ItemForm } from './PlannerScreen'
 import { TellButton } from '../TellHalqa'
-import { WorksTab } from '../Works'
+import { WorksTab, WorkList } from '../Works'
 import { parseSharedText, numberKey } from '../../lib/importContacts'
 import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
@@ -341,22 +341,49 @@ function SearchTab({ villages, contacts, sheets }) {
 
   const words = useMemo(() => queryWords(q), [q])
 
-  // Every word must appear in the name, village or description, in any order.
-  // If nothing matches, try again allowing spelling variants.
-  const { contactHits, similar } = useMemo(() => {
-    if (!active) return { contactHits: [], similar: false }
+  // 17 Nov: results in groups.
+  //  1. Contacts whose name (or village, or number) matches: every word, in any order.
+  //  2. Contacts whose description mentions the exact words, in that order
+  //     ("Mian Ilyas's nephew"), with the words highlighted.
+  //  3. Projects, and 4. notes and the Planner, that mention the exact words.
+  // If nothing matches by name, try again allowing spelling variants.
+  const phrase = useMemo(() => phraseMatcher(q), [q])
+  const { contactHits, similar, descHits } = useMemo(() => {
+    if (!active) return { contactHits: [], similar: false, descHits: [] }
     const find = loose => contacts.filter(c => {
       if (tag && !(c.tags || []).includes(tag)) return false
       if (!words.length) return true
       if (digits.length >= 3 && digits.length === q.replace(/[\s+()-]/g, '').length && phonesOf(c).some(p => phoneDigits(p).includes(digits))) return true
-      return matchesWords(words, [c.name, vById[c.village_id]?.name, c.description], loose)
+      return matchesWords(words, [c.name, vById[c.village_id]?.name], loose)
     })
     let hits = find(false)
-    const similar = !hits.length && words.length > 0
+    const named = new Set(hits.map(c => c.id))
+    const descHits = phrase ? contacts.filter(c => !named.has(c.id) && (!tag || (c.tags || []).includes(tag)) && phrase.test(c.description || '')).sort(byName).slice(0, 80) : []
+    const similar = !hits.length && !descHits.length && words.length > 0
     if (similar) hits = find(true)
     hits.sort((a, b) => nameRank(words, a.name) - nameRank(words, b.name) || byName(a, b))
-    return { contactHits: hits.slice(0, 80), similar: similar && hits.length > 0 }
-  }, [contacts, words, digits, q, tag, active, vById])
+    return { contactHits: hits.slice(0, 80), similar: similar && hits.length > 0, descHits }
+  }, [contacts, words, digits, q, tag, active, vById, phrase])
+
+  // Everything else that mentions the exact words.
+  const works = useLiveQuery(() => db.works.toArray(), [], [])
+  const vNotes = useLiveQuery(() => db.notes.toArray(), [], [])
+  const gNotes = useLiveQuery(() => db.general_notes.toArray(), [], [])
+  const events = useLiveQuery(() => db.events.toArray(), [], [])
+  const listItems = useLiveQuery(() => db.list_items.toArray(), [], [])
+  const lists = useLiveQuery(() => db.planner_lists.toArray(), [], [])
+  const elsewhere = useMemo(() => {
+    if (!phrase || tag) return { projects: [], other: [] }
+    const listName = Object.fromEntries(lists.map(l => [l.id, l.name]))
+    const projects = works.filter(x => phrase.test(x.body || '')).sort((a, b) => (a.done_at ? 1 : 0) - (b.done_at ? 1 : 0) || (b.created_at || '').localeCompare(a.created_at || ''))
+    const other = [
+      ...vNotes.filter(n => phrase.test(plainText(n.body || ''))).map(n => ({ key: n.id, where: `Note · ${vById[n.village_id]?.name || 'Village'}`, text: plainText(n.body || ''), go: () => push('note', { table: 'notes', id: n.id }) })),
+      ...gNotes.filter(n => phrase.test(plainText(n.body || ''))).map(n => ({ key: n.id, where: 'Note', text: plainText(n.body || ''), go: () => push('note', { table: 'general_notes', id: n.id }) })),
+      ...events.filter(e => phrase.test([e.title, e.notes, e.venue, e.village].filter(Boolean).join(' · '))).map(e => ({ key: e.id, where: `Planner · ${e.function || 'Event'}${e.day ? ` · ${shortDate(e.day)}` : ''}`, text: [e.title, e.notes, e.venue].filter(Boolean).join(' · '), go: () => push('planner', { tab: 'calendar', day: e.day }) })),
+      ...listItems.filter(i => phrase.test([i.title, i.details].filter(Boolean).join(' · '))).map(i => ({ key: i.id, where: `Planner · ${listName[i.list_id] || 'List'}${i.done_at ? ' · done' : ''}`, text: [i.title, i.details].filter(Boolean).join(' · '), go: () => push('planner', { tab: i.list_id }) })),
+    ]
+    return { projects, other }
+  }, [phrase, tag, works, vNotes, gNotes, events, listItems, lists, vById, push])
 
   const villageHits = useMemo(() => {
     if (!words.length || tag) return []
@@ -405,8 +432,63 @@ function SearchTab({ villages, contacts, sheets }) {
           </ul>
         </div>
       )}
+
+      {descHits.length > 0 && (
+        <div className={ui.section}>
+          <div className={ui.sectionHead}><span>Mentioned in a description</span><span className={h.resultCount}>{descHits.length}</span></div>
+          <ul className={ui.list}>
+            {descHits.map(c => (
+              <ContactRow key={c.id} contact={c} villageName={vById[c.village_id]?.name} subtitle={vById[c.village_id]?.name || 'Unknown village'} mark={phrase}
+                onPress={() => push('village', { id: c.village_id, tab: 'Contacts', highlight: c.id })} />
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {elsewhere.projects.length > 0 && (
+        <WorkList list={elsewhere.projects} heading="Projects" headRight={elsewhere.projects.length} className={ui.section} />
+      )}
+
+      {elsewhere.other.length > 0 && (
+        <div className={ui.section}>
+          <div className={ui.sectionHead}><span>Notes and Planner</span><span className={h.resultCount}>{elsewhere.other.length}</span></div>
+          <div className={h.elseList}>
+            {elsewhere.other.map(x => (
+              <button key={x.key} className={h.elseRow} onClick={x.go}>
+                <span className={h.elseWhere}>{x.where}</span>
+                <span className={h.elseText}><Marked text={x.text} phrase={phrase} /></span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </>
   )
+}
+
+// The exact words typed, in order, as whole words (capitals don't matter):
+// "mian ilyas" matches "Mian Ilyas's nephew" and "mian  ilyas ka", not "Mian Ilyasabad".
+function phraseMatcher(q) {
+  const parts = (q || '').trim().split(/\s+/).filter(Boolean)
+  if (!parts.length || parts.join('').length < 2) return null
+  const esc = parts.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('\\s+')
+  try { return new RegExp(`(?<![\\p{L}\\p{N}])${esc}(?![\\p{L}\\p{N}])`, 'iu') } catch { return null }
+}
+
+// Text with the matched words highlighted.
+export function Marked({ text, phrase }) {
+  if (!phrase || !text) return text || null
+  const g = new RegExp(phrase.source, 'giu')
+  const out = []
+  let last = 0, m
+  while ((m = g.exec(text)) && out.length < 20) {
+    if (m.index > last) out.push(text.slice(last, m.index))
+    out.push(<mark key={m.index} className={h.mark}>{m[0]}</mark>)
+    last = m.index + m[0].length
+    if (!m[0].length) g.lastIndex++
+  }
+  out.push(text.slice(last))
+  return out
 }
 
 // The last 15 people added one by one (not the iPhone import), so a quick add

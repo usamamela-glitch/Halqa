@@ -479,7 +479,13 @@ export default function PlannerScreen() {
     let tries = 0
     const find = () => {
       const el = document.getElementById(`row-${id}`)
-      if (!el) { if (++tries < 20) return setTimeout(find, 60); return }
+      if (!el) {
+        if (++tries < 20) return setTimeout(find, 60)
+        // Not in the list (e.g. an event more than 15 days old): open it instead.
+        const ev = events.find(e => e.id === id)
+        if (ev) setForm(ev)
+        return
+      }
       el.scrollIntoView({ block: 'center', behavior: 'smooth' })
       el.classList.add(p.flashRow)
       setTimeout(() => el.classList.remove(p.flashRow), 1800)
@@ -500,7 +506,10 @@ export default function PlannerScreen() {
 
   const confirmed = events.filter(e => e.status !== 'review')
   const upcoming = sortEvents(confirmed.filter(e => !e.day || e.day >= today))
-  const past = sortEvents(confirmed.filter(e => e.day && e.day < today)).reverse()
+  // Past events show for 15 days after their date (17 Nov); older ones stay in
+  // the calendar and Search, and nothing is deleted.
+  const pastFrom = addDays(today, -15)
+  const past = sortEvents(confirmed.filter(e => e.day && e.day < today && e.day >= pastFrom)).reverse()
   // Pinned events show in their own section at the top, and also in their place below.
   const pinnedEvents = upcoming.filter(e => e.pinned)
   // List items with a date also show under Events (until done).

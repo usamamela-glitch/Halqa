@@ -139,6 +139,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 
 - **Keypad (17 Nov):** a tab in the bottom bar (`components/Keypad.js`). Type a number on big keys; from 3 digits, people in Halqa whose number contains them show above the keys (a fixed strip, so the keys never move); tap one to open their card. The full number shows the person's name. Call (green) rings it with the SIM (the iPhone asks "Call …?" first, as for every app) and counts as "Tried" for a Halqa person; WhatsApp opens a chat with any number; a 10+ digit number not in Halqa offers "Not in Halqa · Add" (Quick Add, number filled in). The big header is hidden on the Keypad tab.
 
+- **Past events for 15 days (17 Nov):** the Planner's "Past events" list shows events from the last 15 days only. Older events are not deleted: they stay in the calendar and Search; "Show in Planner" on one of them opens it in the event form. (Card pictures are still deleted once an event has passed, see lib/cards.js.)
+
 ## Importing iPhone contacts (built 25 Oct 2026, one-time)
 - **Purpose:** a one-time import of the roughly 5,660 contacts in his iPhone, of which at least 3,500 belong in Halqa. From now on he saves new people directly in Halqa.
 - **How:** export a .vcf from the Contacts app (Lists → hold "All Contacts" → Export → Save to Files), then Settings → Import contacts → choose the file.

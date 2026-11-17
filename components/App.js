@@ -113,6 +113,19 @@ function Main() {
 export default function App() {
   const signedIn = useSignedIn()
   useEffect(() => { registerServiceWorker() }, [])
+  // Safety net (17 Nov): iOS sometimes leaves the whole page shifted after a field
+  // or the keyboard closes, pushing the bottom bar half off the screen. Halqa's
+  // pages never scroll the window itself, so when nothing is being typed in,
+  // put it back.
+  useEffect(() => {
+    const typing = () => { const a = document.activeElement; return !!a && (a.matches?.('input, textarea, select, [contenteditable="true"]')) }
+    let t = null
+    const fix = () => { clearTimeout(t); t = setTimeout(() => { if (!typing() && (window.scrollY || document.documentElement.scrollTop)) window.scrollTo(0, 0) }, 120) }
+    window.addEventListener('scroll', fix, { passive: true })
+    document.addEventListener('focusout', fix)
+    window.visualViewport?.addEventListener('resize', fix)
+    return () => { window.removeEventListener('scroll', fix); document.removeEventListener('focusout', fix); window.visualViewport?.removeEventListener('resize', fix) }
+  }, [])
   if (signedIn === null) return <div className={s.boot} />
   return signedIn ? <Main /> : <SignIn />
 }

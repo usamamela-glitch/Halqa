@@ -29,13 +29,29 @@ export function KeypadTab({ contacts, vById, sheets }) {
   const zeroDown = () => { hold.current = setTimeout(() => { hold.current = 'plus'; setNum(n => (n.length < 18 ? n + '+' : n)) }, 450) }
   const zeroUp = () => { if (hold.current === 'plus') { hold.current = null; return } clearTimeout(hold.current); hold.current = null; press('0') }
   const call = () => { if (exact) recordAttempt(exact) }
+  // Hold the number area to paste a copied number (the iPhone asks to allow it).
+  const pasteHold = useRef(null)
+  const pasteDown = () => {
+    pasteHold.current = setTimeout(async () => {
+      try {
+        const t = await navigator.clipboard.readText()
+        const clean = (t || '').replace(/[^\d+*#]/g, '').slice(0, 18)
+        if (clean) setNum(clean)
+      } catch {}
+    }, 500)
+  }
+  const pasteCancel = () => clearTimeout(pasteHold.current)
 
   return (
     <div className={k.wrap}>
       <div className={k.display}>
         <div className={k.numRow}>
-          <input className={k.number} value={pretty(num)} onChange={e => setNum(e.target.value.replace(/[^\d+*#]/g, ''))}
-            inputMode="none" aria-label="Number" />
+          {/* Not a typing field (17 Nov): focusing it made iOS shift the screen and push
+              the bottom bar half off. Typing is by the keys; hold the number to paste. */}
+          <div className={k.number} role="textbox" aria-readonly="true" aria-label="Number"
+            onPointerDown={pasteDown} onPointerUp={pasteCancel} onPointerLeave={pasteCancel} onContextMenu={e => e.preventDefault()}>
+            {pretty(num) || '\u00a0'}
+          </div>
           {num && <button className={k.back} onClick={back} aria-label="Delete"><svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M9 1h18a2 2 0 012 2v16a2 2 0 01-2 2H9L1 11z" /><path d="M14 7l8 8M22 7l-8 8" strokeLinecap="round" /></svg></button>}
         </div>
         {exact && <div className={k.who}>{exact.name}{vById[exact.village_id] ? ` · ${vById[exact.village_id].name}` : ''}</div>}

@@ -3,7 +3,7 @@
 .wrap { display: flex; flex-direction: column; align-items: stretch; padding-bottom: 20px; font-family: -apple-system, system-ui, 'Inter Variable', sans-serif; }
 .display { text-align: center; height: 62px; }
 .numRow { position: relative; display: flex; align-items: center; justify-content: center; height: 44px; }
-.number { width: 100%; padding: 0 44px; border: 0; background: transparent; text-align: center; font-family: inherit; font-size: 34px; font-weight: 400; letter-spacing: .5px; color: #000; outline: none; caret-color: transparent; }
+.number { width: 100%; padding: 0 44px; text-align: center; font-family: inherit; font-size: 34px; font-weight: 400; letter-spacing: .5px; color: #000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .back { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 44px; height: 40px; display: flex; align-items: center; justify-content: center; color: #8e8e93; }
 .back:active { color: #3a3a3c; }
 .who { font-size: 15px; font-weight: 600; color: var(--teal-700); margin-top: 2px; }

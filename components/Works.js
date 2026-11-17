@@ -213,7 +213,7 @@ export function WorksTab({ category, onCategory, sheets }) {
         )}
       </div>
 
-      <button className={ui.fab} onClick={() => openForm({ category: cat })} aria-label="Add project"><IconPlus size={28} /></button>
+      <button className={cx(ui.fab, w.fabAboveBar)} onClick={() => openForm({ category: cat })} aria-label="Add project"><IconPlus size={28} /></button>
 
       <Sheet open={!!viewing} onClose={() => setView(null)} title={viewing ? `${categoryLabel(categoryOf(viewing))}${viewing.serial ? ` · ${serialLabel(viewing)}` : ''}` : ''}
         headerRight={viewing && <button className={w.editBtn} onClick={() => openForm(viewing)}>Edit</button>}>

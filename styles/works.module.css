@@ -107,3 +107,5 @@
 .filterChips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
 .filterChips .filterChip { margin-bottom: 0; }
 .clearAll { height: 32px; padding: 0 10px; font-size: 13.5px; font-weight: 700; color: var(--muted); }
+/* The + sits above the main page's bottom bar (17 Nov) */
+.fabAboveBar { bottom: calc(var(--safe-bottom) + 84px) !important; }

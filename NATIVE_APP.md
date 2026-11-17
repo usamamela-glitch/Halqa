@@ -71,6 +71,7 @@ Everything in the web app comes across unchanged, including recent additions:
 - **Halqa list bar** on Home with a + to add straight to the Halqa list, and a **+ next to ⋯** on every Planner list (14 Nov).
 - **Notes** is a tab in the Planner (15 Nov). Day to Day notes removed from the Planner.
 - **Projects:** search by village, qanungo, person or word, several at once (14 Nov).
+- **Bottom bar and Keypad** (17 Nov): Home · Projects · ⚡ Quick add · Keypad · Search on the main page; the Keypad finds Halqa people by number and calls or WhatsApps any number.
 - **Calendar in the Planner** (15 Nov): a month view of every dated event and to-do, with "Show in Planner" and "Add an event on this day". Phase 2's iPhone Calendar sync (item 11) would be extra: it puts the same events into the iPhone's own Calendar app.
 - **Tap the top bar to scroll up** on every screen (16 Nov). In the native app, also connect the iPhone's own status-bar tap (Capacitor `statusTap`) to the same scroll.
 - **Past invitation cards deleted** automatically once the event has passed (15 Nov).

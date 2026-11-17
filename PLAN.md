@@ -66,7 +66,7 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 - Header: "Halqa" + "NA-83 Sargodha-II", with three number boxes: Villages · Contacts · Pinned.
 - Sync badge (Synced / Offline · N waiting).
 - Header icons: map, AI analysis, settings. Notes is a tab in the Planner (15 Nov; it was a yellow button next to Synced for a day).
-- Tabs: **Home** · Projects · Search (15 Nov; the first tab was called Qanungos until then. Notes was the middle tab until 13 Nov; Projects was called Works on 13 Nov, Targets on 14 Nov). The app opens on Home; tapping the big "Halqa" title goes to Home.
+- **Bottom bar (17 Nov), on the main page only:** Home · Projects · ⚡ Quick add (raised, centre) · Keypad · Search. It replaced the Home/Projects/Search tab row at the top and the floating ⚡ button; other pages (village, Planner, Main Groups…) have no bar. The Projects + button sits above the bar. Earlier tabs: Home · Projects · Search (15 Nov; the first tab was called Qanungos until then. Notes was the middle tab until 13 Nov; Projects was called Works on 13 Nov, Targets on 14 Nov). The app opens on Home; tapping the big "Halqa" title goes to Home.
 - A teal **"Today" card** under the tabs ("Today · 12 of 35 done", a progress bar, and "October 2026 briefing is ready" when one is waiting). Tapping it opens the daily list.
 - Main Groups and Day to Day side by side, under the Today card.
 - Qanungo cards: "…" menu (Rename / Remove), contact count, thin completion bar.
@@ -136,6 +136,8 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 
 - **Quick Add: several numbers (17 Nov):** "+ Add another number" now shows in Quick Add too (Phone 2 and Phone 3), as in the full contact form.
 - **Next.js 16.4.2 → 16.4.5 (17 Nov):** the build began stopping with "affected by a known security vulnerability" (GHSA-mfr8-8qww-v76h, `use cache` + `unstable_cache`, which Halqa doesn't use). 16.4.5 fixes it; `npm audit` is clean.
+
+- **Keypad (17 Nov):** a tab in the bottom bar (`components/Keypad.js`). Type a number on big keys; from 3 digits, people in Halqa whose number contains them show above the keys (a fixed strip, so the keys never move); tap one to open their card. The full number shows the person's name. Call (green) rings it with the SIM (the iPhone asks "Call …?" first, as for every app) and counts as "Tried" for a Halqa person; WhatsApp opens a chat with any number; a 10+ digit number not in Halqa offers "Not in Halqa · Add" (Quick Add, number filled in). The big header is hidden on the Keypad tab.
 
 ## Importing iPhone contacts (built 25 Oct 2026, one-time)
 - **Purpose:** a one-time import of the roughly 5,660 contacts in his iPhone, of which at least 3,500 belong in Halqa. From now on he saves new people directly in Halqa.

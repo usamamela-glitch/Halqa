@@ -9,17 +9,18 @@ import { phoneDigits, phonesOf, cleanText } from '../../lib/phone'
 import { Screen, BarButton, Tabs, Card, Sheet, ActionSheet, Empty, Field, SearchBox, SyncPill, cx, ui, useToast, useSyncState } from '../ui'
 import { maybeAutoBriefing } from '../../lib/briefing'
 import { ContactRow, useContactSheets } from '../contacts'
-import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers, IconDownload } from '../Icons'
+import { IconMap, IconSparkles, IconSettings, IconStar, IconCalendar, IconChevron, IconMore, IconPlus, IconBolt, IconEdit, IconTrash, IconNote, IconSearch, IconLayers, IconDownload, IconHome } from '../Icons'
 import { CONSTITUENCY, SHOW_MAP } from '../../lib/config'
 import { TodayCard } from './TodayScreen'
 import { NextLines, ItemForm } from './PlannerScreen'
 import { TellButton } from '../TellHalqa'
 import { WorksTab, WorkList } from '../Works'
+import { KeypadTab } from '../Keypad'
 import { parseSharedText, numberKey } from '../../lib/importContacts'
 import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
 
-const TABS = ['Home', 'Projects', 'Search']
+const TABS = ['Home', 'Projects', 'Keypad', 'Search']
 
 export default function HomeScreen() {
   const { push, setParams } = useNav()
@@ -32,6 +33,7 @@ export default function HomeScreen() {
   const villages = useLiveQuery(() => db.villages.toArray(), [], [])
   const contacts = useLiveQuery(() => db.contacts.toArray(), [], [])
   const pinnedCount = contacts.filter(c => c.pinned).length
+  const vById = useMemo(() => Object.fromEntries(villages.map(v => [v.id, v])), [villages])
 
   // On the first open of a new month, write last month's briefing in the background.
   const { lastSync } = useSyncState()
@@ -67,7 +69,7 @@ export default function HomeScreen() {
   return (
     <Screen
       back={false}
-      barTitle={null}
+      barTitle={tab === 'Keypad' ? 'Keypad' : null}
       actions={
         <>
           {SHOW_MAP && <BarButton onClick={() => push('map')} aria-label="District map"><IconMap size={21} /></BarButton>}
@@ -75,7 +77,7 @@ export default function HomeScreen() {
           <BarButton onClick={() => push('settings')} aria-label="Settings"><IconSettings size={21} /></BarButton>
         </>
       }
-      hero={
+      hero={tab === 'Keypad' ? null : (
         <>
           <div className={h.heroTop}>
             <div className={h.brand}>
@@ -90,12 +92,13 @@ export default function HomeScreen() {
             <span><b>{pinnedCount.toLocaleString()}</b> pinned</span>
           </div>
         </>
-      }
-      tabs={<Tabs id="home" tabs={TABS} value={tab} onChange={t => setParams(key, { tab: t })} />}
+      )}
     >
       {tab === 'Home' && <QanungosTab villages={villages} contacts={contacts} pinnedCount={pinnedCount} onQuickAdd={() => sheets.quickAdd()} />}
       {tab === 'Projects' && <WorksTab category={params.workCategory} onCategory={c => setParams(key, { workCategory: c })} sheets={sheets} />}
       {tab === 'Search' && <SearchTab villages={villages} contacts={contacts} sheets={sheets} />}
+      {tab === 'Keypad' && <KeypadTab contacts={contacts} vById={vById} sheets={sheets} />}
+      <TabBar tab={tab} onTab={t => setParams(key, { tab: t })} onQuickAdd={() => sheets.quickAdd()} />
       {sheets.element}
     </Screen>
   )
@@ -250,7 +253,6 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
         <button className={ui.addRow} style={{ width: 'calc(100% - 78px)' }} onClick={() => setNameSheet({ name: '' })}><IconPlus size={18} />Add Qanungo</button>
       </div>
 
-      <button className={cx(ui.fab)} onClick={onQuickAdd} aria-label="Quick add contact"><IconBolt size={28} className={ui.fabBolt} /></button>
 
       <ActionSheet open={!!menu} onClose={() => setMenu(null)} title={menu?.name} items={menu && [
         { label: 'Rename', icon: <IconEdit size={20} />, onClick: () => setNameSheet({ id: menu.id, name: menu.name }) },
@@ -322,6 +324,31 @@ export function NotesScreen() {
       <NotesPanel />
       <button className={ui.fab} onClick={() => newGeneralNote(push)} aria-label="New note"><IconEdit size={26} /></button>
     </Screen>
+  )
+}
+
+// ---------- Bottom bar (17 Nov), on the main page only ----------
+const KeypadIcon = () => (
+  <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    {[5, 12, 19].flatMap(y => [5, 12, 19].map(x => <circle key={`${x}-${y}`} cx={x} cy={y} r="2.1" />))}
+  </svg>
+)
+function TabBar({ tab, onTab, onQuickAdd }) {
+  const item = (id, label, icon) => (
+    <button className={cx(h.tbItem, tab === id && h.tbOn)} onClick={() => onTab(id)} aria-current={tab === id ? 'page' : undefined}>
+      {icon}<span>{label}</span>
+    </button>
+  )
+  return (
+    <nav className={h.tabBar} aria-label="Main">
+      {item('Home', 'Home', <IconHome size={22} />)}
+      {item('Projects', 'Projects', <IconLayers size={22} />)}
+      <button className={h.tbQuick} onClick={onQuickAdd} aria-label="Quick add contact">
+        <span className={h.tbBolt}><IconBolt size={26} /></span><span>Quick add</span>
+      </button>
+      {item('Keypad', 'Keypad', <KeypadIcon />)}
+      {item('Search', 'Search', <IconSearch size={22} />)}
+    </nav>
   )
 }
 

@@ -1,153 +1,19 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
-import { insertRow, updateRow, deleteRow, restoreRow } from '../lib/store'
-import { allCategories, categoryOf, categoryLabel, categoryIcon, roadTypeLabel, serialLabel, saveWork, setWorkDone, setWorkPinned } from '../lib/works'
+import { insertRow } from '../lib/store'
+import { categoryLabel, categoryIcon, roadTypeLabel, saveWork } from '../lib/works'
 import { WorkForm } from './Works'
 import { tellHalqa } from '../lib/tell'
-import { cleanText } from '../lib/phone'
-import { TAGS } from '../lib/domain'
 import { describeError } from '../lib/analysis'
-import { listIdByName, dayLabel, whenLabel, partFromTime, partLabel, timeLabel, tagFor } from '../lib/events'
+import { listIdByName, dayLabel, whenLabel, partFromTime, tagFor } from '../lib/events'
 import { Sheet, cx, ui, useToast } from './ui'
-import { IconSparkles, IconCalendar, IconCheck, IconUserPlus, IconNote, IconX, IconEdit } from './Icons'
+import { IconSparkles, IconCalendar, IconCheck, IconUserPlus, IconNote, IconX, IconEdit, IconMap } from './Icons'
 import { useContactSheets } from './contacts'
 import { EventForm, ItemForm } from './screens/PlannerScreen'
+import { PLANS, isChange, recorder, findVillage, matchPeople, villageIds } from './tellPlans'
 import t from '../styles/tell.module.css'
 
-const norm = s => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '')
-const findVillage = (villages, name) => {
-  const n = norm(name)
-  return n ? villages.find(v => norm(v.name) === n) || villages.find(v => norm(v.name).includes(n) || n.includes(norm(v.name))) : null
-}
-// People he named, matched to his contacts: one match is used; none or several are flagged on the card.
-function matchPeople(contacts, names) {
-  return (names || []).map(said => {
-    const k = norm(said)
-    if (!k) return null
-    const exact = contacts.filter(c => norm(c.name) === k)
-    const words = said.toLowerCase().split(/\s+/).filter(w => w.length > 1)
-    const loose = exact.length ? exact : contacts.filter(c => { const n = (c.name || '').toLowerCase(); return words.length && words.every(w => n.includes(w)) })
-    return { said, matches: loose.slice(0, 6) }
-  }).filter(Boolean)
-}
-const villageIds = (villages, names) => [...new Set((names || []).map(n => findVillage(villages, n)?.id).filter(Boolean))]
-// "R-17" → the project with that number.
-function findWork(works, serial) {
-  const m = /^\s*([A-Za-z]+)\s*-?\s*(\d+)\s*$/.exec(serial || '')
-  if (!m) return null
-  const ids = allCategories(works).filter(c => c.prefix.toLowerCase() === m[1].toLowerCase()).map(c => c.id)
-  return works.find(w => ids.includes(categoryOf(w)) && w.serial === +m[2]) || null
-}
-// The contact he means (contact_update): by name, narrowed by village if he said one.
-// A chosen id (when he picked one of several) wins.
-function contactsFor(a, contacts, villages) {
-  if (a.contact_id) return contacts.filter(c => c.id === a.contact_id)
-  let m = matchPeople(contacts, [a.name])[0]?.matches || []
-  if (!m.length && a.name) {   // the place may be written into the name: try the first words
-    const words = a.name.split(/\s+/)
-    for (let n = words.length - 1; n >= 2 && !m.length; n--) m = matchPeople(contacts, [words.slice(0, n).join(' ')])[0]?.matches || []
-  }
-  const v = a.village && findVillage(villages, a.village)
-  if (m.length > 1 && v) { const inV = m.filter(c => c.village_id === v.id); if (inV.length) m = inV }
-  return m
-}
-const phoneKey = p => (p || '').replace(/\D/g, '').replace(/^92/, '0').slice(-10)
-// What will be saved for a contact_update (null if there's nothing to do).
-function contactPatch(a, c, villages) {
-  const txt = cleanText(a.details || '').trim()
-  switch (a.change) {
-    case 'add_description': {
-      if (!txt) return null
-      const old = (c.description || '').trim()
-      return { description: old ? `${old}${/[.!?]$/.test(old) ? '' : '.'} ${txt}` : txt }
-    }
-    case 'replace_description': return txt ? { description: txt } : null
-    case 'add_phone': {
-      const ph = cleanText(a.phone || '').trim()
-      if (!ph || ['phone', 'phone2', 'phone3'].some(k => c[k] && phoneKey(c[k]) === phoneKey(ph))) return null
-      const slot = ['phone', 'phone2', 'phone3'].find(k => !(c[k] || '').trim())
-      return slot ? { [slot]: ph } : null
-    }
-    case 'add_tags': {
-      const add = (a.tags || []).filter(tg => TAGS.includes(tg) && !(c.tags || []).includes(tg))
-      return add.length ? { tags: [...(c.tags || []), ...add] } : null
-    }
-    case 'pin': return c.pinned ? null : { pinned: true }
-    case 'unpin': return c.pinned ? { pinned: false } : null
-    case 'set_village': { const v = findVillage(villages, a.new_village); return v && v.id !== c.village_id ? { village_id: v.id } : null }
-    case 'rename': { const n = cleanText(a.new_name || '').replace(/\s+/g, ' ').trim(); return n && n !== c.name ? { name: n } : null }
-    default: return null
-  }
-}
-const CONTACT_CHANGE = { add_description: 'Add to description', replace_description: 'New description', add_phone: 'Add a number', add_tags: 'Add tags', pin: 'Pin to Main Groups', unpin: 'Unpin', set_village: 'Move village', rename: 'Rename' }
-
-const CHANGE_TEXT = {
-  done: 'Mark as done', not_done: 'Mark as not done', pin: 'Pin to the top', unpin: 'Unpin',
-  add_people: 'Add people', add_villages: 'Add villages', set_road_type: 'Set road type', move: 'Move', add_details: 'Add to description',
-}
-
-// Changing an event or list item that's already in the Planner. Each returns
-// what will be saved, { delete: true }, or null if there's nothing to do.
-const joinText = (old, add) => { const o = (old || '').trim(), n = cleanText(add || '').trim(); return n ? (o ? `${o}${/[.!?]$/.test(o) ? '' : '.'} ${n}` : n) : null }
-function eventPatch(a, e) {
-  switch (a.change) {
-    case 'add_details': { const n = joinText(e.notes, a.details); return n ? { notes: n } : null }
-    case 'replace_details': { const n = cleanText(a.details || '').trim(); return n ? { notes: n } : null }
-    case 'set_date': return a.date && a.date !== e.day ? { day: a.date } : null
-    case 'set_time':
-      if (a.time && e.kind !== 'wedding') return { time: a.time, part: partFromTime(a.time) }
-      if (a.time) return { part: partFromTime(a.time) }
-      return a.part && a.part !== e.part ? { part: a.part, time: null } : null
-    case 'set_venue': { const v = cleanText(a.venue || '').trim(); return v && v !== e.venue ? { venue: v } : null }
-    case 'rename': { const n = cleanText(a.new_name || '').trim(); return n && n !== e.title ? { title: n } : null }
-    case 'pin': return e.pinned ? null : { pinned: true }
-    case 'unpin': return e.pinned ? { pinned: false } : null
-    case 'delete': return { delete: true }
-    default: return null
-  }
-}
-function itemPatch(a, i, lists) {
-  switch (a.change) {
-    case 'add_details': { const n = joinText(i.details, a.details); return n ? { details: n } : null }
-    case 'replace_details': { const n = cleanText(a.details || '').trim(); return n ? { details: n } : null }
-    case 'set_date': return a.date && a.date !== i.day ? { day: a.date } : null
-    case 'done': return i.done_at ? null : { done_at: new Date().toISOString() }
-    case 'move': {
-      const name = (a.list || '').trim()
-      const hit = lists.find(l => l.name.toLowerCase() === name.toLowerCase())
-      if (hit) return hit.id !== i.list_id ? { list_id: hit.id } : null
-      return name ? { newList: name } : null
-    }
-    case 'rename': { const n = cleanText(a.new_name || '').trim(); return n && n !== i.title ? { title: n } : null }
-    case 'pin': return i.pinned ? null : { pinned: true }
-    case 'unpin': return i.pinned ? { pinned: false } : null
-    case 'delete': return { delete: true }
-    default: return null
-  }
-}
-const PLANNER_CHANGE = {
-  add_details: 'Add to note', replace_details: 'New note', set_date: 'New date', set_time: 'New time', set_venue: 'New venue',
-  rename: 'Rename', pin: 'Pin', unpin: 'Unpin', delete: 'Delete', done: 'Mark done', move: 'Move',
-}
-// The before → after line on an event or list item card.
-function plannerChange(a, row, patch, lists, field) {
-  if (patch.delete) return <b className={t.danger}>{a.type === 'event_update' ? 'Delete this event' : 'Delete this item'}</b>
-  const listName = id => lists.find(l => l.id === id)?.name || ''
-  switch (a.change) {
-    case 'add_details': return <>{row[field] ? <span className={t.old}>{row[field]} </span> : null}<b className={t.added}>+ {patch[field].slice((row[field] || '').trim().length).replace(/^\.?\s*/, '')}</b></>
-    case 'replace_details': return <><span className={t.old}><s>{row[field] || 'No note'}</s></span><br /><b className={t.added}>{patch[field]}</b></>
-    case 'set_date': return <>{row.day ? dayLabel(row.day) : 'No date'} → <b className={t.added}>{dayLabel(patch.day)}</b></>
-    case 'set_time': return <>{whenLabel(row) || 'No time'} → <b className={t.added}>{patch.time ? timeLabel(patch.time) : partLabel(patch.part)}</b></>
-    case 'set_venue': return <>{row.venue || 'No venue'} → <b className={t.added}>{patch.venue}</b></>
-    case 'rename': return <>→ <b className={t.added}>{patch.title}</b></>
-    case 'pin': return <b className={t.added}>📌 Pin to the top</b>
-    case 'unpin': return <b>Unpin</b>
-    case 'done': return <b className={t.added}>✓ Mark done</b>
-    case 'move': return <>{listName(row.list_id)} → <b className={t.added}>{patch.newList ? `${patch.newList} (new list)` : listName(patch.list_id)}</b></>
-    default: return null
-  }
-}
 // What Claude returned, in the shape the Projects form takes.
 const asProject = (a, villages, contacts) => {
   const people = matchPeople(contacts, a.people)
@@ -171,9 +37,16 @@ const asItem = (a, lists) => {
   return { title: a.title, details: a.details, day: a.date, ...(hit ? { list_id: hit.id } : { newList: (a.list || '').trim() }) }
 }
 
-function ActionCard({ a, lists, villages, contacts, works, events, items, onOpen, onDrop, onPick }) {
-  let icon, head, dest, title, sub, question = a.question, choices = null
-  if (a.type === 'project') {
+const PLAN_ICON = { contact: <IconEdit size={15} />, event: <IconCalendar size={16} />, item: <IconCheck size={16} />, project: <IconCheck size={16} />, note: <IconNote size={16} />, village: <IconMap size={16} /> }
+
+function ActionCard({ a, D, onOpen, onDrop, onPick }) {
+  const { lists, villages, contacts } = D
+  let icon, head, dest, title, sub, question = a.question, choices = null, danger = false
+  if (isChange(a)) {
+    const d = PLANS[a.type].describe(a, D)
+    icon = PLAN_ICON[d.icon]; head = d.head; dest = d.dest; title = d.title; sub = d.sub; choices = d.choices || null; danger = !!d.danger
+    question = d.question || (d.ok ? a.question : '')
+  } else if (a.type === 'project') {
     const p = asProject(a, villages, contacts)
     const people = matchPeople(contacts, a.people)
     icon = <span>{categoryIcon(p.category)}</span>; head = `${categoryLabel(p.category)}${p.road_type ? ` · ${roadTypeLabel(p.road_type)}` : ''}`; dest = 'New project'
@@ -186,56 +59,6 @@ function ActionCard({ a, lists, villages, contacts, works, events, items, onOpen
     const unclear = people.filter(x => x.matches.length !== 1)
       .map(x => (x.matches.length ? `Which ${x.said}? (${x.matches.length} in Halqa)` : `${x.said} isn't in Halqa`))
     question = [...unclear, a.question].filter(Boolean).join(' · ')
-  } else if (a.type === 'project_update') {
-    const work = findWork(works, a.serial)
-    icon = <IconCheck size={16} />; head = `Update ${work ? serialLabel(work) : a.serial || '?'}`; dest = CHANGE_TEXT[a.change] || ''
-    title = work ? (work.body || '').split('\n')[0] : null
-    const people = matchPeople(contacts, a.people)
-    sub = a.change === 'add_people' ? people.map(x => (x.matches.length === 1 ? `👤 ${x.matches[0].name}` : `${x.said}: not found`)).join('  ')
-      : a.change === 'add_villages' ? (a.villages || []).map(n => `📍 ${findVillage(villages, n)?.name || `${n}: not found`}`).join('  ')
-      : a.change === 'set_road_type' ? roadTypeLabel(a.road_type)
-      : a.change === 'move' ? `To ${categoryLabel(a.category)}`
-      : a.change === 'add_details' ? <b className={t.added}>+ {a.details}</b> : ''
-    if (!work) question = `There's no project ${a.serial || ''} · this one will be skipped`
-  } else if (a.type === 'event_update' || a.type === 'list_item_update') {
-    const isEvent = a.type === 'event_update'
-    const row = isEvent ? events.find(e => e.id === a.target_id) : items.find(i => i.id === a.target_id)
-    icon = isEvent ? <IconCalendar size={16} /> : <IconCheck size={16} />
-    dest = (!isEvent && a.change === 'add_details' ? 'Add details' : !isEvent && a.change === 'replace_details' ? 'New details' : PLANNER_CHANGE[a.change]) || ''
-    if (row) {
-      head = isEvent ? `Update · ${tagFor(row)}${row.day ? ` · ${dayLabel(row.day)}` : ''}` : `Update · ${lists.find(l => l.id === row.list_id)?.name || ''} list`
-      title = row.title || 'Untitled'
-      const patch = isEvent ? eventPatch(a, row) : itemPatch(a, row, lists)
-      sub = patch ? plannerChange(a, row, patch, lists, isEvent ? 'notes' : 'details') : null
-      if (!patch) question = 'Nothing to change · this will be skipped'
-    } else {
-      head = isEvent ? 'Update event' : 'Update list item'
-      question = `Couldn't find which ${isEvent ? 'event' : 'item'} · this will be skipped`
-    }
-  } else if (a.type === 'contact_update') {
-    const found = contactsFor(a, contacts, villages)
-    const c = found.length === 1 ? found[0] : null
-    const vName = id => villages.find(v => v.id === id)?.name || ''
-    icon = <IconEdit size={15} />; head = c ? `Update ${c.name}` : `Update ${a.name || 'contact'}`; dest = CONTACT_CHANGE[a.change] || ''
-    if (c) {
-      const patch = contactPatch(a, c, villages)
-      title = null
-      sub = !patch ? null
-        : a.change === 'add_description' ? <>{c.description ? <span className={t.old}>{c.description} </span> : null}<b className={t.added}>+ {patch.description.slice((c.description || '').trim().length).trim()}</b></>
-        : a.change === 'replace_description' ? <><span className={t.old}><s>{c.description || 'No description'}</s></span><br /><b className={t.added}>{patch.description}</b></>
-        : a.change === 'add_phone' ? <b className={t.added}>+ 📞 {Object.values(patch)[0]}</b>
-        : a.change === 'add_tags' ? <b className={t.added}>+ {patch.tags.filter(tg => !(c.tags || []).includes(tg)).join(', ')}</b>
-        : a.change === 'pin' ? <b className={t.added}>📌 Pin to Main Groups</b>
-        : a.change === 'unpin' ? <b>Unpin from Main Groups</b>
-        : a.change === 'set_village' ? <>{vName(c.village_id)} → <b className={t.added}>{vName(patch.village_id)}</b></>
-        : a.change === 'rename' ? <>{c.name} → <b className={t.added}>{patch.name}</b></> : null
-      title = <>{c.name}<span className={t.who}> · {vName(c.village_id) || 'No village'}</span></>
-      if (!patch) question = a.change === 'add_phone' && ['phone', 'phone2', 'phone3'].every(k => (c[k] || '').trim()) ? 'All three number slots are full · this will be skipped'
-        : 'Nothing to change · this will be skipped'
-    } else if (found.length > 1) {
-      question = `Which ${a.name}? (${found.length} in Halqa) · pick one`
-      choices = found.slice(0, 6)
-    } else question = `${a.name || 'This person'} isn't in Halqa · this will be skipped`
   } else if (a.type === 'event') {
     icon = <IconCalendar size={16} />; head = 'Events'; dest = a.date ? dayLabel(a.date) : 'No date'
     title = a.title || 'Untitled'; sub = [a.village, a.venue].filter(Boolean).join(' · ')
@@ -253,9 +76,9 @@ function ActionCard({ a, lists, villages, contacts, works, events, items, onOpen
     title = null; sub = a.details
   }
   return (
-    <div className={cx(t.card, a.change === 'delete' && a.type.endsWith('_update') && t.cardDanger)}>
+    <div className={cx(t.card, danger && t.cardDanger)}>
       <div className={t.head}>
-        {icon}<span>{head}</span><span className={cx(t.dest, a.change === 'delete' && t.danger)}>{dest}</span>
+        {icon}<span>{head}</span><span className={cx(t.dest, danger && t.danger)}>{dest}</span>
         <button className={t.drop} onClick={onDrop} aria-label="Leave this out"><IconX size={14} /></button>
       </div>
       <button className={t.body} onClick={onOpen}>
@@ -264,13 +87,13 @@ function ActionCard({ a, lists, villages, contacts, works, events, items, onOpen
         )}
         {title && <span className={t.title}>{title}</span>}
         {sub && <span className={t.sub}>{sub}</span>}
-        {question && <span className={t.question}>{question}{a.type.endsWith('_update') ? '' : ' · tap to fix'}</span>}
+        {question && <span className={t.question}>{question}{isChange(a) ? '' : ' · tap to fix'}</span>}
       </button>
       {choices && (
         <div className={t.choices}>
           {choices.map(c => (
             <button key={c.id} className={t.choice} onClick={() => onPick(c.id)}>
-              <b>{c.name}</b><span>{[villages.find(v => v.id === c.village_id)?.name, c.phone].filter(Boolean).join(' · ')}</span>
+              <b>{c.label}</b>{c.sub && <span>{c.sub}</span>}
             </button>
           ))}
         </div>
@@ -287,6 +110,10 @@ function TellSheet({ open, onClose, onContact }) {
   const works = useLiveQuery(() => db.works.toArray(), [], [])
   const events = useLiveQuery(() => db.events.toArray(), [], [])
   const items = useLiveQuery(() => db.list_items.toArray(), [], [])
+  const notes = useLiveQuery(() => db.notes.toArray(), [], [])
+  const generalNotes = useLiveQuery(() => db.general_notes.toArray(), [], [])
+  const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
+  const D = { lists, villages, contacts, works, events, items, notes, generalNotes, qanungos }
   const names = { villages, contacts, village: Object.fromEntries(villages.map(v => [v.id, v])), contact: Object.fromEntries(contacts.map(c => [c.id, c])) }
   const [said, setSaid] = useState('')
   const [busy, setBusy] = useState(false)
@@ -305,7 +132,8 @@ function TellSheet({ open, onClose, onContact }) {
     setBusy(false)
   }
 
-  async function save(a) {
+  async function save(a, rec) {
+    if (isChange(a)) return PLANS[a.type].run(a, D, rec)
     if (a.type === 'event') {
       const e = asEvent(a)
       await insertRow('events', {
@@ -316,35 +144,6 @@ function TellSheet({ open, onClose, onContact }) {
       await insertRow('list_items', { list_id: await listIdByName(a.list), title: a.title || a.details, details: a.title ? a.details || null : null, day: a.date || null })
     } else if (a.type === 'project') {
       await saveWork(null, asProject(a, villages, contacts))
-    } else if (a.type === 'project_update') {
-      const work = findWork(works, a.serial)
-      if (!work) return false
-      if (a.change === 'done' || a.change === 'not_done') await setWorkDone(work, a.change === 'done')
-      else if (a.change === 'pin' || a.change === 'unpin') await setWorkPinned(work, a.change === 'pin')
-      else if (a.change === 'add_people') {
-        const ids = matchPeople(contacts, a.people).filter(x => x.matches.length === 1).map(x => x.matches[0].id)
-        await updateRow('works', work.id, { contact_ids: [...new Set([...(work.contact_ids || []), ...ids])] })
-      } else if (a.change === 'add_villages') {
-        await updateRow('works', work.id, { village_ids: [...new Set([...(work.village_ids || []), ...villageIds(villages, a.villages)])] })
-      } else if (a.change === 'set_road_type' && a.road_type) await updateRow('works', work.id, { road_type: a.road_type })
-      else if (a.change === 'move' && a.category) await saveWork(work.id, { category: a.category })
-      else if (a.change === 'add_details' && cleanText(a.details || '').trim()) await updateRow('works', work.id, { body: `${(work.body || '').trim()}\n${cleanText(a.details).trim()}`.trim() })
-      else return false
-    } else if (a.type === 'event_update' || a.type === 'list_item_update') {
-      const table = a.type === 'event_update' ? 'events' : 'list_items'
-      const row = await db[table].get(a.target_id || '')
-      if (!row) return false
-      const patch = table === 'events' ? eventPatch(a, row) : itemPatch(a, row, lists)
-      if (!patch) return false
-      if (patch.delete) { await deleteRow(table, row.id); deleted.push([table, row]); return }
-      if (patch.newList) { const { newList, ...rest } = patch; await updateRow(table, row.id, { ...rest, list_id: await listIdByName(newList) }); return }
-      await updateRow(table, row.id, patch)
-    } else if (a.type === 'contact_update') {
-      const found = contactsFor(a, contacts, villages)
-      if (found.length !== 1) return false
-      const patch = contactPatch(a, found[0], villages)
-      if (!patch) return false
-      await updateRow('contacts', found[0].id, patch)
     } else if (a.type === 'note') {
       const v = findVillage(villages, a.village)
       const body = (a.details || '').split('\n').map(l => `<div>${escape(l) || '<br>'}</div>`).join('')
@@ -352,16 +151,14 @@ function TellSheet({ open, onClose, onContact }) {
     }
   }
 
-  const deleted = []   // rows deleted by this Save, for Undo
   async function addAll() {
     const acts = result.actions
-    deleted.length = 0
+    const rec = recorder()
     let n = 0
-    for (const a of acts) if (a.type !== 'contact' && (await save(a)) !== false) n++
+    for (const a of acts) if (a.type !== 'contact' && (await save(a, rec)) !== false) n++
     const contact = acts.find(a => a.type === 'contact')
-    const gone = [...deleted]
-    const undo = gone.length ? { label: 'Undo', onClick: () => gone.forEach(([table, row]) => restoreRow(table, row)) } : undefined
-    if (n) toast(acts.every(a => a.type.endsWith('_update')) ? `Saved ${n} change${n > 1 ? 's' : ''}` : `Added ${n} to Halqa`, undo)
+    const undo = rec.undos.length ? { label: 'Undo', onClick: () => rec.undo() } : undefined
+    if (n) toast(acts.every(isChange) ? `Saved ${n} change${n > 1 ? 's' : ''}` : `Added ${n} to Halqa`, undo)
     reset(); onClose()
     if (contact) {
       const v = findVillage(villages, contact.village)
@@ -396,12 +193,12 @@ function TellSheet({ open, onClose, onContact }) {
         <>
           <div className={t.you}><b>You said</b>{said}</div>
           {result.reply && <div className={t.reply}>{result.reply}</div>}
-          {actions.length > 0 && <div className={t.label}>{actions.length} thing{actions.length > 1 ? 's' : ''} to {actions.every(a => a.type.endsWith('_update')) ? 'change' : 'add'}</div>}
-          {actions.map(a => <ActionCard key={a.key} a={a} lists={lists} villages={villages} contacts={contacts} works={works} events={events} items={items} onOpen={() => openAction(a)} onDrop={() => drop(a.key)}
-            onPick={id => setResult(r => ({ ...r, actions: r.actions.map(x => (x.key === a.key ? { ...x, contact_id: id } : x)) }))} />)}
+          {actions.length > 0 && <div className={t.label}>{actions.length} thing{actions.length > 1 ? 's' : ''} to {actions.every(isChange) ? 'change' : 'add'}</div>}
+          {actions.map(a => <ActionCard key={a.key} a={a} D={D} onOpen={() => openAction(a)} onDrop={() => drop(a.key)}
+            onPick={id => setResult(r => ({ ...r, actions: r.actions.map(x => (x.key === a.key ? { ...x, pick_id: id } : x)) }))} />)}
           <div className={t.acts}>
             {actions.length > 0
-              ? <button className={cx(ui.btn, ui.btnPrimary)} onClick={addAll}><IconCheck size={18} />{actions.every(a => a.type.endsWith('_update')) ? 'Save' : actions.length > 1 ? 'Add all' : 'Add'}</button>
+              ? <button className={cx(ui.btn, ui.btnPrimary)} onClick={addAll}><IconCheck size={18} />{actions.every(isChange) ? 'Save' : actions.length > 1 ? 'Add all' : 'Add'}</button>
               : <button className={cx(ui.btn, ui.btnPrimary)} onClick={() => { reset(); onClose() }}>Done</button>}
             <button className={cx(ui.btn, ui.btnSecondary)} onClick={() => { setResult(null); setEditing(null) }}>Change what I said</button>
           </div>

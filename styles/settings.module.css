@@ -16,4 +16,7 @@
 .keyMask { font-family: ui-monospace, Menlo, monospace; font-size: 14px; color: var(--ink-2); }
 .link { color: var(--red); font-weight: 650; padding: 6px; }
 .problem { text-align: center; margin: 6px 16px 0; color: var(--faint); font-size: 11px; line-height: 1.4; word-break: break-word; }
-.version { text-align: center; margin-top: 28px; color: var(--faint); font-size: 13px; font-weight: 600; }
+.version { text-align: center; margin-top: 28px; margin-bottom: 4px; color: var(--faint); font-size: 13px; font-weight: 600; }
+
+.update { display: block; margin: 0 auto; background: none; border: 0; color: var(--teal, #0f766e); font: inherit; font-size: 14px; font-weight: 600; padding: 8px 12px; }
+.update:disabled { opacity: .6; }

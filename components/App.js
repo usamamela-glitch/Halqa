@@ -7,6 +7,7 @@ import Navigator from './Navigator'
 import ReachedPrompt from './ReachedPrompt'
 import { ToastProvider } from './ui'
 import { useSignedIn, signIn } from '../lib/auth'
+import { markNewVersion } from '../lib/update'
 import s from '../styles/boot.module.css'
 
 // New versions install in the background. Once one has taken over, Halqa
@@ -23,7 +24,12 @@ function registerServiceWorker() {
     })
   }).catch(() => {})
   if (!hadVersion) return   // the very first install: nothing old to replace
+  const openedAt = Date.now()
   sw.addEventListener('controllerchange', () => {
+    markNewVersion()
+    // Just opened (the new version finished downloading in the first moments):
+    // switch now, before he's started anything. Otherwise wait until he leaves.
+    if (document.visibilityState === 'visible' && Date.now() - openedAt < 12000) { window.location.reload(); return }
     const reloadWhenHidden = () => { if (document.visibilityState === 'hidden') window.location.reload() }
     if (document.visibilityState === 'hidden') window.location.reload()
     else document.addEventListener('visibilitychange', reloadWhenHidden)

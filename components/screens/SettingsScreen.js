@@ -10,9 +10,17 @@ import { IconRefresh, IconDownload } from '../Icons'
 import { useNav } from '../../lib/nav'
 import { lastProblem } from '../Recover'
 import { useAccountEmail, signOutAndClear } from '../../lib/auth'
+import { BUILD_TIME, checkForUpdate } from '../../lib/update'
 import st from '../../styles/settings.module.css'
 
-const APP_VERSION = '2.0.0'
+// "17 Nov, 3:42 PM": when the version on this phone was built.
+function versionLabel() {
+  if (!BUILD_TIME) return 'Halqa'
+  const d = new Date(BUILD_TIME)
+  const day = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
+  const time = d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+  return `Halqa version: ${day}, ${time}`
+}
 
 export default function SettingsScreen() {
   const toast = useToast()
@@ -28,6 +36,7 @@ export default function SettingsScreen() {
   const missingTables = useLiveQuery(async () => (await db.meta.get('missingTables'))?.value || [], [], [])
   const [key, setKey] = useState('')
   const [savedKey, setSavedKey] = useState('')
+  const [checking, setChecking] = useState(false)
   const [persisted, setPersisted] = useState(null)
 
   useEffect(() => {
@@ -157,7 +166,13 @@ export default function SettingsScreen() {
           : 'Halqa\u2019s data will be removed from this device. You can sign in again at any time.'}
         items={[!sync.pending && { label: 'Sign out', danger: true, onClick: signOutAndClear }]} />
 
-      <p className={st.version}>Halqa {APP_VERSION}</p>
+      <p className={st.version}>{versionLabel()}</p>
+      <button className={st.update} disabled={checking} onClick={async () => {
+        setChecking(true)
+        try {
+          if (await checkForUpdate() === 'latest') { toast('You have the latest version'); setChecking(false) }
+        } catch { toast('Couldn\u2019t check. Are you online?'); setChecking(false) }
+      }}>{checking ? 'Updating\u2026' : 'Check for update'}</button>
       {problem && <p className={st.problem}>Last problem ({shortDate(problem.at)}): {problem.message}</p>}
     </Screen>
   )

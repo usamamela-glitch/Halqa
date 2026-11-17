@@ -134,6 +134,9 @@ Usama Mela (MNA, NA-83 Sargodha-II) is not a developer: explain things in plain 
 
 - **Quick Add's first letter came out lowercase (17 Nov):** numbers copied from WhatsApp carry invisible text-direction marks (U+202A … U+202C). Back Tap → Quick Add took the number out and left those marks (and a space) in the Name field, so it looked empty but the iPhone didn't capitalise. Fixed: `cleanText` in `lib/phone.js` removes invisible characters from shared text (`parseSharedText`), from the Shortcut's name/phone, and from every contact's name, numbers and description when saved. Existing contacts were cleaned by Usama by hand.
 
+- **Quick Add: several numbers (17 Nov):** "+ Add another number" now shows in Quick Add too (Phone 2 and Phone 3), as in the full contact form.
+- **Next.js 16.4.2 → 16.4.5 (17 Nov):** the build began stopping with "affected by a known security vulnerability" (GHSA-mfr8-8qww-v76h, `use cache` + `unstable_cache`, which Halqa doesn't use). 16.4.5 fixes it; `npm audit` is clean.
+
 ## Importing iPhone contacts (built 25 Oct 2026, one-time)
 - **Purpose:** a one-time import of the roughly 5,660 contacts in his iPhone, of which at least 3,500 belong in Halqa. From now on he saves new people directly in Halqa.
 - **How:** export a .vcf from the Contacts app (Lists → hold "All Contacts" → Export → Save to Files), then Settings → Import contacts → choose the file.

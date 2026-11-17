@@ -377,7 +377,7 @@ function ContactForm({ initial, onDone, onOpenExisting, quick, focus }) {
           <Field label="Phone 3"><input className={ui.input} type="tel" inputMode="tel" value={f.phone3} onChange={e => set('phone3', e.target.value)} placeholder="Optional" /></Field>
         </>
       )}
-      {!quick && !showMore && <button type="button" className={s.addPhone} onClick={() => setShowMore(true)}>+ Add another number</button>}
+      {!showMore && <button type="button" className={s.addPhone} onClick={() => setShowMore(true)}>+ Add another number</button>}
       {dupe && (
         <div className={s.dupe}>
           This number is already saved as <strong>{dupe.contact.name}</strong>{dupe.village ? ` in ${dupe.village.name}` : ''}.{' '}

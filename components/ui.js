@@ -117,26 +117,99 @@ export function Avatar({ name, photo, size = 48 }) {
   )
 }
 
-// A photo full screen, over everything. Tap or swipe down to close.
-// (Holding the photo still gives the iPhone's Share / Save to Photos menu.)
+// A photo full screen, over everything. Pinch to zoom, drag to look around
+// when zoomed, double-tap to zoom in or out. Not zoomed: tap or swipe down to
+// close. (Holding the photo still gives the iPhone's Share / Save menu.)
+const MAX_ZOOM = 5
+const dist = (a, b) => Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY)
+const mid = (a, b) => ({ x: (a.clientX + b.clientX) / 2, y: (a.clientY + b.clientY) / 2 })
+
 export function PhotoView({ bucket, path, onClose }) {
   const url = useImageUrl(bucket, path)
-  const [dy, setDy] = useState(0)
-  const start = useRef(null)
+  const img = useRef(null)
+  const [v, setV] = useState({ s: 1, x: 0, y: 0, drop: 0, anim: false })
+  const cur = useRef(v); cur.current = v
+  const g = useRef(null)          // the gesture in progress
+  const lastTap = useRef(0)
+  const tapTimer = useRef(null)
   useEffect(() => {
     const onKey = e => { if (e.key === 'Escape') onClose() }
     window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
+    return () => { window.removeEventListener('keydown', onKey); clearTimeout(tapTimer.current) }
   }, [onClose])
+
+  // The picture's centre and size as shown before any zoom.
+  const base = () => {
+    const r = img.current.getBoundingClientRect(), { s, x, y } = cur.current
+    return { cx: r.left + r.width / 2 - x, cy: r.top + r.height / 2 - y, w: r.width / s, h: r.height / s }
+  }
+  // Keep a zoomed picture from being dragged off screen.
+  const clamp = (s, x, y, b) => {
+    const mx = Math.max(0, (b.w * s - window.innerWidth) / 2), my = Math.max(0, (b.h * s - window.innerHeight) / 2)
+    return { s, x: Math.min(mx, Math.max(-mx, x)), y: Math.min(my, Math.max(-my, y)) }
+  }
+  // Zoom to s keeping the screen point (px, py) still.
+  const zoomAt = (s, px, py, from, b) => {
+    const ix = (px - b.cx - from.x) / from.s, iy = (py - b.cy - from.y) / from.s
+    return { s, x: px - b.cx - s * ix, y: py - b.cy - s * iy }
+  }
+
+  function start(e) {
+    if (!img.current) return
+    const t = e.touches, b = base(), { s, x, y } = cur.current
+    if (t.length >= 2) g.current = { kind: 'pinch', d0: dist(t[0], t[1]), m0: mid(t[0], t[1]), from: { s, x, y }, b, moved: true }
+    else g.current = { kind: s > 1.01 ? 'pan' : 'drop', x0: t[0].clientX, y0: t[0].clientY, from: { s, x, y }, b, moved: false }
+  }
+  function move(e) {
+    const G = g.current, t = e.touches
+    if (!G) return
+    if (G.kind === 'pinch' && t.length >= 2) {
+      const m = mid(t[0], t[1])
+      const s = Math.min(MAX_ZOOM * 1.3, Math.max(0.6, G.from.s * dist(t[0], t[1]) / G.d0))
+      const z = zoomAt(s, G.m0.x, G.m0.y, G.from, G.b)
+      setV({ s, x: z.x + m.x - G.m0.x, y: z.y + m.y - G.m0.y, drop: 0, anim: false })
+      return
+    }
+    if (t.length >= 2) { start(e); return }   // a second finger came down: now a pinch
+    const dx = t[0].clientX - G.x0, dy = t[0].clientY - G.y0
+    if (Math.abs(dx) + Math.abs(dy) > 8) G.moved = true
+    if (G.kind === 'pan') setV({ ...G.from, x: G.from.x + dx, y: G.from.y + dy, drop: 0, anim: false })
+    else if (G.kind === 'drop') setV(o => ({ ...o, drop: Math.max(0, dy), anim: false }))
+  }
+  function end(e) {
+    const G = g.current
+    if (!G || e.touches.length) { if (G && e.touches.length === 1) start(e); return }
+    g.current = null
+    const { s, x, y, drop } = cur.current
+    if (G.kind === 'drop' && drop > 90) { onClose(); return }
+    if (s < 1.01) { setV({ s: 1, x: 0, y: 0, drop: 0, anim: true }); }
+    else {
+      const k = Math.min(MAX_ZOOM, s)
+      const z = k !== s ? zoomAt(k, window.innerWidth / 2, window.innerHeight / 2, { s, x, y }, G.b) : { s, x, y }
+      setV({ ...clamp(z.s, z.x, z.y, G.b), drop: 0, anim: true })
+    }
+    if (G.moved) return
+    // A tap: two quick ones zoom in or out; one alone (not zoomed) closes.
+    const touch = e.changedTouches[0], now = Date.now()
+    if (now - lastTap.current < 300) {
+      clearTimeout(tapTimer.current); lastTap.current = 0
+      if (cur.current.s > 1.01) setV({ s: 1, x: 0, y: 0, drop: 0, anim: true })
+      else { const z = zoomAt(2.5, touch.clientX, touch.clientY, { s: 1, x: 0, y: 0 }, G.b); setV({ ...clamp(z.s, z.x, z.y, G.b), drop: 0, anim: true }) }
+      return
+    }
+    lastTap.current = now
+    if (cur.current.s <= 1.01) tapTimer.current = setTimeout(onClose, 300)
+  }
+
   if (typeof document === 'undefined') return null
+  const { s: sc, x, y, drop, anim } = v
   return createPortal(
-    <div className={s.photoView} role="dialog" aria-label="Photo" style={{ background: `rgba(0,0,0,${Math.max(0.3, 0.94 - dy / 500)})` }}
-      onClick={() => { if (Math.abs(dy) < 8) onClose() }}
-      onTouchStart={e => { start.current = e.touches[0].clientY }}
-      onTouchMove={e => { if (start.current != null) setDy(Math.max(0, e.touches[0].clientY - start.current)) }}
-      onTouchEnd={() => { start.current = null; if (dy > 90) onClose(); else setDy(0) }}>
-      <button className={s.photoClose} aria-label="Close" onClick={e => { e.stopPropagation(); onClose() }}><IconX size={20} /></button>
-      {url && <img src={url} alt="" style={{ transform: `translateY(${dy}px)`, transition: start.current == null ? 'transform .2s' : 'none' }} />}
+    <div className={s.photoView} role="dialog" aria-label="Photo" style={{ background: `rgba(0,0,0,${Math.max(0.3, 0.94 - drop / 500)})` }}
+      onClick={e => { if (e.detail && !('ontouchstart' in window)) onClose() }}
+      onTouchStart={start} onTouchMove={move} onTouchEnd={end} onTouchCancel={end}>
+      <button className={s.photoClose} aria-label="Close" onTouchEnd={e => e.stopPropagation()} onClick={e => { e.stopPropagation(); onClose() }}><IconX size={20} /></button>
+      {url && <img ref={img} src={url} alt="" draggable={false}
+        style={{ transform: `translate(${x}px, ${y + drop}px) scale(${sc})`, transition: anim ? 'transform .22s ease-out' : 'none' }} />}
     </div>,
     document.body,
   )

@@ -16,6 +16,7 @@ import { NextLines, ItemForm } from './PlannerScreen'
 import { TellButton } from '../TellHalqa'
 import { WorksTab, WorkList } from '../Works'
 import { KeypadTab } from '../Keypad'
+import kp from '../../styles/keypad.module.css'
 import { parseSharedText, numberKey } from '../../lib/importContacts'
 import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
@@ -69,7 +70,8 @@ export default function HomeScreen() {
   return (
     <Screen
       back={false}
-      barTitle={tab === 'Keypad' ? 'Keypad' : null}
+      barTitle={null}
+      bodyClassName={tab === 'Keypad' ? kp.page : undefined}
       actions={
         <>
           {SHOW_MAP && <BarButton onClick={() => push('map')} aria-label="District map"><IconMap size={21} /></BarButton>}

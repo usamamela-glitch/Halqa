@@ -1,28 +1,32 @@
-/* Keypad tab (17 Nov) */
-.wrap { display: flex; flex-direction: column; align-items: stretch; margin-top: -6px; padding-bottom: 20px; }
-.display { text-align: center; height: 58px; padding: 0; }
-.number { width: 100%; border: 0; background: transparent; text-align: center; font-size: 32px; font-weight: 600; letter-spacing: .5px; color: var(--ink); outline: none; caret-color: var(--teal); }
-.number::placeholder { color: var(--faint); font-size: 22px; font-weight: 500; }
-.who { font-size: 15px; font-weight: 700; color: var(--teal-700); margin-top: 2px; }
+/* Keypad tab (17 Nov): laid out and styled like the iPhone's keypad, on white */
+.page { background: #fff !important; min-height: calc(100% - var(--safe-top) - 54px); padding: 12px 16px calc(var(--safe-bottom) + 110px); }
+.wrap { display: flex; flex-direction: column; align-items: stretch; padding-bottom: 20px; font-family: -apple-system, system-ui, 'Inter Variable', sans-serif; }
+.display { text-align: center; height: 62px; }
+.numRow { position: relative; display: flex; align-items: center; justify-content: center; height: 44px; }
+.number { width: 100%; padding: 0 44px; border: 0; background: transparent; text-align: center; font-family: inherit; font-size: 34px; font-weight: 400; letter-spacing: .5px; color: #000; outline: none; caret-color: transparent; }
+.back { position: absolute; right: 2px; top: 50%; transform: translateY(-50%); width: 44px; height: 40px; display: flex; align-items: center; justify-content: center; color: #8e8e93; }
+.back:active { color: #3a3a3c; }
+.who { font-size: 15px; font-weight: 600; color: var(--teal-700); margin-top: 2px; }
 .matchArea { height: 88px; display: flex; flex-direction: column; justify-content: center; margin-bottom: 8px; }
-.matches { max-height: 88px; overflow-y: auto; border-radius: 14px; background: var(--card); box-shadow: var(--shadow); }
-.match { width: 100%; display: flex; flex-direction: column; gap: 0; padding: 6px 14px; border-bottom: 1px solid var(--hair); text-align: left; }
+.matches { max-height: 88px; overflow-y: auto; border-radius: 14px; background: #f7f7f9; }
+.match { width: 100%; display: flex; flex-direction: column; gap: 0; padding: 6px 14px; border-bottom: 1px solid #ececf0; text-align: left; font-family: 'Inter Variable', -apple-system, sans-serif; }
 .match:last-child { border-bottom: 0; }
-.match:active { background: #f3f6f9; }
+.match:active { background: #eeeef2; }
 .mName { font-size: 15.5px; font-weight: 700; color: var(--ink); }
 .mSub { font-size: 12.5px; color: var(--muted); }
-.addNew { align-self: center; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; background: var(--teal-50); color: var(--teal-700); font-weight: 750; font-size: 14.5px; }
-.pad { display: grid; grid-template-columns: repeat(3, 66px); justify-content: center; gap: 10px 30px; }
-.key { width: 66px; height: 66px; border-radius: 33px; background: var(--card); box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--ink); -webkit-user-select: none; user-select: none; }
-.key:active { background: var(--teal-50); }
-.digit { font-size: 28px; font-weight: 500; line-height: 1; }
-.letters { font-size: 9.5px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); margin-top: 3px; }
-.del, .plus { background: transparent; box-shadow: none; }
-.del .digit { font-size: 24px; color: var(--muted); }
-.plus .digit { font-size: 26px; color: var(--muted); }
-.actions { display: grid; grid-template-columns: repeat(3, 66px); justify-content: center; gap: 30px; margin-top: 10px; align-items: center; }
-.act { width: 66px; height: 66px; border-radius: 33px; display: flex; align-items: center; justify-content: center; }
-.call { background: #2fb45a; color: #fff; box-shadow: 0 6px 16px rgba(47,180,90,.35); }
-.wa { width: 58px; height: 58px; justify-self: center; background: #e6f6ec; color: #1d9a57; }
-.clear { width: auto; height: 40px; justify-self: center; padding: 0 12px; border-radius: 20px; font-size: 14px; font-weight: 700; color: var(--muted); }
+.addNew { align-self: center; display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; border-radius: 999px; background: var(--teal-50); color: var(--teal-700); font-weight: 700; font-size: 14.5px; }
+.pad { display: grid; grid-template-columns: repeat(3, 70px); justify-content: center; gap: 12px 28px; }
+.key { width: 70px; height: 70px; border-radius: 35px; background: #f4f4f6; box-shadow: 0 1px 6px rgba(0,0,0,.05); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #000; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.key:active { background: #d9d9de; }
+.digit { font-size: 34px; font-weight: 400; line-height: 1; }
+.letters { font-size: 9.5px; font-weight: 700; letter-spacing: 2px; color: #000; margin-top: 2px; }
+.plusSign { font-size: 15px; font-weight: 600; letter-spacing: 0; margin-top: 0; line-height: 1; }
+.sym .digit { font-size: 32px; }
+.actions { display: grid; grid-template-columns: repeat(3, 70px); justify-content: center; gap: 28px; margin-top: 12px; align-items: center; }
+.act { width: 70px; height: 70px; border-radius: 35px; display: flex; align-items: center; justify-content: center; }
+.call { background: #34c759; color: #fff; }
+.call:active { background: #2aa94b; }
+.wa { width: 56px; height: 56px; justify-self: center; background: #e7f7ec; color: #1d9a57; }
+/* "Clear" in the iPhone's soft rounded font */
+.clear { width: auto; height: 40px; justify-self: center; padding: 0 12px; border-radius: 20px; font-family: ui-rounded, 'SF Pro Rounded', 'Nunito', -apple-system, system-ui, sans-serif; font-size: 17px; font-weight: 500; color: #8e9aa4; }
 .off { opacity: .35; pointer-events: none; }

@@ -346,7 +346,7 @@ function TabBar({ tab, onTab, onQuickAdd }) {
       {item('Home', 'Home', <IconHome size={22} />)}
       {item('Projects', 'Projects', <IconLayers size={22} />)}
       <button className={h.tbQuick} onClick={onQuickAdd} aria-label="Quick add contact">
-        <span className={h.tbBolt}><IconBolt size={26} /></span><span>Quick add</span>
+        <span className={h.tbBolt}><IconBolt size={22} /></span><span>Quick add</span>
       </button>
       {item('Keypad', 'Keypad', <KeypadIcon />)}
       {item('Search', 'Search', <IconSearch size={22} />)}

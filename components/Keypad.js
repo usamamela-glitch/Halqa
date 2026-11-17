@@ -23,7 +23,10 @@ export function KeypadTab({ contacts, vById, sheets }) {
   }, [contacts, digits])
   const exact = matches.find(c => phonesOf(c).some(p => phoneDigits(p) === digits))
   const press = key => setNum(n => (n.length < 18 ? n + key : n))
-  const back = () => setNum(n => n.slice(0, -1))
+  // ⌫ at the bottom right, like the iPhone: tap deletes the last digit, hold clears the number.
+  const delHold = useRef(null)
+  const delDown = () => { delHold.current = setTimeout(() => { delHold.current = 'cleared'; setNum('') }, 550) }
+  const delUp = () => { if (delHold.current === 'cleared') { delHold.current = null; return } clearTimeout(delHold.current); delHold.current = null; setNum(n => n.slice(0, -1)) }
   // Hold 0 for +, like the iPhone.
   const hold = useRef(null)
   const zeroDown = () => { hold.current = setTimeout(() => { hold.current = 'plus'; setNum(n => (n.length < 18 ? n + '+' : n)) }, 450) }
@@ -52,7 +55,6 @@ export function KeypadTab({ contacts, vById, sheets }) {
             onPointerDown={pasteDown} onPointerUp={pasteCancel} onPointerLeave={pasteCancel} onContextMenu={e => e.preventDefault()}>
             {pretty(num) || '\u00a0'}
           </div>
-          {num && <button className={k.back} onClick={back} aria-label="Delete"><svg width="30" height="22" viewBox="0 0 30 22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round"><path d="M9 1h18a2 2 0 012 2v16a2 2 0 01-2 2H9L1 11z" /><path d="M14 7l8 8M22 7l-8 8" strokeLinecap="round" /></svg></button>}
         </div>
         {exact && <div className={k.who}>{exact.name}{vById[exact.village_id] ? ` · ${vById[exact.village_id].name}` : ''}</div>}
       </div>
@@ -85,7 +87,15 @@ export function KeypadTab({ contacts, vById, sheets }) {
       <div className={k.actions}>
         <a className={cx(k.act, k.wa, digits.length < 10 && k.off)} href={digits.length >= 10 ? waHref(num) : undefined} onClick={call} target="_blank" rel="noreferrer" aria-label="WhatsApp"><IconWhatsApp size={24} /></a>
         <a className={cx(k.act, k.call, digits.length < 2 && k.off)} href={digits.length >= 2 ? telHref(num) : undefined} onClick={call} aria-label="Call"><IconPhone size={28} /></a>
-        <button className={cx(k.act, k.clear, !num && k.off)} onClick={() => setNum('')} aria-label="Clear">Clear</button>
+        {num ? (
+          <button className={cx(k.act, k.del)} aria-label="Delete (hold to clear)" onContextMenu={e => e.preventDefault()}
+            onPointerDown={delDown} onPointerUp={delUp} onPointerLeave={() => { clearTimeout(delHold.current); delHold.current = null }}>
+            <svg width="31" height="23" viewBox="0 0 31 23" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M10.2 1.5H26.5a3 3 0 013 3v14a3 3 0 01-3 3H10.2a2.4 2.4 0 01-1.8-.8L1.9 12.6a1.6 1.6 0 010-2.2l6.5-8.1a2.4 2.4 0 011.8-.8z" />
+              <path d="M14.5 7.5l8 8M22.5 7.5l-8 8" />
+            </svg>
+          </button>
+        ) : <span />}
       </div>
     </div>
   )

@@ -27,6 +27,6 @@
 .call { background: #34c759; color: #fff; }
 .call:active { background: #2aa94b; }
 .wa { width: 56px; height: 56px; justify-self: center; background: #e7f7ec; color: #1d9a57; }
-/* "Clear" in the iPhone's soft rounded font */
-.clear { width: auto; height: 40px; justify-self: center; padding: 0 12px; border-radius: 20px; font-family: ui-rounded, 'SF Pro Rounded', 'Nunito', -apple-system, system-ui, sans-serif; font-size: 17px; font-weight: 500; color: #8e9aa4; }
+.del { background: transparent; color: #3c3c43; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.del:active { color: #8e8e93; }
 .off { opacity: .35; pointer-events: none; }

@@ -11,7 +11,7 @@ import { markInTouch, recordAttempt, inTouchToday } from '../lib/touch'
 import { tidyToday, markDone, openInToday } from '../lib/daily'
 import { numberKey, nameKey } from '../lib/importContacts'
 import { queryWords, matchesWords } from '../lib/search'
-import { Card, Avatar, Sheet, ActionSheet, Field, cx, ui, useToast } from './ui'
+import { Card, Avatar, PhotoView, Sheet, ActionSheet, Field, cx, ui, useToast } from './ui'
 import { IconPhone, IconWhatsApp, IconPin, IconCheck, IconUserPlus, IconEdit, IconCamera } from './Icons'
 import s from '../styles/contacts.module.css'
 
@@ -130,6 +130,7 @@ export function ContactRow({ contact, villageName, subtitle, onPress, highlight,
 
 function ContactDetail({ id, onEdit, onClose }) {
   const toast = useToast()
+  const [photoOpen, setPhotoOpen] = useState(false)
   const contact = useLiveQuery(() => (id ? db.contacts.get(id) : undefined), [id])
   const village = useLiveQuery(() => (contact?.village_id ? db.villages.get(contact.village_id) : undefined), [contact?.village_id])
   // Added one by one (not in an import batch, which shares one time)?
@@ -170,7 +171,10 @@ function ContactDetail({ id, onEdit, onClose }) {
   return (
     <>
       <div className={s.top}>
-        <Avatar name={contact.name} photo={contact.photo_path} size={92} />
+        {contact.photo_path
+          ? <button type="button" className={s.photoTap} aria-label="Show photo" onClick={() => setPhotoOpen(true)}><Avatar name={contact.name} photo={contact.photo_path} size={92} /></button>
+          : <Avatar name={contact.name} photo={contact.photo_path} size={92} />}
+        {photoOpen && <PhotoView bucket="contact-photos" path={contact.photo_path} onClose={() => setPhotoOpen(false)} />}
         <div className={s.bigName}>{contact.name}</div>
         {village && <div className={s.village}>{village.name}</div>}
         {oneByOne && <div className={s.added}>Added {addedDate(contact.created_at)}</div>}

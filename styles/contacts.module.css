@@ -148,3 +148,6 @@
 
 /* The number remembered as being on WhatsApp (contacts with several numbers) */
 .waChosen { box-shadow: 0 0 0 2px #13a150 inset; }
+
+.photoTap { background: none; border: 0; padding: 0; border-radius: 50%; -webkit-tap-highlight-color: transparent; }
+.photoTap:active { opacity: .85; }

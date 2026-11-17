@@ -117,6 +117,31 @@ export function Avatar({ name, photo, size = 48 }) {
   )
 }
 
+// A photo full screen, over everything. Tap or swipe down to close.
+// (Holding the photo still gives the iPhone's Share / Save to Photos menu.)
+export function PhotoView({ bucket, path, onClose }) {
+  const url = useImageUrl(bucket, path)
+  const [dy, setDy] = useState(0)
+  const start = useRef(null)
+  useEffect(() => {
+    const onKey = e => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [onClose])
+  if (typeof document === 'undefined') return null
+  return createPortal(
+    <div className={s.photoView} role="dialog" aria-label="Photo" style={{ background: `rgba(0,0,0,${Math.max(0.3, 0.94 - dy / 500)})` }}
+      onClick={() => { if (Math.abs(dy) < 8) onClose() }}
+      onTouchStart={e => { start.current = e.touches[0].clientY }}
+      onTouchMove={e => { if (start.current != null) setDy(Math.max(0, e.touches[0].clientY - start.current)) }}
+      onTouchEnd={() => { start.current = null; if (dy > 90) onClose(); else setDy(0) }}>
+      <button className={s.photoClose} aria-label="Close" onClick={e => { e.stopPropagation(); onClose() }}><IconX size={20} /></button>
+      {url && <img src={url} alt="" style={{ transform: `translateY(${dy}px)`, transition: start.current == null ? 'transform .2s' : 'none' }} />}
+    </div>,
+    document.body,
+  )
+}
+
 // ---------- Keyboard-aware bottom sheet ----------
 
 // How far the on-screen keyboard covers the page, so sheets sit above it.

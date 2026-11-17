@@ -41,3 +41,6 @@
 .choice:active { background: #f3f6f9; }
 .choice b { font-size: 15px; color: var(--ink); }
 .choice span { font-size: 12.5px; color: var(--muted); }
+
+.danger { color: #c0392b; font-weight: 700; }
+.cardDanger { border-color: #f1b8b0; }

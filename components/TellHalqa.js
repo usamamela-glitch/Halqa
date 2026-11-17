@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../lib/db'
-import { insertRow, updateRow } from '../lib/store'
+import { insertRow, updateRow, deleteRow, restoreRow } from '../lib/store'
 import { allCategories, categoryOf, categoryLabel, categoryIcon, roadTypeLabel, serialLabel, saveWork, setWorkDone, setWorkPinned } from '../lib/works'
 import { WorkForm } from './Works'
 import { tellHalqa } from '../lib/tell'
 import { cleanText } from '../lib/phone'
 import { TAGS } from '../lib/domain'
 import { describeError } from '../lib/analysis'
-import { listIdByName, dayLabel, whenLabel, partFromTime, tagFor } from '../lib/events'
+import { listIdByName, dayLabel, whenLabel, partFromTime, partLabel, timeLabel, tagFor } from '../lib/events'
 import { Sheet, cx, ui, useToast } from './ui'
 import { IconSparkles, IconCalendar, IconCheck, IconUserPlus, IconNote, IconX, IconEdit } from './Icons'
 import { useContactSheets } from './contacts'
@@ -84,7 +84,69 @@ const CONTACT_CHANGE = { add_description: 'Add to description', replace_descript
 
 const CHANGE_TEXT = {
   done: 'Mark as done', not_done: 'Mark as not done', pin: 'Pin to the top', unpin: 'Unpin',
-  add_people: 'Add people', add_villages: 'Add villages', set_road_type: 'Set road type', move: 'Move',
+  add_people: 'Add people', add_villages: 'Add villages', set_road_type: 'Set road type', move: 'Move', add_details: 'Add to description',
+}
+
+// Changing an event or list item that's already in the Planner. Each returns
+// what will be saved, { delete: true }, or null if there's nothing to do.
+const joinText = (old, add) => { const o = (old || '').trim(), n = cleanText(add || '').trim(); return n ? (o ? `${o}${/[.!?]$/.test(o) ? '' : '.'} ${n}` : n) : null }
+function eventPatch(a, e) {
+  switch (a.change) {
+    case 'add_details': { const n = joinText(e.notes, a.details); return n ? { notes: n } : null }
+    case 'replace_details': { const n = cleanText(a.details || '').trim(); return n ? { notes: n } : null }
+    case 'set_date': return a.date && a.date !== e.day ? { day: a.date } : null
+    case 'set_time':
+      if (a.time && e.kind !== 'wedding') return { time: a.time, part: partFromTime(a.time) }
+      if (a.time) return { part: partFromTime(a.time) }
+      return a.part && a.part !== e.part ? { part: a.part, time: null } : null
+    case 'set_venue': { const v = cleanText(a.venue || '').trim(); return v && v !== e.venue ? { venue: v } : null }
+    case 'rename': { const n = cleanText(a.new_name || '').trim(); return n && n !== e.title ? { title: n } : null }
+    case 'pin': return e.pinned ? null : { pinned: true }
+    case 'unpin': return e.pinned ? { pinned: false } : null
+    case 'delete': return { delete: true }
+    default: return null
+  }
+}
+function itemPatch(a, i, lists) {
+  switch (a.change) {
+    case 'add_details': { const n = joinText(i.details, a.details); return n ? { details: n } : null }
+    case 'replace_details': { const n = cleanText(a.details || '').trim(); return n ? { details: n } : null }
+    case 'set_date': return a.date && a.date !== i.day ? { day: a.date } : null
+    case 'done': return i.done_at ? null : { done_at: new Date().toISOString() }
+    case 'move': {
+      const name = (a.list || '').trim()
+      const hit = lists.find(l => l.name.toLowerCase() === name.toLowerCase())
+      if (hit) return hit.id !== i.list_id ? { list_id: hit.id } : null
+      return name ? { newList: name } : null
+    }
+    case 'rename': { const n = cleanText(a.new_name || '').trim(); return n && n !== i.title ? { title: n } : null }
+    case 'pin': return i.pinned ? null : { pinned: true }
+    case 'unpin': return i.pinned ? { pinned: false } : null
+    case 'delete': return { delete: true }
+    default: return null
+  }
+}
+const PLANNER_CHANGE = {
+  add_details: 'Add to note', replace_details: 'New note', set_date: 'New date', set_time: 'New time', set_venue: 'New venue',
+  rename: 'Rename', pin: 'Pin', unpin: 'Unpin', delete: 'Delete', done: 'Mark done', move: 'Move',
+}
+// The before → after line on an event or list item card.
+function plannerChange(a, row, patch, lists, field) {
+  if (patch.delete) return <b className={t.danger}>{a.type === 'event_update' ? 'Delete this event' : 'Delete this item'}</b>
+  const listName = id => lists.find(l => l.id === id)?.name || ''
+  switch (a.change) {
+    case 'add_details': return <>{row[field] ? <span className={t.old}>{row[field]} </span> : null}<b className={t.added}>+ {patch[field].slice((row[field] || '').trim().length).replace(/^\.?\s*/, '')}</b></>
+    case 'replace_details': return <><span className={t.old}><s>{row[field] || 'No note'}</s></span><br /><b className={t.added}>{patch[field]}</b></>
+    case 'set_date': return <>{row.day ? dayLabel(row.day) : 'No date'} → <b className={t.added}>{dayLabel(patch.day)}</b></>
+    case 'set_time': return <>{whenLabel(row) || 'No time'} → <b className={t.added}>{patch.time ? timeLabel(patch.time) : partLabel(patch.part)}</b></>
+    case 'set_venue': return <>{row.venue || 'No venue'} → <b className={t.added}>{patch.venue}</b></>
+    case 'rename': return <>→ <b className={t.added}>{patch.title}</b></>
+    case 'pin': return <b className={t.added}>📌 Pin to the top</b>
+    case 'unpin': return <b>Unpin</b>
+    case 'done': return <b className={t.added}>✓ Mark done</b>
+    case 'move': return <>{listName(row.list_id)} → <b className={t.added}>{patch.newList ? `${patch.newList} (new list)` : listName(patch.list_id)}</b></>
+    default: return null
+  }
 }
 // What Claude returned, in the shape the Projects form takes.
 const asProject = (a, villages, contacts) => {
@@ -109,7 +171,7 @@ const asItem = (a, lists) => {
   return { title: a.title, details: a.details, day: a.date, ...(hit ? { list_id: hit.id } : { newList: (a.list || '').trim() }) }
 }
 
-function ActionCard({ a, lists, villages, contacts, works, onOpen, onDrop, onPick }) {
+function ActionCard({ a, lists, villages, contacts, works, events, items, onOpen, onDrop, onPick }) {
   let icon, head, dest, title, sub, question = a.question, choices = null
   if (a.type === 'project') {
     const p = asProject(a, villages, contacts)
@@ -132,8 +194,24 @@ function ActionCard({ a, lists, villages, contacts, works, onOpen, onDrop, onPic
     sub = a.change === 'add_people' ? people.map(x => (x.matches.length === 1 ? `👤 ${x.matches[0].name}` : `${x.said}: not found`)).join('  ')
       : a.change === 'add_villages' ? (a.villages || []).map(n => `📍 ${findVillage(villages, n)?.name || `${n}: not found`}`).join('  ')
       : a.change === 'set_road_type' ? roadTypeLabel(a.road_type)
-      : a.change === 'move' ? `To ${categoryLabel(a.category)}` : ''
+      : a.change === 'move' ? `To ${categoryLabel(a.category)}`
+      : a.change === 'add_details' ? <b className={t.added}>+ {a.details}</b> : ''
     if (!work) question = `There's no project ${a.serial || ''} · this one will be skipped`
+  } else if (a.type === 'event_update' || a.type === 'list_item_update') {
+    const isEvent = a.type === 'event_update'
+    const row = isEvent ? events.find(e => e.id === a.target_id) : items.find(i => i.id === a.target_id)
+    icon = isEvent ? <IconCalendar size={16} /> : <IconCheck size={16} />
+    dest = (!isEvent && a.change === 'add_details' ? 'Add details' : !isEvent && a.change === 'replace_details' ? 'New details' : PLANNER_CHANGE[a.change]) || ''
+    if (row) {
+      head = isEvent ? `Update · ${tagFor(row)}${row.day ? ` · ${dayLabel(row.day)}` : ''}` : `Update · ${lists.find(l => l.id === row.list_id)?.name || ''} list`
+      title = row.title || 'Untitled'
+      const patch = isEvent ? eventPatch(a, row) : itemPatch(a, row, lists)
+      sub = patch ? plannerChange(a, row, patch, lists, isEvent ? 'notes' : 'details') : null
+      if (!patch) question = 'Nothing to change · this will be skipped'
+    } else {
+      head = isEvent ? 'Update event' : 'Update list item'
+      question = `Couldn't find which ${isEvent ? 'event' : 'item'} · this will be skipped`
+    }
   } else if (a.type === 'contact_update') {
     const found = contactsFor(a, contacts, villages)
     const c = found.length === 1 ? found[0] : null
@@ -175,9 +253,9 @@ function ActionCard({ a, lists, villages, contacts, works, onOpen, onDrop, onPic
     title = null; sub = a.details
   }
   return (
-    <div className={t.card}>
+    <div className={cx(t.card, a.change === 'delete' && a.type.endsWith('_update') && t.cardDanger)}>
       <div className={t.head}>
-        {icon}<span>{head}</span><span className={t.dest}>{dest}</span>
+        {icon}<span>{head}</span><span className={cx(t.dest, a.change === 'delete' && t.danger)}>{dest}</span>
         <button className={t.drop} onClick={onDrop} aria-label="Leave this out"><IconX size={14} /></button>
       </div>
       <button className={t.body} onClick={onOpen}>
@@ -186,7 +264,7 @@ function ActionCard({ a, lists, villages, contacts, works, onOpen, onDrop, onPic
         )}
         {title && <span className={t.title}>{title}</span>}
         {sub && <span className={t.sub}>{sub}</span>}
-        {question && <span className={t.question}>{question}{a.type === 'project_update' || a.type === 'contact_update' ? '' : ' · tap to fix'}</span>}
+        {question && <span className={t.question}>{question}{a.type.endsWith('_update') ? '' : ' · tap to fix'}</span>}
       </button>
       {choices && (
         <div className={t.choices}>
@@ -207,6 +285,8 @@ function TellSheet({ open, onClose, onContact }) {
   const villages = useLiveQuery(() => db.villages.toArray(), [], [])
   const contacts = useLiveQuery(() => db.contacts.toArray(), [], [])
   const works = useLiveQuery(() => db.works.toArray(), [], [])
+  const events = useLiveQuery(() => db.events.toArray(), [], [])
+  const items = useLiveQuery(() => db.list_items.toArray(), [], [])
   const names = { villages, contacts, village: Object.fromEntries(villages.map(v => [v.id, v])), contact: Object.fromEntries(contacts.map(c => [c.id, c])) }
   const [said, setSaid] = useState('')
   const [busy, setBusy] = useState(false)
@@ -248,7 +328,17 @@ function TellSheet({ open, onClose, onContact }) {
         await updateRow('works', work.id, { village_ids: [...new Set([...(work.village_ids || []), ...villageIds(villages, a.villages)])] })
       } else if (a.change === 'set_road_type' && a.road_type) await updateRow('works', work.id, { road_type: a.road_type })
       else if (a.change === 'move' && a.category) await saveWork(work.id, { category: a.category })
+      else if (a.change === 'add_details' && cleanText(a.details || '').trim()) await updateRow('works', work.id, { body: `${(work.body || '').trim()}\n${cleanText(a.details).trim()}`.trim() })
       else return false
+    } else if (a.type === 'event_update' || a.type === 'list_item_update') {
+      const table = a.type === 'event_update' ? 'events' : 'list_items'
+      const row = await db[table].get(a.target_id || '')
+      if (!row) return false
+      const patch = table === 'events' ? eventPatch(a, row) : itemPatch(a, row, lists)
+      if (!patch) return false
+      if (patch.delete) { await deleteRow(table, row.id); deleted.push([table, row]); return }
+      if (patch.newList) { const { newList, ...rest } = patch; await updateRow(table, row.id, { ...rest, list_id: await listIdByName(newList) }); return }
+      await updateRow(table, row.id, patch)
     } else if (a.type === 'contact_update') {
       const found = contactsFor(a, contacts, villages)
       if (found.length !== 1) return false
@@ -262,12 +352,16 @@ function TellSheet({ open, onClose, onContact }) {
     }
   }
 
+  const deleted = []   // rows deleted by this Save, for Undo
   async function addAll() {
     const acts = result.actions
+    deleted.length = 0
     let n = 0
     for (const a of acts) if (a.type !== 'contact' && (await save(a)) !== false) n++
     const contact = acts.find(a => a.type === 'contact')
-    if (n) toast(acts.every(a => a.type.endsWith('_update')) ? `Saved ${n} change${n > 1 ? 's' : ''}` : `Added ${n} to Halqa`)
+    const gone = [...deleted]
+    const undo = gone.length ? { label: 'Undo', onClick: () => gone.forEach(([table, row]) => restoreRow(table, row)) } : undefined
+    if (n) toast(acts.every(a => a.type.endsWith('_update')) ? `Saved ${n} change${n > 1 ? 's' : ''}` : `Added ${n} to Halqa`, undo)
     reset(); onClose()
     if (contact) {
       const v = findVillage(villages, contact.village)
@@ -303,7 +397,7 @@ function TellSheet({ open, onClose, onContact }) {
           <div className={t.you}><b>You said</b>{said}</div>
           {result.reply && <div className={t.reply}>{result.reply}</div>}
           {actions.length > 0 && <div className={t.label}>{actions.length} thing{actions.length > 1 ? 's' : ''} to {actions.every(a => a.type.endsWith('_update')) ? 'change' : 'add'}</div>}
-          {actions.map(a => <ActionCard key={a.key} a={a} lists={lists} villages={villages} contacts={contacts} works={works} onOpen={() => openAction(a)} onDrop={() => drop(a.key)}
+          {actions.map(a => <ActionCard key={a.key} a={a} lists={lists} villages={villages} contacts={contacts} works={works} events={events} items={items} onOpen={() => openAction(a)} onDrop={() => drop(a.key)}
             onPick={id => setResult(r => ({ ...r, actions: r.actions.map(x => (x.key === a.key ? { ...x, contact_id: id } : x)) }))} />)}
           <div className={t.acts}>
             {actions.length > 0

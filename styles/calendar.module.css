@@ -27,7 +27,8 @@
 .row:active { background: #f3f6f9; }
 .rowTop { display: flex; align-items: center; gap: 8px; }
 .rowTag { font-size: 12px; font-weight: 750; padding: 2px 8px; border-radius: 999px; }
-.rowWhen { margin-left: auto; font-size: 12.5px; font-weight: 700; color: var(--amber, #c98208); }
+.rowNote { flex: 1; min-width: 0; font-size: 13px; font-weight: 700; color: #1f3a8a; overflow-wrap: anywhere; }
+.rowWhen { margin-left: auto; flex-shrink: 0; font-size: 12.5px; font-weight: 700; color: var(--amber, #c98208); }
 .rowTitle { font-size: 16px; font-weight: 750; color: var(--ink); }
 .rowSub { font-size: 13px; color: var(--muted); }
 .rowGo { font-size: 13px; font-weight: 700; color: var(--teal-700); margin-top: 2px; }

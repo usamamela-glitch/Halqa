@@ -173,6 +173,7 @@ export default function CalendarScreen() {
                   <span className={c.rowTop}>
                     <span className={cx(c.rowTag, ch.cls)}>{x.ev ? (x.ev.status === 'review' ? 'To review' : tagFor(x.ev)) : listName[x.item.list_id] || 'To do'}</span>
                     {x.ev?.pinned && <span>📌</span>}
+                    {x.ev?.notes && <span className={c.rowNote}>{x.ev.notes.split('\n').map(l => l.trim()).filter(Boolean).join(' · ')}</span>}
                     {x.ev && <span className={c.rowWhen}>{whenLabel(x.ev)}</span>}
                     {x.item?.done_at && <span className={c.rowWhen}>Done</span>}
                   </span>

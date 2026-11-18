@@ -456,7 +456,7 @@ function SearchTab({ villages, contacts, sheets }) {
           <ul className={ui.list}>
             {contactHits.map(c => (
               <ContactRow key={c.id} contact={c} villageName={vById[c.village_id]?.name} subtitle={vById[c.village_id]?.name || 'Unknown village'}
-                onPress={() => push('village', { id: c.village_id, tab: 'Contacts', highlight: c.id })} />
+                onPress={() => sheets.open(c.id)} />
             ))}
           </ul>
         </div>
@@ -468,7 +468,7 @@ function SearchTab({ villages, contacts, sheets }) {
           <ul className={ui.list}>
             {descHits.map(c => (
               <ContactRow key={c.id} contact={c} villageName={vById[c.village_id]?.name} subtitle={vById[c.village_id]?.name || 'Unknown village'} mark={phrase}
-                onPress={() => push('village', { id: c.village_id, tab: 'Contacts', highlight: c.id })} />
+                onPress={() => sheets.open(c.id)} />
             ))}
           </ul>
         </div>

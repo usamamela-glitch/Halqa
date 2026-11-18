@@ -2,11 +2,10 @@ import { memo, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'r
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { db } from '../../lib/db'
-import { useNav } from '../../lib/nav'
 import { updateRow } from '../../lib/store'
 import { byName, daysSince, contactedLevel } from '../../lib/domain'
 import { Screen, Empty, ui, useToast } from '../ui'
-import { ContactRow } from '../contacts'
+import { ContactRow, useContactSheets } from '../contacts'
 import { IconStar } from '../Icons'
 import m from '../../styles/maingroups.module.css'
 
@@ -14,8 +13,11 @@ import m from '../../styles/maingroups.module.css'
 // either side) are drawn; rows are swapped in and out while scrolling (15 Nov).
 // Opening, closing and scrolling cost the same however many are pinned.
 export default function MainGroupsScreen() {
-  const { push } = useNav()
   const toast = useToast()
+  // Tapping a person opens their card (the card's village name goes to the village).
+  const sheets = useContactSheets()
+  const sheetsRef = useRef(sheets); sheetsRef.current = sheets
+  const openCard = useCallback(id => sheetsRef.current.open(id), [])
   const contacts = useLiveQuery(() => db.contacts.filter(c => !!c.pinned).toArray(), [], [])
   const villages = useLiveQuery(() => db.villages.toArray(), [], [])
   const qanungos = useLiveQuery(() => db.qanungos.toArray(), [], [])
@@ -109,16 +111,17 @@ export default function MainGroupsScreen() {
           {v.getVirtualItems().map(vi => (
             <div key={vi.key} data-index={vi.index} ref={v.measureElement} className={m.vrow}
               style={{ transform: `translateY(${vi.start - layout.margin}px)` }}>
-              <Row row={rows[vi.index]} push={push} unpin={unpin} />
+              <Row row={rows[vi.index]} openCard={openCard} unpin={unpin} />
             </div>
           ))}
         </div>
       </>)}
+      {sheets.element}
     </Screen>
   )
 }
 
-const Row = memo(function Row({ row, push, unpin }) {
+const Row = memo(function Row({ row, openCard, unpin }) {
   if (row.head) {
     return (
       <h2 className={m.head} style={{ paddingTop: row.first ? 14 : 22 }}>
@@ -130,7 +133,7 @@ const Row = memo(function Row({ row, push, unpin }) {
   return (
     <ul className={ui.list} style={{ paddingBottom: 10 }}>
       <ContactRow contact={c} villageName={village?.name} subtitle={village?.name || 'Unknown village'} showContacted
-        onPress={() => push('village', { id: c.village_id, tab: 'Contacts', highlight: c.id })}
+        onPress={() => openCard(c.id)}
         onUnpin={() => unpin(c)} />
     </ul>
   )

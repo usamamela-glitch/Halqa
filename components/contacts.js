@@ -13,6 +13,7 @@ import { numberKey, nameKey } from '../lib/importContacts'
 import { queryWords, matchesWords } from '../lib/search'
 import { Card, Avatar, PhotoView, Sheet, ActionSheet, Field, cx, ui, useToast } from './ui'
 import { IconPhone, IconWhatsApp, IconPin, IconCheck, IconUserPlus, IconEdit, IconCamera } from './Icons'
+import { useNav, useNavStack } from '../lib/nav'
 import s from '../styles/contacts.module.css'
 
 // ---------- Row ----------
@@ -131,6 +132,8 @@ export function ContactRow({ contact, villageName, subtitle, onPress, highlight,
 function ContactDetail({ id, onEdit, onClose }) {
   const toast = useToast()
   const [photoOpen, setPhotoOpen] = useState(false)
+  const { push, setParams } = useNav()
+  const { stack } = useNavStack()
   const contact = useLiveQuery(() => (id ? db.contacts.get(id) : undefined), [id])
   const village = useLiveQuery(() => (contact?.village_id ? db.villages.get(contact.village_id) : undefined), [contact?.village_id])
   // Added one by one (not in an import batch, which shares one time)?
@@ -160,6 +163,15 @@ function ContactDetail({ id, onEdit, onClose }) {
     toast(contact.pinned ? 'Removed from Main Groups' : 'Added to Main Groups')
   }
 
+  // The village name opens that village's page, with this person's row flashed.
+  // Already on that village's page: just close the card and flash the row.
+  function openVillage() {
+    const top = stack[stack.length - 1]
+    onClose()
+    if (top?.screen === 'village' && top.params?.id === village.id) setParams(top.key, { tab: 'Contacts', highlight: contact.id })
+    else push('village', { id: village.id, tab: 'Contacts', highlight: contact.id })
+  }
+
   async function remove() {
     const snapshot = { ...contact }
     onClose()
@@ -176,7 +188,7 @@ function ContactDetail({ id, onEdit, onClose }) {
           : <Avatar name={contact.name} photo={contact.photo_path} size={92} />}
         {photoOpen && <PhotoView bucket="contact-photos" path={contact.photo_path} onClose={() => setPhotoOpen(false)} />}
         <div className={s.bigName}>{contact.name}</div>
-        {village && <div className={s.village}>{village.name}</div>}
+        {village && <button type="button" className={s.village} onClick={openVillage}>{village.name}<span className={s.villageGo}>›</span></button>}
         {oneByOne && <div className={s.added}>Added {addedDate(contact.created_at)}</div>}
         {contact.description && <div className={s.detailDesc}>{contact.description}</div>}
         {(contact.tags || []).length > 0 && (

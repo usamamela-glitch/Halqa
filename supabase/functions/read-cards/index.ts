@@ -47,12 +47,26 @@ const SCHEMA = {
   additionalProperties: false,
 }
 
+// The five wedding functions; other spellings and a bare "Wedding" are mapped onto them.
+const FUNCTIONS: Record<string, string[]> = {
+  Mehndi: ['mehndi', 'mehendi', 'mehandi', 'mayun', 'mayon', 'mayoon', 'dholki', 'sangeet'],
+  Baraat: ['baraat', 'barat', 'baarat'],
+  Walima: ['walima', 'valima', 'waleema', 'walimah'],
+  Nikah: ['nikah', 'nikkah', 'nikaah'],
+  Rukhsati: ['rukhsati', 'ruksati'],
+}
+function weddingFunction(fn: string | undefined, title: string | undefined): string {
+  const k = (fn || '').trim().toLowerCase()
+  for (const [name, list] of Object.entries(FUNCTIONS)) if (list.includes(k)) return name
+  return /^daughter/i.test(title || '') ? 'Rukhsati' : 'Baraat'
+}
+
 function instructions(today: string) {
   return `You read invitation cards sent to a Pakistani politician: mostly wedding cards (Urdu or English, printed; sometimes handwritten notes), sometimes invitations to dinners, jalsas, meetings or meet-ups. Cards come as images or PDFs; several images (or a PDF's pages) may be pages of the same card. Today is ${today} (Pakistan).
 
 Return one entry for every function the images invite him to, one per function per day.
 - kind: wedding, dinner, jalsa, meeting, meetup or other.
-- function: for weddings the function's name, e.g. Mehndi, Baraat, Walima, Nikah, Rukhsati, Sangeet, Dholki (use the card's own word if it's another). For other kinds, a short label (e.g. Dinner, Jalsa, Meeting).
+- function: for weddings exactly one of Mehndi, Baraat, Walima, Nikah, Rukhsati. Mayun, Dholki or Sangeet count as Mehndi. If the card doesn't name the function (just a wedding / shadi card): Baraat for a son's wedding, Rukhsati for a daughter's, and set unsure to true. Never "Wedding" or "Shadi". For other kinds, a short label (e.g. Dinner, Jalsa, Meeting).
 - title: for weddings the groom's name in English letters (transliterate Urdu names, e.g. ملک رستم علی تھہیم → Malik Rustam Ali Thaheem). Two grooms: join with " & ". A daughter's wedding with no groom named: "Daughter of <father's name>". For other kinds: who or what it is, briefly.
 - village: only if the card names a village or chak; "74 جنوبی" means Chak 74SB, "شمالی" means NB. Otherwise an empty string.
 - venue: the hall or place and its town, short, in English letters (e.g. "Victoria Palace, Kanda Mor, Bhagtanwala"). Empty string if none.
@@ -149,7 +163,7 @@ Deno.serve(async req => {
 
   const rows = found.map(ev => ({
     kind: ev.kind,
-    function: ev.function || null,
+    function: ev.kind === 'wedding' ? weddingFunction(ev.function, ev.title) : (ev.function || null),
     title: ev.title || '',
     village: ev.village || null,
     venue: ev.venue || null,

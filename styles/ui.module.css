@@ -199,6 +199,7 @@
   background: var(--teal-50); color: var(--teal-700);
 }
 .chipBtn {
+  display: inline-flex; align-items: center; justify-content: center; line-height: 1; box-sizing: border-box; white-space: nowrap;
   height: 36px; padding: 0 14px; border-radius: 18px;
   font-size: 14px; font-weight: 600;
   background: var(--card); color: var(--ink-2);

@@ -4,7 +4,7 @@ import { db } from '../../lib/db'
 import { insertRow, updateRow } from '../../lib/store'
 import { supabase } from '../../lib/supabase'
 import { localDay } from '../../lib/touch'
-import { KINDS, WEDDING_FUNCTIONS, PARTS, tagFor, partLabel, whenLabel, partFromTime, sortEvents, dayLabel, addDays, confirmEvent, removeEvent,
+import { KINDS, WEDDING_FUNCTIONS, normalizeFunction, PARTS, tagFor, partLabel, whenLabel, partFromTime, sortEvents, dayLabel, addDays, confirmEvent, removeEvent,
   sortLists, listIdByName, toggleDone, removeListItem, DONE_KEEP_DAYS } from '../../lib/events'
 import { deleteRow } from '../../lib/store'
 import { Screen, BarButton, Card, Sheet, ActionSheet, Empty, Field, cx, ui, useToast } from '../ui'
@@ -118,7 +118,7 @@ const EMPTY = { kind: 'wedding', function: 'Baraat', title: '', village: '', ven
 
 export function EventForm({ initial, onDone }) {
   const toast = useToast()
-  const [f, setF] = useState(() => ({ ...EMPTY, ...Object.fromEntries(Object.entries(initial || {}).filter(([, v]) => v != null)) }))
+  const [f, setF] = useState(() => { const x = { ...EMPTY, ...Object.fromEntries(Object.entries(initial || {}).filter(([, v]) => v != null)) }; return { ...x, function: normalizeFunction(x.function) } })
   const [confirmDel, setConfirmDel] = useState(false)
   const set = (k, v) => setF(x => ({ ...x, [k]: v }))
   const isNew = !initial?.id
@@ -164,7 +164,6 @@ export function EventForm({ initial, onDone }) {
             {WEDDING_FUNCTIONS.map(fn => (
               <button type="button" key={fn} className={cx(ui.chipBtn, f.function === fn && ui.chipBtnOn)} onClick={() => set('function', fn)}>{fn}</button>
             ))}
-            {f.function && !WEDDING_FUNCTIONS.includes(f.function) && <span className={cx(ui.chipBtn, ui.chipBtnOn)}>{f.function}</span>}
           </div>
         </div>
       )}

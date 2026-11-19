@@ -17,6 +17,7 @@ import { TellButton } from '../TellHalqa'
 import { WorksTab, WorkList } from '../Works'
 import { KeypadTab } from '../Keypad'
 import kp from '../../styles/keypad.module.css'
+import plannerStyles from '../../styles/planner.module.css'
 import { parseSharedText, numberKey } from '../../lib/importContacts'
 import { queryWords, matchesWords, nameRank } from '../../lib/search'
 import h from '../../styles/home.module.css'
@@ -209,7 +210,14 @@ function QanungosTab({ villages, contacts, pinnedCount, onQuickAdd }) {
       )}
 
       <div className={ui.section}>
-        <div className={ui.sectionHead}><span>Qanungos</span><span>{qanungos.length}</span></div>
+        <div className={ui.sectionHead}>
+          <span>Qanungos</span>
+          {/* Same calendar button as Planner's Upcoming header (that one stays put); this is a shortcut to it from home. */}
+          <span style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+            <button className={plannerStyles.calBtn} style={{ margin: '-8px 0' }} onClick={() => push('calendar')} aria-label="Calendar"><IconCalendar size={17} /></button>
+            <span>{qanungos.length}</span>
+          </span>
+        </div>
         {sorted.length === 0 && orphanCount === 0 ? (
           <Empty icon={<IconLayers size={28} />} title="No Qanungos yet" text="Add your first Qanungo to start organising villages." />
         ) : (

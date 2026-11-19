@@ -1,7 +1,7 @@
 import { memo, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../../lib/db'
-import { useNav } from '../../lib/nav'
+import { useNav, useNavStack } from '../../lib/nav'
 import { localDay } from '../../lib/touch'
 import { tagFor, whenLabel, sortEvents, sortLists } from '../../lib/events'
 import { Screen, BarButton, Sheet, cx } from '../ui'
@@ -57,7 +57,8 @@ const Month = memo(function Month({ y, m, byDay, today, sel, onPick }) {
 })
 
 export default function CalendarScreen() {
-  const { pop } = useNav()
+  const { pop, replace } = useNav()
+  const { stack } = useNavStack()
   const events = useLiveQuery(() => db.events.toArray(), [], [])
   const items = useLiveQuery(() => db.list_items.toArray(), [], [])
   const lists = sortLists(useLiveQuery(() => db.planner_lists.toArray(), [], []))
@@ -147,8 +148,12 @@ export default function CalendarScreen() {
   const showInPlanner = x => {
     const detail = x.ev ? { id: x.ev.id, day: x.ev.day } : { id: x.item.id, day: x.item.day, listId: x.item.list_id, isItem: true }
     setSel(null)
-    pop()
-    setTimeout(() => window.dispatchEvent(new CustomEvent('halqa:planner-show', { detail })), 340)
+    // Opened from the Planner: go back to it. Opened from elsewhere (Home): the
+    // Planner takes the calendar's place, so Back from it goes home.
+    if (stack[stack.length - 2]?.screen === 'planner') {
+      pop()
+      setTimeout(() => window.dispatchEvent(new CustomEvent('halqa:planner-show', { detail })), 340)
+    } else replace('planner', { show: detail })
   }
   const selItems = sel ? byDay[sel] || [] : []
 

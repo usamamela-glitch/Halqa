@@ -491,6 +491,14 @@ export default function PlannerScreen() {
     }
     setTimeout(find, 80)
   }
+  // Opened by the calendar from elsewhere (Home): show that card once the page is in.
+  const shownParam = useRef(false)
+  useEffect(() => {
+    if (!params.show || shownParam.current) return
+    shownParam.current = true
+    const t = setTimeout(() => showRef.current(params.show), 380)
+    return () => clearTimeout(t)
+  }, [params.show])
   useEffect(() => {
     const on = e => showRef.current(e.detail)
     window.addEventListener('halqa:planner-show', on)

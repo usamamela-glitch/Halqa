@@ -9,7 +9,6 @@ import { KINDS, WEDDING_FUNCTIONS, normalizeFunction, PARTS, tagFor, partLabel, 
 import { deleteRow } from '../../lib/store'
 import { Screen, BarButton, Card, Sheet, ActionSheet, Empty, Field, cx, ui, useToast } from '../ui'
 import { IconPlus, IconCalendar, IconChevron, IconNote, IconCheck, IconMore, IconEdit, IconTrash, IconShare, IconMove, IconPin } from '../Icons'
-import { motion, animate, useMotionValue } from 'framer-motion'
 import { useNav, useScreen } from '../../lib/nav'
 import { TellBar } from '../TellHalqa'
 import { NotesPanel, newGeneralNote } from './HomeScreen'
@@ -220,18 +219,77 @@ function CardPreview({ path }) {
 
 // ---------- Swipe left for actions (like the iPhone Notes app) ----------
 
-const SNAP = { type: 'spring', stiffness: 500, damping: 40 }
 let closeOpenRow = null   // only one row open at a time
 
+// Swipe left on a row for its actions (Share, Move, Delete). Own touch handling
+// (19 Nov): the row only moves once the finger is clearly going sideways, so
+// scrolling up and down never wobbles rows, and a tap is always a tap.
+const LOCK = 8          // px of movement before deciding sideways or up/down
 export function SwipeRow({ actions, children, rowId }) {
-  const x = useMotionValue(0)
+  const front = useRef(null)
+  const g = useRef({ x: 0, swipedAt: 0 })
   const width = actions.length * 74
-  const close = () => animate(x, 0, SNAP)
-  const open = () => {
-    if (closeOpenRow && closeOpenRow !== close) closeOpenRow()
-    closeOpenRow = close
-    animate(x, -width, SNAP)
+  const setX = (x, anim) => {
+    const el = front.current
+    if (!el) return
+    el.style.transition = anim ? 'transform .3s cubic-bezier(.32,.72,0,1)' : 'none'
+    el.style.transform = x ? `translateX(${x}px)` : ''
+    g.current.x = x
   }
+  const close = () => { setX(0, true); if (closeOpenRow === close) closeOpenRow = null }
+  const closeRef = useRef(close); closeRef.current = close
+  const open = () => {
+    if (closeOpenRow && closeOpenRow !== closeRef.current) closeOpenRow()
+    closeOpenRow = closeRef.current
+    setX(-width, true)
+  }
+  useEffect(() => {
+    const el = front.current
+    if (!el) return
+    let t = null
+    const start = e => {
+      if (e.touches.length !== 1) { t = null; return }
+      const p0 = e.touches[0]
+      t = { x0: p0.clientX, y0: p0.clientY, base: g.current.x, lock: null, lastX: p0.clientX, lastT: e.timeStamp, v: 0 }
+    }
+    const move = e => {
+      if (!t) return
+      const p1 = e.touches[0], dx = p1.clientX - t.x0, dy = p1.clientY - t.y0
+      if (!t.lock) {
+        if (Math.abs(dx) < LOCK && Math.abs(dy) < LOCK) return
+        t.lock = Math.abs(dx) > Math.abs(dy) * 1.3 ? 'x' : 'y'
+        if (t.lock === 'y') { if (g.current.x) closeRef.current(); return }
+        if (closeOpenRow && closeOpenRow !== closeRef.current) closeOpenRow()
+      }
+      if (t.lock !== 'x') return
+      e.preventDefault()
+      let x = t.base + dx
+      if (x > 0) x *= 0.15
+      if (x < -width) x = -width + (x + width) * 0.15
+      const dt = e.timeStamp - t.lastT
+      if (dt > 0) t.v = (p1.clientX - t.lastX) / dt * 1000
+      t.lastX = p1.clientX; t.lastT = e.timeStamp
+      setX(x, false)
+    }
+    const end = () => {
+      if (t?.lock === 'x') {
+        g.current.swipedAt = Date.now()
+        const x = g.current.x
+        if (t.v < -350 || (x < -width / 2 && t.v < 350)) open()
+        else close()
+      }
+      t = null
+    }
+    el.addEventListener('touchstart', start, { passive: true })
+    el.addEventListener('touchmove', move, { passive: false })
+    el.addEventListener('touchend', end)
+    el.addEventListener('touchcancel', end)
+    return () => {
+      el.removeEventListener('touchstart', start); el.removeEventListener('touchmove', move)
+      el.removeEventListener('touchend', end); el.removeEventListener('touchcancel', end)
+      if (closeOpenRow === closeRef.current) closeOpenRow = null
+    }
+  }, [width])
   return (
     <div className={p.swipe} id={rowId}>
       <div className={p.swipeActions} style={{ width }}>
@@ -241,12 +299,13 @@ export function SwipeRow({ actions, children, rowId }) {
           </button>
         ))}
       </div>
-      <motion.div className={p.swipeFront} style={{ x }} drag="x" dragDirectionLock dragMomentum={false}
-        dragConstraints={{ left: -width, right: 0 }} dragElastic={{ left: 0.12, right: 0.04 }}
-        onDragEnd={(_, info) => (info.velocity.x < -350 || (x.get() < -width / 2 && info.velocity.x < 350) ? open() : close())}
-        onClickCapture={e => { if (x.get() < -4) { e.stopPropagation(); e.preventDefault(); close() } }}>
+      <div ref={front} className={p.swipeFront}
+        onClickCapture={e => {
+          // A swipe that just ended, or a tap on an open row (closes it), is not a tap on the row.
+          if (Date.now() - g.current.swipedAt < 350 || g.current.x < -4) { e.stopPropagation(); e.preventDefault(); if (g.current.x) close() }
+        }}>
         {children}
-      </motion.div>
+      </div>
     </div>
   )
 }

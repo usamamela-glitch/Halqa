@@ -86,7 +86,7 @@ export function Card({ as = 'button', className, children, ...rest }) {
   // made long lists (Main Groups, 800+ rows) slow to open and close.
   const C = as === 'div' ? 'div' : 'button'
   return (
-    <C className={cx(s.card, className)} {...rest}>
+    <C className={cx(s.card, s.press, className)} {...rest}>
       {children}
     </C>
   )

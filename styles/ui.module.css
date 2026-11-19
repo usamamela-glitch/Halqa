@@ -109,7 +109,9 @@
   transition: background 120ms ease, transform 160ms cubic-bezier(.2,.8,.3,1.4);
   -webkit-user-select: none; user-select: none;
 }
-.card:active { background: #f3f6f9; transform: scale(0.97); transition: background 120ms ease, transform 90ms ease-out; }
+/* Press effect only for cards that are one tappable thing (the Card component),
+   never for a white box that holds a whole list (19 Nov). */
+.press:active { background: #f3f6f9; transform: scale(0.97); transition: background 120ms ease, transform 90ms ease-out; }
 .cardMain { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
 .cardTitle { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .cardSub { font-size: 14px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

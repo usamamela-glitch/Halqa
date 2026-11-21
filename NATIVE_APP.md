@@ -1,6 +1,6 @@
 # Halqa: the native iPhone app
 
-Agreed with Usama, 11 Nov 2026 (updated 15 Nov). This is the build list for when Apple approves the developer account.
+Agreed with Usama, 11 Nov 2026 (updated 15 and 21 Nov). This is the build list for when Apple approves the developer account.
 
 ## How it works
 - **Same app, same look.** The current Halqa is wrapped in a native iPhone shell (Capacitor). Every screen and all data stay as they are.
@@ -16,6 +16,14 @@ Agreed with Usama, 11 Nov 2026 (updated 15 Nov). This is the build list for when
    - **Contact:** a contact card, or a message with a number in it. Quick Add opens already filled in.
    - **WhatsApp business accounts** (asked 14 Nov), where the number can't be copied: open their contact info in WhatsApp, tap **Share contact**, then **Halqa**. No more forwarding the card to someone else first. This only works where WhatsApp offers the share menu for that contact; if WhatsApp hides the number completely, no app can see it.
    - **A screenshot works too:** share a screenshot of the chat or contact info to **Halqa**. Halqa reads the number off the picture (on the phone itself) and opens Quick Add with it filled in.
+   - **Cards shared with no signal (decided 21 Nov): built the native way, NOT like the web app.** The web app does this with two Shortcuts, a Halqa Inbox folder in Files, four automations and a "delete without asking" setting (see PLAN.md, 21 Nov). The native app replaces all of that and needs none of it:
+     - **Halqa itself is in the share menu** (a Share Extension). There's no Shortcut and no code in a header.
+     - **A hidden inbox inside Halqa** (the app's own storage, shared with the Share Extension). A card shared with no signal is kept instantly. Usama never sees a folder.
+     - **It shows at once** in the Planner under *To review* as **"Waiting for signal"**, with the card's picture, so nothing is forgotten.
+     - **The iPhone sends it by itself** when signal comes back, with a background upload, even if Halqa is closed. It retries through patchy signal: no automations, no closing WhatsApp, no set times.
+     - **Once Claude has read it,** the placeholder becomes the normal review card with the functions filled in (Add all, Discard, note box, as now).
+     - **Kept from today:** a card sent twice is only added once (`read-cards` makes the batch id from the pictures).
+     - **When this ships,** Usama deletes the two Shortcuts ("Add to Halqa", "Send to Halqa"), the Shortcut automations and the Halqa Inbox folder. The Back Tap Shortcut stays (item 2).
 2. **Back Tap stays.** A ready-made one-block Shortcut, "Quick Add copied number": copy a number, Back Tap, and Quick Add opens with it filled in, never in Safari. Numbers split over two lines are joined.
 3. **iPhone contacts stay in step with Halqa, automatically.** Halqa is the master copy.
    - **New contact in Halqa:** saved to the iPhone contacts too. No more "Save to iPhone" step.

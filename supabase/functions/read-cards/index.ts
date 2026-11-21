@@ -94,6 +94,14 @@ function decode(b64: string): Uint8Array {
   return out
 }
 
+// A UUID made from the pictures themselves (SHA-256), so the same card always gets the same one.
+async function idFor(text: string): Promise<string> {
+  const h = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text))).slice(0, 16)
+  h[6] = (h[6] & 0x0f) | 0x50; h[8] = (h[8] & 0x3f) | 0x80
+  const x = [...h].map(b => b.toString(16).padStart(2, '0')).join('')
+  return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`
+}
+
 const reply = (status: number, text: string) =>
   new Response(text, { status, headers: { 'content-type': 'text/plain; charset=utf-8' } })
 
@@ -125,11 +133,16 @@ Deno.serve(async req => {
   if (!images.length) return reply(400, 'The pictures could not be opened. Share pictures (JPG, PNG) or a PDF.')
 
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
-  const batchId = crypto.randomUUID()
+  // The same card sent twice (a retry from the Shortcut's offline inbox after a
+  // dropped connection, or shared again by mistake) gets the same id, so it's
+  // only added once (21 Nov).
+  const batchId = await idFor(images.map(i => i.b64).join(','))
+  const { data: seen } = await supabase.from('events').select('id').eq('batch_id', batchId).limit(1)
+  if (seen?.length) return reply(200, 'Already in Halqa (this card was sent before).')
   const paths = await Promise.all(images.map(async (img, i) => {
     const ext = img.type.split('/')[1].replace('jpeg', 'jpg')  // jpg, png, webp, gif, pdf
     const path = `${batchId}/${i + 1}.${ext}`
-    const { error } = await supabase.storage.from('event-cards').upload(path, img.bytes, { contentType: img.type })
+    const { error } = await supabase.storage.from('event-cards').upload(path, img.bytes, { contentType: img.type, upsert: true })
     return error ? null : path
   }))
 

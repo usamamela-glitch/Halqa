@@ -102,7 +102,7 @@ async function idFor(text: string): Promise<string> {
   return `${x.slice(0, 8)}-${x.slice(8, 12)}-${x.slice(12, 16)}-${x.slice(16, 20)}-${x.slice(20)}`
 }
 
-// Answers starting with ✓ are final: the Shortcut's offline inbox deletes that
+// Answers starting with "Done" are final: the Shortcut's offline inbox deletes that
 // card. Anything else (no signal, server or Claude trouble) is tried again later.
 const reply = (status: number, text: string) =>
   new Response(text, { status, headers: { 'content-type': 'text/plain; charset=utf-8' } })
@@ -122,7 +122,7 @@ Deno.serve(async req => {
   // split where a new file starts (JPEG /9j/, PNG iVBOR, WebP UklGR, GIF R0lGOD, PDF JVBERi).
   const chunks = raw.includes(',') ? raw.split(',') : raw.split(/\s+(?=\/9j\/|iVBOR|UklGR|R0lGOD|JVBERi)/)
   const parts = chunks.map(c => c.replace(/^\s*data:[^;]+;base64/, '').replace(/\s+/g, '')).filter(c => c.length > 200)
-  if (!parts.length) return reply(400, '✓ No pictures received. Share the card images or PDF, not a link.')
+  if (!parts.length) return reply(400, 'Done · No pictures received. Share the card images or PDF, not a link.')
 
   const images: { bytes: Uint8Array; type: string; b64: string }[] = []
   for (const b64 of parts.slice(0, MAX_IMAGES)) {
@@ -132,7 +132,7 @@ Deno.serve(async req => {
     if (!type || bytes.length > (type === 'application/pdf' ? MAX_PDF_BYTES : MAX_BYTES)) continue
     images.push({ bytes, type, b64 })
   }
-  if (!images.length) return reply(400, '✓ The pictures could not be opened. Share pictures (JPG, PNG) or a PDF.')
+  if (!images.length) return reply(400, 'Done · The pictures could not be opened. Share pictures (JPG, PNG) or a PDF.')
 
   const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
   // The same card sent twice (a retry from the Shortcut's offline inbox after a
@@ -140,7 +140,7 @@ Deno.serve(async req => {
   // only added once (21 Nov).
   const batchId = await idFor(images.map(i => i.b64).join(','))
   const { data: seen } = await supabase.from('events').select('id').eq('batch_id', batchId).limit(1)
-  if (seen?.length) return reply(200, '✓ Already in Halqa (this card was sent before).')
+  if (seen?.length) return reply(200, 'Done · Already in Halqa (this card was sent before).')
   const paths = await Promise.all(images.map(async (img, i) => {
     const ext = img.type.split('/')[1].replace('jpeg', 'jpg')  // jpg, png, webp, gif, pdf
     const path = `${batchId}/${i + 1}.${ext}`
@@ -168,13 +168,13 @@ Deno.serve(async req => {
         ],
       }],
     } as any)
-    if (res.stop_reason === 'refusal') return reply(200, '✓ Claude could not read these pictures. Add them in Halqa by hand.')
+    if (res.stop_reason === 'refusal') return reply(200, 'Done · Claude could not read these pictures. Add them in Halqa by hand.')
     const text = (res.content || []).filter((b: any) => b.type === 'text').map((b: any) => b.text).join('')
     found = JSON.parse(text).events || []
   } catch (e) {
     return reply(502, `Reading the cards failed: ${(e as Error).message.slice(0, 160)}`)
   }
-  if (!found.length) return reply(200, '✓ No invitation found in these pictures.')
+  if (!found.length) return reply(200, 'Done · No invitation found in these pictures.')
 
   const rows = found.map(ev => ({
     kind: ev.kind,
@@ -195,5 +195,5 @@ Deno.serve(async req => {
   if (error) return reply(500, `Saving failed: ${error.message.slice(0, 160)}`)
 
   const n = rows.length
-  return reply(200, `✓ ${n} function${n === 1 ? '' : 's'} found. Open Halqa → Planner to check ${n === 1 ? 'it' : 'them'}.`)
+  return reply(200, `Done · ${n} function${n === 1 ? '' : 's'} found. Open Halqa → Planner to check ${n === 1 ? 'it' : 'them'}.`)
 })
